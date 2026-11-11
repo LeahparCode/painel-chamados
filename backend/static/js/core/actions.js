@@ -1,6 +1,7 @@
 // Ações de escrita com atualização otimista + rollback em caso de erro.
 import { OFFLINE } from "./config.js";
-import { findRecord, patchLocal, addLocal, removeLocal } from "./state.js";
+import { findRecord, patchLocal, addLocal, removeLocal, pendingDeletes } from "./state.js";
+import { API_BASE } from "./config.js";
 import { createRecord, updateRecord, deleteRecord, refreshSoon } from "./api.js";
 import { toast } from "../ui/toast.js";
 
@@ -75,3 +76,57 @@ export async function removeRecord(id){
     return false;
   }
 }
+
+/**
+ * Exclusão com "Desfazer": o disparo some na hora e só é apagado no servidor depois de alguns
+ * segundos. Se a pessoa clicar em "Desfazer" nesse intervalo, ele volta como estava.
+ */
+const scheduled = new Map(); // id -> { timer, rec }
+
+async function commitDelete(id){
+  const item = scheduled.get(id);
+  if (!item) return;
+  scheduled.delete(id);
+  if (OFFLINE || isTemp(id)){ pendingDeletes.delete(id); return; }
+  try{
+    await deleteRecord(id);
+    refreshSoon();
+  }catch(err){
+    console.error("Falha ao excluir", err);
+    addLocal(item.rec);
+    toast("Não consegui excluir o disparo.", "error", 3000);
+  }finally{
+    pendingDeletes.delete(id);
+  }
+}
+
+export function deleteWithUndo(id, { label = "Disparo excluído.", delay = 6000 } = {}){
+  const rec = findRecord(id);
+  if (!rec || scheduled.has(id)) return;
+  pendingDeletes.add(`${id}`);
+  removeLocal(id);
+  const timer = setTimeout(() => commitDelete(id), delay);
+  scheduled.set(id, { timer, rec });
+  toast(label, "ok", delay, null, {
+    label: "Desfazer",
+    onClick: () => {
+      const item = scheduled.get(id);
+      if (!item) return;
+      clearTimeout(item.timer);
+      scheduled.delete(id);
+      pendingDeletes.delete(`${id}`);
+      addLocal(item.rec);
+      toast("Exclusão desfeita.", "ok", 1800);
+    },
+  });
+}
+
+// se a página for fechada durante o "Desfazer", conclui as exclusões pendentes
+window.addEventListener("pagehide", () => {
+  scheduled.forEach((item, id) => {
+    clearTimeout(item.timer);
+    if (OFFLINE || isTemp(id)) return;
+    try{ fetch(`${API_BASE}/api/disparos/${encodeURIComponent(id)}`, { method: "DELETE", keepalive: true }); }catch{}
+  });
+  scheduled.clear();
+});
