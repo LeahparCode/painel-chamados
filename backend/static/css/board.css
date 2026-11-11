@@ -28,6 +28,17 @@
   border: 1.5px dashed var(--border-strong); border-radius: var(--r-lg);
 }
 
+/* ---------- Animação de entrada (troca de visão) ---------- */
+.board.is-entering > *{
+  animation: day-rise .55s var(--ease) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+.board.is-entering .dcard{ animation: none; }
+@keyframes day-rise{
+  from{ opacity: 0; transform: translateY(22px) scale(.97); }
+  to{ transform: none; } /* opacidade final = a do próprio dia (dias fora de foco ficam esmaecidos) */
+}
+
 /* ---------- Coluna do dia ---------- */
 .day{
   display: flex; flex-direction: column;

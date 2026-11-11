@@ -16,6 +16,8 @@ let boardEl = null;
 let handlers = { onOpen: () => {}, onNew: () => {} };
 let dragId = null;
 let pendingRender = false;
+let lastViewKey = null;
+let enterTimer = null;
 const autoFinalized = new Set();
 
 /* ------------------------------------------------------------------ */
@@ -108,12 +110,33 @@ export function renderBoard(){
   if (!days.length) html = `<div class="board-empty">Selecione um período válido.</div>`;
   boardEl.innerHTML = html;
 
+  // Animação de entrada: só quando muda o conjunto de dias exibido (Dia/Semana/Mês/Período
+  // ou navegação de datas). Atualizações em tempo real não reanimam o quadro.
+  const viewKey = `${view.mode}|${days[0]}|${days.length}`;
+  if (viewKey !== lastViewKey){
+    lastViewKey = viewKey;
+    playEnter();
+  }
+
   // Na visão "Dia" a coluna em foco ganha mais espaço
   if (view.mode === "dia"){
     boardEl.style.gridTemplateColumns = days.map(d => d === view.ref ? "minmax(230px, 1.9fr)" : "minmax(135px, 1fr)").join(" ");
   }else{
     boardEl.style.gridTemplateColumns = "";
   }
+}
+
+/** Os dias sobem em sequência, um após o outro. */
+function playEnter(){
+  const items = [...boardEl.children];
+  if (!items.length) return;
+  const step = Math.min(45, Math.round(650 / items.length)); // mês inteiro termina em ~0,65s
+  items.forEach((el, i) => el.style.setProperty("--enter-delay", `${i * step}ms`));
+  boardEl.classList.remove("is-entering");
+  void boardEl.offsetWidth; // reinicia a animação
+  boardEl.classList.add("is-entering");
+  clearTimeout(enterTimer);
+  enterTimer = setTimeout(() => boardEl.classList.remove("is-entering"), items.length * step + 700);
 }
 
 /* ------------------------------------------------------------------ */
