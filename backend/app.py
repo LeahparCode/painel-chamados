@@ -1,9 +1,7 @@
 import os, time, json, hashlib, logging, requests
-from functools import wraps
-from datetime import timedelta, datetime
-from collections import deque
+from datetime import datetime
 
-from flask import Flask, jsonify, request, Response, render_template, session
+from flask import Flask, jsonify, request, Response, render_template
 from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -23,6 +21,8 @@ VALID_TIPO_DISPARO = {
     "Utilidade",
     "Autenticação",
 }
+
+VALID_STATUS = {"Em andamento", "Finalizado", "Insucesso"}
 
 # ===== Airtable =====
 AIRTABLE_TOKEN = os.getenv("AIRTABLE_TOKEN")
@@ -44,36 +44,26 @@ REQ.headers.update({
 DEFAULT_TIMEOUT = int(os.getenv("AIRTABLE_TIMEOUT", "12"))
 MAX_RETRIES = int(os.getenv("AIRTABLE_MAX_RETRIES", "4"))
 
-# ===== Blip Analytics =====
-BLIP_EVENTS = deque(maxlen=int(os.getenv("BLIP_MAX_EVENTS", "50")))
-
-# ===== App / Auth =====
-APP_USER = os.getenv("APP_USER", "energia")
-APP_PASS = os.getenv("APP_PASS", "energia1")
-
-app = Flask(__name__, template_folder="templates")
-
+# ===== App =====
+# Obs.: o login foi removido temporariamente (será reimplementado depois).
+# Todas as rotas de escrita estão abertas.
+app = Flask(__name__, template_folder="templates", static_folder="static")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
-app.config.update(
-    SECRET_KEY=os.getenv("APP_SECRET", "change-this-in-prod"),
-    SESSION_COOKIE_SECURE=(os.getenv("COOKIE_SECURE", "1") == "1"),
-    SESSION_COOKIE_SAMESITE="Lax",
-    SESSION_COOKIE_HTTPONLY=True,
-    PERMANENT_SESSION_LIFETIME=timedelta(days=int(os.getenv("SESSION_DAYS", "7"))),
-)
-CORS(app, supports_credentials=True)
+CORS(app)
+
+# Versão dos assets para "furar" cache do navegador a cada deploy/restart
+ASSET_VERSION = os.getenv("ASSET_VERSION") or str(int(time.time()))
+
+
+@app.context_processor
+def inject_asset_version():
+    return {"asset_version": ASSET_VERSION}
+
 
 # ===== Helpers =====
-def require_auth(fn):
-    @wraps(fn)
-    def wrapper(*args, **kwargs):
-        if not session.get("auth_ok"):
-            return jsonify({"error": "unauthorized"}), 401
-        return fn(*args, **kwargs)
-    return wrapper
-
 def md5(obj) -> str:
     return hashlib.md5(json.dumps(obj, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+
 
 def _airtable_request(method: str, url: str, **kwargs) -> requests.Response:
     timeout = kwargs.pop("timeout", DEFAULT_TIMEOUT)
@@ -83,18 +73,21 @@ def _airtable_request(method: str, url: str, **kwargs) -> requests.Response:
             resp = REQ.request(method, url, timeout=timeout, **kwargs)
             if resp.status_code == 429:
                 ra = resp.headers.get("Retry-After")
-                try: wait = float(ra) if ra else backoff
-                except: wait = backoff
+                try:
+                    wait = float(ra) if ra else backoff
+                except ValueError:
+                    wait = backoff
                 log.warning("Airtable 429; aguardando %.2fs", wait)
-                time.sleep(wait); backoff = min(backoff*2, 6); continue
+                time.sleep(wait); backoff = min(backoff * 2, 6); continue
             if 500 <= resp.status_code < 600:
                 log.warning("Airtable %s; retry em %.2fs", resp.status_code, backoff)
-                time.sleep(backoff); backoff = min(backoff*2, 6); continue
+                time.sleep(backoff); backoff = min(backoff * 2, 6); continue
             return resp
         except requests.RequestException as e:
             log.warning("Erro de rede Airtable (%s). Retry em %.2fs", e, backoff)
-            time.sleep(backoff); backoff = min(backoff*2, 6)
+            time.sleep(backoff); backoff = min(backoff * 2, 6)
     return REQ.request(method, url, timeout=timeout, **kwargs)
+
 
 def _normalize_records(records):
     out = []
@@ -116,6 +109,7 @@ def _normalize_records(records):
         })
     return out
 
+
 def _fetch_all_from_airtable():
     records = []
     params = {
@@ -129,29 +123,49 @@ def _fetch_all_from_airtable():
             r.raise_for_status()
         payload = r.json()
         records.extend(payload.get("records", []))
-        if "offset" not in payload: break
+        if "offset" not in payload:
+            break
         params["offset"] = payload["offset"]
     return _normalize_records(records)
 
+
 _LAST_SNAPSHOT = []
-_LAST_HASH = ""
 _LAST_FETCH_TS = 0.0
 _SNAPSHOT_TTL = float(os.getenv("SNAPSHOT_TTL", "6.0"))
 
+
 def get_snapshot(force: bool = False):
-    global _LAST_SNAPSHOT, _LAST_HASH, _LAST_FETCH_TS
+    global _LAST_SNAPSHOT, _LAST_FETCH_TS
     now = time.time()
     if not force and (now - _LAST_FETCH_TS) < _SNAPSHOT_TTL and _LAST_SNAPSHOT:
         return _LAST_SNAPSHOT, False
     try:
         data = _fetch_all_from_airtable()
         _LAST_SNAPSHOT = data
-        _LAST_HASH = md5(data)
         _LAST_FETCH_TS = time.time()
         return data, False
     except Exception as e:
         log.warning("Falha snapshot Airtable: %s", e)
         return _LAST_SNAPSHOT, True
+
+
+def _refresh_quietly():
+    try:
+        get_snapshot(force=True)
+    except Exception:
+        pass
+
+
+def _to_int(value):
+    return int(value or 0)
+
+
+def _validate_choice(raw, valid, error):
+    value = (raw or "").strip()
+    if value and value not in valid:
+        return None, (jsonify({"error": error}), 400)
+    return value, None
+
 
 # ===== Views =====
 @app.after_request
@@ -160,28 +174,16 @@ def add_headers(resp):
         resp.headers.setdefault("Cache-Control", "no-store")
     return resp
 
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
 
 @app.get("/healthz")
 def health():
     return jsonify(ok=True)
 
-# ---- Auth ----
-@app.post("/api/login")
-def api_login():
-    b = request.json or {}
-    if (b.get("username") or "").strip() == APP_USER and (b.get("password") or "").strip() == APP_PASS:
-        session["auth_ok"] = True
-        session.permanent = True
-        return jsonify(ok=True)
-    return jsonify(ok=False, error="invalid_credentials"), 401
-
-@app.post("/api/logout")
-def api_logout():
-    session.clear()
-    return jsonify(ok=True)
 
 # ---- Data ----
 @app.get("/api/disparos")
@@ -191,96 +193,89 @@ def api_disparos():
     resp.headers["X-Data-Stale"] = "1" if stale else "0"
     return resp
 
+
 @app.post("/api/disparos")
-@require_auth
 def create_disparo():
     b = request.json or {}
-    
-    today_str = datetime.utcnow().strftime('%Y-%m-%d')
+    today_str = datetime.now().strftime("%Y-%m-%d")
 
     try:
         fields = {
             "Tipo": b.get("tipo", ""),
-            "Tempo": int(b.get("tempo", 0)),
-            "Potes": int(b.get("potes", 0)),
-            "Volume": int(b.get("volume", 0)),
+            "Tempo": _to_int(b.get("tempo")),
+            "Potes": _to_int(b.get("potes")),
+            "Volume": _to_int(b.get("volume")),
             "Horário": b.get("horario", "08:00"),
             "Status": b.get("status", "Em andamento"),
-            # LINHA REMOVIDA: Não enviamos mais 'AtualizadoEm'
-            "Data": b.get("data", today_str)
+            "Data": b.get("data") or today_str,
         }
     except (ValueError, TypeError) as e:
-        log.error(f"Erro de tipo de dado ao criar disparo: {e}")
-        return jsonify({"error": "invalid_data_type", "message": "Os campos de tempo, potes e volume devem ser números inteiros."}), 400
+        log.error("Erro de tipo de dado ao criar disparo: %s", e)
+        return jsonify({"error": "invalid_data_type",
+                        "message": "Os campos de tempo, potes e volume devem ser números inteiros."}), 400
 
+    if fields["Status"] not in VALID_STATUS:
+        return jsonify({"error": "invalid_status"}), 400
 
-    if "template" in b and b["template"]:
+    if b.get("template"):
         fields["Template"] = b["template"]
 
-    raw_tag = (b.get("tag") or "").strip()
-    if raw_tag:
-        if raw_tag not in VALID_TAGS:
-            return jsonify({"error": "invalid_tag"}), 400
-        fields["Tags"] = raw_tag
+    tag, err = _validate_choice(b.get("tag"), VALID_TAGS, "invalid_tag")
+    if err: return err
+    if tag: fields["Tags"] = tag
 
-    raw_tipo = (b.get("tipoDisparo") or "").strip()
-    if raw_tipo:
-        if raw_tipo not in VALID_TIPO_DISPARO:
-            return jsonify({"error": "invalid_tipo_disparo"}), 400
-        fields["Tipo Disparo"] = raw_tipo
+    tipo, err = _validate_choice(b.get("tipoDisparo"), VALID_TIPO_DISPARO, "invalid_tipo_disparo")
+    if err: return err
+    if tipo: fields["Tipo Disparo"] = tipo
 
-    r = _airtable_request("POST", AIRTABLE_API, json={"fields": fields}, params={"typecast":"true"})
-    
+    r = _airtable_request("POST", AIRTABLE_API, json={"fields": fields}, params={"typecast": "true"})
     if r.ok:
-        try: get_snapshot(force=True)
-        except: pass
+        _refresh_quietly()
     else:
-        log.error(f"Airtable respondeu com {r.status_code}: {r.text}")
-
+        log.error("Airtable respondeu com %s: %s", r.status_code, r.text)
     return (r.text, r.status_code, {"Content-Type": "application/json"})
 
 
 @app.patch("/api/disparos/<rid>")
-@require_auth
 def update_disparo(rid):
     b = request.json or {}
     fields = {}
-    if "status" in b:   fields["Status"] = b["status"]
-    if "horario" in b:  fields["Horário"] = b["horario"]
-    if "tipo" in b:     fields["Tipo"] = b["tipo"]
-    if "tempo" in b:    fields["Tempo"] = int(b.get("tempo", 0))
-    if "potes" in b:    fields["Potes"] = int(b.get("potes", 0))
-    if "volume" in b:   fields["Volume"] = int(b.get("volume", 0))
-    if "template" in b: fields["Template"] = b["template"] or ""
-    if "data" in b:     fields["Data"] = b.get("data")
+    try:
+        if "status" in b:
+            if b["status"] not in VALID_STATUS:
+                return jsonify({"error": "invalid_status"}), 400
+            fields["Status"] = b["status"]
+        if "horario" in b:  fields["Horário"] = b["horario"]
+        if "tipo" in b:     fields["Tipo"] = b["tipo"]
+        if "tempo" in b:    fields["Tempo"] = _to_int(b.get("tempo"))
+        if "potes" in b:    fields["Potes"] = _to_int(b.get("potes"))
+        if "volume" in b:   fields["Volume"] = _to_int(b.get("volume"))
+        if "template" in b: fields["Template"] = b["template"] or ""
+        if "data" in b:     fields["Data"] = b.get("data")
+    except (ValueError, TypeError):
+        return jsonify({"error": "invalid_data_type"}), 400
 
     if "tag" in b:
-        raw_tag = (b.get("tag") or "").strip()
-        if raw_tag and raw_tag not in VALID_TAGS:
-            return jsonify({"error": "invalid_tag"}), 400
-        fields["Tags"] = raw_tag or None
+        tag, err = _validate_choice(b.get("tag"), VALID_TAGS, "invalid_tag")
+        if err: return err
+        fields["Tags"] = tag or None
 
     if "tipoDisparo" in b:
-        raw_tipo = (b.get("tipoDisparo") or "").strip()
-        if raw_tipo and raw_tipo not in VALID_TIPO_DISPARO:
-            return jsonify({"error": "invalid_tipo_disparo"}), 400
-        fields["Tipo Disparo"] = raw_tipo or None
+        tipo, err = _validate_choice(b.get("tipoDisparo"), VALID_TIPO_DISPARO, "invalid_tipo_disparo")
+        if err: return err
+        fields["Tipo Disparo"] = tipo or None
 
-
-    r = _airtable_request("PATCH", f"{AIRTABLE_API}/{rid}", json={"fields": fields}, params={"typecast":"true"})
+    r = _airtable_request("PATCH", f"{AIRTABLE_API}/{rid}", json={"fields": fields}, params={"typecast": "true"})
     if r.ok:
-        try: get_snapshot(force=True)
-        except: pass
+        _refresh_quietly()
     return (r.text, r.status_code, {"Content-Type": "application/json"})
 
 
 @app.delete("/api/disparos/<rid>")
-@require_auth
 def delete_disparo(rid):
     r = _airtable_request("DELETE", f"{AIRTABLE_API}/{rid}")
     if r.ok:
-        try: get_snapshot(force=True)
-        except: pass
+        _refresh_quietly()
     return (r.text, r.status_code, {"Content-Type": "application/json"})
 
 
@@ -295,7 +290,7 @@ def stream():
             h = md5(data)
             if h != last_hash:
                 last_hash = h
-                payload = json.dumps({"type":"snapshot","records":data,"stale":stale}, ensure_ascii=False)
+                payload = json.dumps({"type": "snapshot", "records": data, "stale": stale}, ensure_ascii=False)
                 yield f"data: {payload}\n\n"
             else:
                 yield "event: ping\ndata: {}\n\n"
@@ -307,6 +302,7 @@ def stream():
         "Connection": "keep-alive",
     }
     return Response(gen(), mimetype="text/event-stream", headers=headers)
+
 
 # ===== Main =====
 if __name__ == "__main__":
