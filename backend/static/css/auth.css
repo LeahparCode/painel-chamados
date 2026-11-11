@@ -11,7 +11,7 @@ html:not(.is-pending) .pending-only{ display: none !important; }
 html:not(.is-admin) .admin-only{ display: none !important; }
 
 /* ---------- Modo visitante: painel em formato "vitrine" ---------- */
-html.is-public .app{ grid-template-columns: minmax(0, 1fr); }
+html.is-public .app{ grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
 html.is-public .sidebar{
   position: sticky; top: 0; z-index: 40;
   height: auto; flex-direction: row; align-items: center; gap: 20px;
@@ -166,9 +166,10 @@ html.no-signup .auth-tabs{ display: none; }
   html.is-public .metrics{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 900px){
-  html.is-public .sidebar{ padding: 10px 16px; }
+  html.is-public .sidebar{ padding: 0 12px 0 14px; }
+  html.is-public .main{ padding-bottom: 28px; }
   html.is-public .clock{ display: none; }
-  .user-box{ order: -1; }
+  .user-box{ order: 2; }
   .user-chip{ width: auto; padding: 4px; background: transparent; border: 0; }
   .user-info, .user-caret{ display: none; }
   .user-menu{ left: auto; right: 0; bottom: auto; top: calc(100% + 8px); width: 220px; }
@@ -176,4 +177,7 @@ html.no-signup .auth-tabs{ display: none; }
 @media (max-width: 560px){
   html.is-public .live span{ display: none; }
   .users-table th:nth-child(3), .users-table td:nth-child(3){ display: none; }
+  .users-table th, .users-table td{ padding-left: 10px; padding-right: 10px; }
+  .users-table .u-person small{ display: block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+  .users-table .u-actions .btn{ padding: 0 10px; }
 }
