@@ -4,14 +4,17 @@ export const STATUS = ["Em andamento", "Finalizado", "Insucesso"];
 
 export const HORARIOS = ["08:00", "12:00", "16:00", "20:00"];
 
-// Tipo do disparo → valor de cada envio (R$ por mensagem).
-// Para mudar preços ou incluir um tipo novo, altere aqui e em VALID_TIPO_DISPARO (backend/app.py).
-export const COST_PER_TIPO = {
-  "SMS": 0.07,
-  "RCS": 0.07,
-  "WhatsApp": 0.12,
-};
-export const TIPOS = Object.keys(COST_PER_TIPO);
+// Tipos de disparo aceitos.
+export const TIPOS = ["SMS", "RCS", "WhatsApp"];
+
+// Valor de cada envio por tipo (R$ por mensagem). Os preços NÃO ficam no código da página:
+// vêm do servidor (GET /api/config) e só para quem está logado. Para visitantes fica vazio,
+// então nenhum valor em R$ aparece nem pode ser calculado. Preços: backend/app.py (PRECO_POR_TIPO).
+export const COST_PER_TIPO = {};
+export function setPrices(precos){
+  Object.keys(COST_PER_TIPO).forEach(k => delete COST_PER_TIPO[k]);
+  Object.assign(COST_PER_TIPO, precos || {});
+}
 
 // API
 export const API_BASE = "";

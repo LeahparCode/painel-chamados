@@ -1,5 +1,6 @@
 // Sessão do usuário no front-end (o controle de acesso de verdade fica no servidor).
 import { state } from "./state.js";
+import { setPrices } from "./config.js";
 
 const HINT_KEY = "painel_logged";
 
@@ -45,6 +46,13 @@ export function applyAuthMode(){
     if (state.user) localStorage.setItem(HINT_KEY, "1");
     else localStorage.removeItem(HINT_KEY);
   }catch{}
+}
+
+/** Preços por tipo (só para quem está logado). */
+export async function fetchConfig(){
+  const data = await call("GET", "/api/config");
+  setPrices(data.precos);
+  return data;
 }
 
 export const login = (login, senha, lembrar) => call("POST", "/api/auth/login", { login, senha, lembrar });
