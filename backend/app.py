@@ -12,11 +12,14 @@ logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 log = logging.getLogger("app")
 
 # Tipos de disparo aceitos (o valor de cada envio fica em static/js/core/config.js → COST_PER_TIPO)
-VALID_TIPO_DISPARO = {
-    "SMS",
-    "RCS",
-    "WhatsApp",
+# Tipo do disparo → valor de cada envio (R$). Entregue ao navegador só para quem está logado
+# (GET /api/config), para que visitantes não consigam ver nem calcular valores.
+PRECO_POR_TIPO = {
+    "SMS": 0.07,
+    "RCS": 0.07,
+    "WhatsApp": 0.12,
 }
+VALID_TIPO_DISPARO = set(PRECO_POR_TIPO)
 
 VALID_STATUS = {"Em andamento", "Finalizado", "Insucesso"}
 
@@ -212,6 +215,13 @@ def delete_disparo(rid):
         return _store_error_response(e)
     _refresh_quietly()
     return jsonify({"deleted": True, "id": rid})
+
+
+# ---- Configuração (somente logados) ----
+@app.get("/api/config")
+@login_required
+def api_config():
+    return jsonify({"precos": PRECO_POR_TIPO})
 
 
 # ---- Templates personalizados ----

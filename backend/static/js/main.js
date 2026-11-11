@@ -14,7 +14,7 @@ import { initDashboard, setDashboardVisible } from "./views/dashboard.js";
 import { initExport, setExportVisible } from "./views/export.js";
 import { initAccount } from "./views/account.js";
 import { initUsers, setUsersVisible } from "./views/users.js";
-import { fetchMe, isLogged, isAdmin } from "./core/auth.js";
+import { fetchMe, fetchConfig, isLogged, isAdmin } from "./core/auth.js";
 
 /* ---------- navegação entre telas ---------- */
 const LOGGED_VIEWS = ["painel", "dashboard", "frases", "exportar"];
@@ -62,6 +62,7 @@ function hideSplash(){
 /* ---------- boot ---------- */
 await fetchMe();      // visitante ou logado? (o servidor confirma; o resto da tela depende disso)
 const logged = isLogged();
+if (logged) await fetchConfig().catch(err => console.error("Não consegui carregar os preços", err));
 if (logged) loadTemplatesCache(); // templates próprios já aparecem antes da resposta do servidor
 else{ try{ localStorage.removeItem("painel_templates_v1"); }catch{} }
 

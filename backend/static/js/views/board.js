@@ -32,7 +32,7 @@ function cardHtml(r){
   const showCountdown = key === "run" && ms !== null;
   const meta = [
     `<span>Vol. <b>${fmtInt(r.volume)}</b></span>`,
-    costOf(r) ? `<span><b>${fmtMoney(costOf(r))}</b></span>` : "",
+    isLogged() && costOf(r) ? `<span class="money"><b>${fmtMoney(costOf(r))}</b></span>` : "",
     showCountdown
       ? `<span class="dcard-countdown">Restante <b data-countdown="${escapeHtml(r.id)}">${fmtRemaining(ms)}</b></span>`
       : (r.tempo ? `<span>Tempo <b>${fmtTempo(r.tempo)}</b></span>` : ""),
@@ -86,7 +86,7 @@ function dayHtml(day, records, { today, focus, scope, mode }){
         </div>
         <div class="day-stats">
           <span>${s.total} ${s.total === 1 ? "disparo" : "disparos"}</span>
-          <b title="${fmtMoney(s.valor)}">${fmtMoneyCompact(s.valor)}</b>
+          ${isLogged() ? `<b class="money" title="${fmtMoney(s.valor)}">${fmtMoneyCompact(s.valor)}</b>` : ""}
         </div>
         <div class="day-bar">${bar}</div>
       </header>

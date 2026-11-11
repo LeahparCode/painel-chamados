@@ -62,7 +62,7 @@ DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave
 - A aba `Disparos` e o cabeçalho são criados automaticamente se não existirem. Colunas:
   `ID, Tipo, Tempo, Potes, Volume, Horário, Status, Template, AtualizadoEm, Data, Tipo Disparo`.
 - `Tipo Disparo` define o valor de cada envio: **SMS R$ 0,070 · RCS R$ 0,070 · WhatsApp R$ 0,12**
-  (tabela em `backend/static/js/core/config.js`).
+  (tabela `PRECO_POR_TIPO` em `backend/app.py`; os preços só são enviados a quem está logado).
 - As colunas são localizadas pelo nome, então podem ser reordenadas. **Não apague nem renomeie a coluna `ID`.**
 - Linhas digitadas à mão sem ID recebem um ID automaticamente.
 - Templates próprios ficam na aba `Templates` (criada automaticamente), com as colunas
