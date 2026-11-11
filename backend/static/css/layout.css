@@ -104,31 +104,70 @@
   .main{ padding: 24px 22px 0; }
 }
 
+/* ---------- Celular e tablet: barra fina no topo + menu fixo embaixo (estilo app) ---------- */
 @media (max-width: 900px){
-  .app{ grid-template-columns: minmax(0, 1fr); }
+  /* barra e conteúdo empilhados: a barra fica com a própria altura e o conteúdo com o resto
+     (sem isso, em páginas curtas a sobra da tela era dividida e a barra "esticava") */
+  .app{ grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
+
+  /* barra do topo: altura fixa (não cresce com fonte ampliada do celular) */
   .sidebar{
-    position: sticky; top: 0; z-index: 50; height: auto;
-    flex-direction: row; align-items: center; gap: 12px;
-    padding: 10px 16px;
+    position: sticky; top: 0; z-index: 50;
+    height: 58px; min-height: 58px;
+    flex-direction: row; align-items: center; gap: 10px;
+    padding: 0 12px 0 14px;
   }
-  .brand{ padding: 0; }
-  .brand-text small{ display: none; }
+  .brand{ padding: 0; gap: 10px; min-width: 0; flex-shrink: 0; }
   .brand-mark{ width: 36px; height: 36px; border-radius: 11px; }
-  .nav{ flex-direction: row; flex: 1; min-width: 0; overflow-x: auto; gap: 4px; }
-  .nav-item{ width: auto; padding: 9px 12px; white-space: nowrap; }
-  .nav-item.is-active::before{ display: none; }
-  .sidebar-foot{ margin: 0; flex-direction: row; align-items: center; }
+  .brand-mark svg{ width: 18px; height: 18px; }
+  .brand-text strong{ font-size: 16px; }
+  .brand-text small{ display: none; }
+  .sidebar-foot{ margin: 0 0 0 auto; flex-direction: row; align-items: center; gap: 8px; }
+  .sidebar-row{ gap: 8px; }
+  .sidebar-actions{ gap: 6px; }
+  .sidebar .icon-btn{ width: 36px; height: 36px; border-radius: 10px; }
   .clock{ display: none; }
   .live span{ display: none; }
-  .main{ padding: 20px 16px 0; }
+
+  /* menu: barra de abas fixa embaixo, sempre com todos os itens visíveis */
+  .nav{
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    flex-direction: row; gap: 2px;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, var(--side-bg-2), var(--side-bg));
+    border-top: 1px solid rgba(255, 255, 255, .08);
+    box-shadow: 0 -12px 30px -14px rgba(0, 0, 0, .5);
+  }
+  .nav-item{
+    flex: 1 1 0; min-width: 0; width: auto;
+    flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    padding: 7px 2px 6px; border-radius: 12px; text-align: center;
+  }
+  .nav-item svg{ display: block; width: 21px; height: 21px; }
+  .nav-item span{ font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .nav-item.is-active{ background: var(--side-active-bg); }
+  .nav-item.is-active::before{
+    display: block; left: 32%; right: 32%; top: -6px; bottom: auto; width: auto; height: 3px;
+    border-radius: 0 0 3px 3px;
+  }
+  .nav-item .nav-badge{
+    position: absolute; top: 3px; left: calc(50% + 6px); margin: 0;
+    min-width: 17px; height: 17px; padding: 0 5px; font-size: 10px; overflow: visible;
+  }
+
+  /* espaço para o menu de baixo não cobrir o conteúdo */
+  .main{ padding: 18px 14px calc(92px + env(safe-area-inset-bottom)); }
+  .toasts{ bottom: calc(84px + env(safe-area-inset-bottom)) !important; }
 }
 
 @media (max-width: 560px){
   .brand-text{ display: none; }
-  .nav-item span{ font-size: 13px; }
-  .nav-item svg{ display: none; }
   .page-title h1{ font-size: 22px; }
   .page-actions, .page-actions .btn{ width: 100%; }
+}
+@media (max-width: 380px){
+  .nav-item span{ font-size: 10px; }
+  .nav-item svg{ width: 19px; height: 19px; }
 }
 
 /* ---------- Seletor de cores do tema ---------- */
@@ -196,7 +235,9 @@ html.palette-switching *, html.palette-switching *::before, html.palette-switchi
 html[data-palette="azul-dourado"] .brand-watermark{ opacity: .05; visibility: visible; transition-delay: 0s; }
 html.dark[data-palette="azul-dourado"] .brand-watermark{ --wm-color: #ffffff; opacity: .045; }
 @media (max-width: 900px){
-  .brand-watermark{ top: -40px; right: -32vw; width: 92vw; }
+  .brand-watermark{ top: 70px; right: -24vw; width: 66vw; }
+  html[data-palette="azul-dourado"] .brand-watermark{ opacity: .035; }
+  html.dark[data-palette="azul-dourado"] .brand-watermark{ opacity: .035; }
 }
 @media print{
   .brand-watermark{ display: none; }
