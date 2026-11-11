@@ -7,14 +7,15 @@ const ICONS = {
 
 const active = new Map();
 
-export function toast(message, type = "ok", ms = 2600, key = null){
+/** action opcional: { label, onClick } — mostra um botão (ex.: "Desfazer") no aviso. */
+export function toast(message, type = "ok", ms = 2600, key = null, action = null){
   const host = document.getElementById("toasts");
   if (!host) return;
   if (key && active.has(key)) return;
 
   const el = document.createElement("div");
   el.className = `toast ${type}`;
-  el.innerHTML = `${ICONS[type] || ""}<span></span><button type="button" aria-label="Fechar">×</button>`;
+  el.innerHTML = `${ICONS[type] || ""}<span></span>${action ? '<button type="button" class="toast-action"></button>' : ""}<button type="button" class="toast-close" aria-label="Fechar">×</button>`;
   el.querySelector("span").textContent = message;
 
   const remove = () => {
@@ -23,8 +24,14 @@ export function toast(message, type = "ok", ms = 2600, key = null){
     el.addEventListener("animationend", () => el.remove(), { once: true });
     if (key) active.delete(key);
   };
-  el.querySelector("button").addEventListener("click", remove);
+  el.querySelector(".toast-close").addEventListener("click", remove);
+  if (action){
+    const btn = el.querySelector(".toast-action");
+    btn.textContent = action.label;
+    btn.addEventListener("click", () => { remove(); action.onClick(); });
+  }
   host.appendChild(el);
   if (key) active.set(key, el);
   setTimeout(remove, ms);
+  return remove;
 }

@@ -4,7 +4,7 @@ import { boardDaysOf, scopeOf, groupByDay, summarize, statusKey, costOf, remaini
 import { todayISO, weekdayIndex, fmtDate, fmtShort } from "../core/dates.js";
 import { fmtInt, fmtMoney, fmtMoneyCompact, fmtTempo, fmtRemaining, escapeHtml, capitalize } from "../core/format.js";
 import { fraseByKey, chipClass } from "../core/frases.js";
-import { moveToDay, setStatus, removeRecord } from "../core/actions.js";
+import { moveToDay, setStatus, deleteWithUndo } from "../core/actions.js";
 import { toast } from "../ui/toast.js";
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
@@ -48,10 +48,7 @@ function cardHtml(r){
       </div>
       <div class="dcard-title" data-time="${time}">${escapeHtml(title)}</div>
       <div class="dcard-meta">${meta}</div>
-      <div class="dcard-foot">
-        ${pills ? `<div class="dcard-pills">${pills}</div>` : "<span></span>"}
-        <button type="button" class="dcard-del" data-delete title="Excluir disparo" aria-label="Excluir ${escapeHtml(title)}">${TRASH_ICON}</button>
-      </div>
+      ${pills ? `<div class="dcard-pills">${pills}</div>` : ""}
     </article>`;
 }
 
@@ -92,6 +89,7 @@ function dayHtml(day, records, { today, focus, scope, mode }){
         <div class="day-bar">${bar}</div>
       </header>
       <div class="day-body">${cards}</div>
+      <div class="day-trash" data-trash aria-hidden="true">${TRASH_ICON}<span>Solte para excluir</span></div>
     </section>`;
 }
 
@@ -143,28 +141,22 @@ function playEnter(){
   enterTimer = setTimeout(() => boardEl.classList.remove("is-entering"), items.length * step + 700);
 }
 
-/** Exclui direto do card (sem abrir os detalhes), com confirmação e animação de saída. */
-async function quickDelete(card){
-  const id = card?.dataset.id;
-  const rec = id && findRecord(id);
+/** Card solto na lixeira: some na hora, com "Desfazer" por alguns segundos. */
+function trashCard(id){
+  const rec = findRecord(id);
   if (!rec) return;
-  const nome = rec.tipo || fraseByKey(rec.template)?.name || "este disparo";
-  const quando = [rec.data ? rec.data.split("-").reverse().join("/") : "", rec.horario].filter(Boolean).join(" às ");
-  if (!confirm(`Excluir "${nome}"${quando ? ` (${quando})` : ""}?`)) return;
-  card.classList.add("is-removing");
-  await new Promise(r => setTimeout(r, 220));
-  await removeRecord(id);
+  const nome = rec.tipo || fraseByKey(rec.template)?.name || "Disparo";
+  deleteWithUndo(id, { label: `"${nome}" excluído.` });
+}
+
+function endDrag(){
+  boardEl.classList.remove("is-dragging");
+  boardEl.querySelectorAll(".is-drop, .is-over").forEach(el => el.classList.remove("is-drop", "is-over"));
 }
 
 /* ------------------------------------------------------------------ */
 function bindEvents(){
   boardEl.addEventListener("click", (e) => {
-    const del = e.target.closest("[data-delete]");
-    if (del){
-      e.stopPropagation();
-      quickDelete(del.closest(".dcard"));
-      return;
-    }
     const add = e.target.closest("[data-add]");
     if (add){
       e.stopPropagation();
@@ -182,7 +174,7 @@ function bindEvents(){
 
   boardEl.addEventListener("keydown", (e) => {
     const card = e.target.closest?.(".dcard");
-    if (e.target.closest("button")) return; // Enter na lixeira aciona a lixeira, não abre o card
+    if (e.target.closest("button")) return;
     if (card && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); handlers.onOpen(card.dataset.id); }
   });
 
@@ -192,10 +184,12 @@ function bindEvents(){
     dragId = card.dataset.id;
     card.classList.add("is-dragging");
     try{ e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragId); }catch{}
+    // a lixeira aparece no fim de cada dia só enquanto o card está sendo arrastado
+    requestAnimationFrame(() => boardEl.classList.add("is-dragging"));
   });
   boardEl.addEventListener("dragend", (e) => {
     e.target.closest(".dcard")?.classList.remove("is-dragging");
-    boardEl.querySelectorAll(".is-drop").forEach(el => el.classList.remove("is-drop"));
+    endDrag();
     dragId = null;
     if (pendingRender){ pendingRender = false; renderBoard(); }
   });
@@ -203,7 +197,16 @@ function bindEvents(){
     const day = e.target.closest(".day");
     if (!day || !dragId) return;
     e.preventDefault();
+    const trash = e.target.closest("[data-trash]");
     try{ e.dataTransfer.dropEffect = "move"; }catch{}
+    if (trash){
+      if (!trash.classList.contains("is-over")){
+        boardEl.querySelectorAll(".is-drop, .is-over").forEach(el => el.classList.remove("is-drop", "is-over"));
+        trash.classList.add("is-over");
+      }
+      return;
+    }
+    boardEl.querySelectorAll(".is-over").forEach(el => el.classList.remove("is-over"));
     if (!day.classList.contains("is-drop")){
       boardEl.querySelectorAll(".is-drop").forEach(el => el.classList.remove("is-drop"));
       day.classList.add("is-drop");
@@ -218,6 +221,13 @@ function bindEvents(){
     if (!dayEl || !dragId) return;
     e.preventDefault();
     const id = dragId;
+    if (e.target.closest("[data-trash]")){
+      dragId = null;
+      pendingRender = false;
+      endDrag();
+      trashCard(id);
+      return;
+    }
     const target = dayEl.dataset.day;
     dragId = null;
     pendingRender = false;

@@ -25,8 +25,11 @@ export function emit(reason){
   });
 }
 
+/** IDs com exclusão agendada (aguardando o "Desfazer"): ficam fora da tela mesmo se o servidor ainda os enviar. */
+export const pendingDeletes = new Set();
+
 export function setRecords(records, { stale = false } = {}){
-  state.records = Array.isArray(records) ? records : [];
+  state.records = (Array.isArray(records) ? records : []).filter(r => !pendingDeletes.has(`${r.id}`));
   state.stale = stale;
   emit("records");
 }
