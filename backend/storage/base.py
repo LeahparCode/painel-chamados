@@ -116,7 +116,9 @@ USER_FIELDS = [
     ("atualizadoEm", "AtualizadoEm"),
 ]
 USER_KEYS = [k for k, _ in USER_FIELDS]
-USER_ROLES = ("admin", "operador")
+# admin: tudo + usuários · operador: edita e exporta · pendente: conta criada pela própria pessoa,
+# aguardando o administrador liberar (só visualiza, como visitante)
+USER_ROLES = ("admin", "operador", "pendente")
 
 
 def to_bool(value) -> bool:
@@ -131,7 +133,7 @@ def clean_user(rec: dict) -> dict:
         out[k] = "" if out[k] is None else str(out[k]).strip()
     out["login"] = str(out["login"] or "").strip().lower()
     papel = str(out["papel"] or "").strip().lower()
-    out["papel"] = papel if papel in USER_ROLES else "operador"
+    out["papel"] = papel if papel in USER_ROLES else "pendente"
     raw_ativo = rec.get("ativo", "")
     out["ativo"] = True if raw_ativo in ("", None) else to_bool(raw_ativo)
     return out

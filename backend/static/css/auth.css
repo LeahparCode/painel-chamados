@@ -4,8 +4,10 @@
 
 /* ---------- visibilidade por modo ---------- */
 html:not(.is-public) .public-only{ display: none !important; }
-html.is-public .logged-only,
+html.is-public:not(.has-session) .logged-only,
 html.is-public .admin-only{ display: none !important; }
+html.has-session .login-btn{ display: none !important; }
+html:not(.is-pending) .pending-only{ display: none !important; }
 html:not(.is-admin) .admin-only{ display: none !important; }
 
 /* ---------- Modo visitante: painel em formato "vitrine" ---------- */
@@ -39,7 +41,37 @@ html.is-public .info-editable{ cursor: default; }
 html.is-public .info-editable:hover{ border-color: var(--border); background: var(--surface-2); }
 html.is-public .info-editable::after{ display: none; }
 
+/* conta pendente no formato vitrine: chip compacto na barra do topo */
+html.is-public .user-chip{ width: auto; }
+html.is-public .user-menu{ left: auto; right: 0; bottom: auto; top: calc(100% + 8px); width: 230px; }
+
 .login-btn{ white-space: nowrap; }
+
+/* aviso de conta aguardando liberação */
+.pending-note{
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 14px; font-size: 13px; color: var(--text-2);
+  background: var(--run-soft); border: 1px solid color-mix(in srgb, var(--run) 30%, transparent);
+}
+.pending-note b{ color: var(--text); }
+.pending-ico{ width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0; display: grid; place-items: center; background: var(--surface); color: var(--run-ink); }
+.pending-ico svg{ width: 17px; height: 17px; }
+
+/* abas Entrar / Criar conta */
+.auth-tabs{ display: flex; gap: 4px; margin: 14px 22px 0; padding: 4px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+.auth-tabs button{ flex: 1; height: 36px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 700; font-size: 13px; }
+.auth-tabs button.is-active{ background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.auth-switch{ margin: -4px 0 0; text-align: center; font-size: 13px; color: var(--muted); }
+.auth-note{ margin: 0; font-size: 12px; color: var(--muted); line-height: 1.5; }
+html.no-signup [data-auth-tab="signup"], html.no-signup [data-signup-only]{ display: none !important; }
+html.no-signup .auth-tabs{ display: none; }
+
+/* contador de contas pendentes no menu (admin) */
+.nav-badge{
+  margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px;
+  display: inline-grid; place-items: center;
+  background: var(--run); color: #fff; font-size: 11px; font-weight: 800;
+}
 .login-btn svg{ width: 15px; height: 15px; }
 
 /* ---------- Conta do usuário (rodapé da sidebar) ---------- */
@@ -118,6 +150,10 @@ html.is-public .info-editable::after{ display: none; }
 .role-chip{ display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 99px; font-size: 11px; font-weight: 800; }
 .role-chip.admin{ background: var(--brand-soft); color: var(--brand-text); }
 .role-chip.operador{ background: var(--surface-3); color: var(--text-2); }
+.role-chip.pendente{ background: var(--run-soft); color: var(--run-ink); }
+.users-table tr.is-pending td{ background: color-mix(in srgb, var(--run) 6%, transparent); }
+.users-table .u-actions{ white-space: nowrap; }
+.users-table .u-actions .btn + .btn{ margin-left: 6px; }
 .state-chip{ display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
 .state-chip::before{ content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
 .state-chip.off{ color: var(--muted); }

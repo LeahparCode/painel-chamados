@@ -6,7 +6,7 @@ import { fmtInt, fmtMoney, fmtMoneyCompact, fmtTempo, fmtRemaining, escapeHtml, 
 import { fraseByKey, chipClass } from "../core/frases.js";
 import { moveToDay, setStatus, deleteWithUndo } from "../core/actions.js";
 import { toast } from "../ui/toast.js";
-import { isLogged } from "../core/auth.js";
+import { canEdit } from "../core/auth.js";
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const STATUS_LABEL = { run: "Andamento", ok: "Finalizado", err: "Insucesso" };
@@ -32,7 +32,7 @@ function cardHtml(r){
   const showCountdown = key === "run" && ms !== null;
   const meta = [
     `<span>Vol. <b>${fmtInt(r.volume)}</b></span>`,
-    isLogged() && costOf(r) ? `<span class="money"><b>${fmtMoney(costOf(r))}</b></span>` : "",
+    canEdit() && costOf(r) ? `<span class="money"><b>${fmtMoney(costOf(r))}</b></span>` : "",
     showCountdown
       ? `<span class="dcard-countdown">Restante <b data-countdown="${escapeHtml(r.id)}">${fmtRemaining(ms)}</b></span>`
       : (r.tempo ? `<span>Tempo <b>${fmtTempo(r.tempo)}</b></span>` : ""),
@@ -43,7 +43,7 @@ function cardHtml(r){
   ].join("");
   const time = escapeHtml(r.horario || "--:--");
   return `
-    <article class="dcard ${key}" data-id="${escapeHtml(r.id)}" draggable="${isLogged() ? "true" : "false"}" tabindex="0" aria-label="${escapeHtml(title)}">
+    <article class="dcard ${key}" data-id="${escapeHtml(r.id)}" draggable="${canEdit() ? "true" : "false"}" tabindex="0" aria-label="${escapeHtml(title)}">
       <div class="dcard-top">
         <span class="dcard-time">${CLOCK_ICON}${time}</span>
         <span class="dcard-status">${STATUS_LABEL[key]}</span>
@@ -86,7 +86,7 @@ function dayHtml(day, records, { today, focus, scope, mode }){
         </div>
         <div class="day-stats">
           <span>${s.total} ${s.total === 1 ? "disparo" : "disparos"}</span>
-          ${isLogged() ? `<b class="money" title="${fmtMoney(s.valor)}">${fmtMoneyCompact(s.valor)}</b>` : ""}
+          ${canEdit() ? `<b class="money" title="${fmtMoney(s.valor)}">${fmtMoneyCompact(s.valor)}</b>` : ""}
         </div>
         <div class="day-bar">${bar}</div>
       </header>
@@ -181,7 +181,7 @@ function bindEvents(){
 
   boardEl.addEventListener("click", (e) => {
     const add = e.target.closest("[data-add]");
-    if (add && isLogged()){
+    if (add && canEdit()){
       e.stopPropagation();
       handlers.onNew(add.closest(".day")?.dataset.day);
       return;
@@ -202,7 +202,7 @@ function bindEvents(){
   });
 
   boardEl.addEventListener("dragstart", (e) => {
-    if (!isLogged()){ e.preventDefault(); return; }
+    if (!canEdit()){ e.preventDefault(); return; }
     const card = e.target.closest(".dcard");
     if (!card) return;
     dragId = card.dataset.id;
@@ -266,7 +266,7 @@ function tick(){
     const ms = remainingMs(rec);
     el.textContent = fmtRemaining(ms);
     // só quem está logado grava a finalização automática (visitantes só veem o tempo zerar)
-    if (isLogged() && ms !== null && ms <= 0 && statusKey(rec.status) === "run" && !autoFinalized.has(id)){
+    if (canEdit() && ms !== null && ms <= 0 && statusKey(rec.status) === "run" && !autoFinalized.has(id)){
       autoFinalized.add(id);
       setStatus(id, "Finalizado", { quiet: true }).then(ok => {
         if (ok) toast(`"${rec.tipo || "Disparo"}" finalizado automaticamente.`, "ok", 2600);

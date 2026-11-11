@@ -4,7 +4,9 @@ import { setPrices } from "./config.js";
 
 const HINT_KEY = "painel_logged";
 
-export const isLogged = () => !!state.user;
+export const isLogged = () => !!state.user;                       // tem sessão
+export const canEdit = () => ["admin", "operador"].includes(state.user?.papel); // pode editar
+export const isPending = () => state.user?.papel === "pendente";   // conta aguardando liberação
 export const isAdmin = () => state.user?.papel === "admin";
 
 async function call(method, path, body){
@@ -30,6 +32,7 @@ export async function fetchMe(){
     const data = await call("GET", "/api/auth/me");
     state.user = data.user || null;
     state.setupNeeded = !!data.setupNeeded;
+    state.allowSignup = data.allowSignup !== false;
   }catch{
     state.user = null;
   }
@@ -40,10 +43,12 @@ export async function fetchMe(){
 /** Aplica as classes de modo na página (visitante / logado / administrador). */
 export function applyAuthMode(){
   const root = document.documentElement;
-  root.classList.toggle("is-public", !state.user);
-  root.classList.toggle("is-admin", state.user?.papel === "admin");
+  root.classList.toggle("is-public", !canEdit());          // visitante ou conta pendente: só o painel
+  root.classList.toggle("has-session", !!state.user);
+  root.classList.toggle("is-pending", isPending());
+  root.classList.toggle("is-admin", isAdmin());
   try{
-    if (state.user) localStorage.setItem(HINT_KEY, "1");
+    if (canEdit()) localStorage.setItem(HINT_KEY, "1");
     else localStorage.removeItem(HINT_KEY);
   }catch{}
 }
@@ -57,6 +62,7 @@ export async function fetchConfig(){
 
 export const login = (login, senha, lembrar) => call("POST", "/api/auth/login", { login, senha, lembrar });
 export const logout = () => call("POST", "/api/auth/logout");
+export const signup = (nome, login, senha) => call("POST", "/api/auth/signup", { nome, login, senha });
 export const changePassword = (atual, nova) => call("POST", "/api/auth/password", { atual, nova });
 
 export const usersApi = {

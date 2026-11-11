@@ -14,13 +14,13 @@ import { initDashboard, setDashboardVisible } from "./views/dashboard.js";
 import { initExport, setExportVisible } from "./views/export.js";
 import { initAccount } from "./views/account.js";
 import { initUsers, setUsersVisible } from "./views/users.js";
-import { fetchMe, fetchConfig, isLogged, isAdmin } from "./core/auth.js";
+import { fetchMe, fetchConfig, canEdit, isAdmin } from "./core/auth.js";
 
 /* ---------- navegação entre telas ---------- */
 const LOGGED_VIEWS = ["painel", "dashboard", "frases", "exportar"];
 
 function allowedViews(){
-  if (!isLogged()) return ["painel"];                 // visitante: só o painel
+  if (!canEdit()) return ["painel"];                 // visitante: só o painel
   return isAdmin() ? [...LOGGED_VIEWS, "usuarios"] : LOGGED_VIEWS;
 }
 
@@ -29,7 +29,7 @@ function switchView(name){
   state.activeView = name;
   document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("is-active", b.dataset.view === name));
   document.querySelectorAll("[data-view-panel]").forEach(s => { s.hidden = s.dataset.viewPanel !== name; });
-  if (isLogged()){
+  if (canEdit()){
     setDashboardVisible(name === "dashboard");
     setExportVisible(name === "exportar");
     if (name === "frases") refreshFrasesView();
@@ -61,7 +61,7 @@ function hideSplash(){
 
 /* ---------- boot ---------- */
 await fetchMe();      // visitante ou logado? (o servidor confirma; o resto da tela depende disso)
-const logged = isLogged();
+const logged = canEdit();   // admin ou operador (conta pendente vê como visitante)
 if (logged) await fetchConfig().catch(err => console.error("Não consegui carregar os preços", err));
 if (logged) loadTemplatesCache(); // templates próprios já aparecem antes da resposta do servidor
 else{ try{ localStorage.removeItem("painel_templates_v1"); }catch{} }

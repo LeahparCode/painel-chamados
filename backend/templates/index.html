@@ -70,6 +70,7 @@
         <button class="nav-item admin-only" type="button" data-view="usuarios">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>
           <span>Usuários</span>
+          <span class="nav-badge" id="pendingBadge" hidden>0</span>
         </button>
       </nav>
 
@@ -136,6 +137,11 @@
             </button>
           </div>
         </header>
+
+        <div class="pending-note pending-only" role="status">
+          <span class="pending-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+          <span><b>Conta criada!</b> Um administrador precisa liberar o seu acesso para você cadastrar e editar disparos. Assim que for liberado, é só recarregar a página.</span>
+        </div>
 
         <div class="toolbar">
           <div class="segmented" role="tablist" aria-label="Visão" id="modeSwitch">
@@ -406,6 +412,7 @@
         </article>
         <p class="users-hint">
           <b>Administrador</b>: faz tudo, inclusive gerenciar usuários. <b>Operador</b>: cadastra, edita e exporta disparos e templates.
+          <b>Aguardando liberação</b>: conta criada pela própria pessoa; só visualiza o painel até um administrador mudar o cargo.
         </p>
       </section>
 
@@ -584,12 +591,16 @@
         <div>
           <span class="login-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
           <h2 id="lTitle">Entrar no painel</h2>
-          <p>Use o login e a senha cadastrados pelo administrador.</p>
+          <p id="lSub">Use o seu usuário e senha.</p>
         </div>
         <button class="icon-btn" type="button" data-close aria-label="Fechar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
         </button>
       </header>
+      <div class="auth-tabs" id="authTabs" role="tablist">
+        <button type="button" role="tab" data-auth-tab="login" class="is-active">Entrar</button>
+        <button type="button" role="tab" data-auth-tab="signup">Criar conta</button>
+      </div>
       <form class="modal-body login-form" id="loginForm" novalidate>
         <label class="field"><span>E-mail ou usuário</span><input type="text" id="lLogin" autocomplete="username" autocapitalize="none" spellcheck="false" /></label>
         <label class="field">
@@ -604,6 +615,23 @@
         <label class="check"><input type="checkbox" id="lLembrar" checked /> <span>Manter conectado neste computador</span></label>
         <p class="form-error" id="lError" role="alert" hidden></p>
         <button type="submit" class="btn btn-primary" id="lSubmit">Entrar</button>
+        <p class="auth-switch" data-signup-only>Ainda não tem conta? <button type="button" class="link-btn" data-auth-tab="signup">Criar conta</button></p>
+      </form>
+      <form class="modal-body login-form" id="signupForm" novalidate hidden>
+        <label class="field"><span>Seu nome</span><input type="text" id="sNome" maxlength="80" autocomplete="name" placeholder="Ex.: Maria Souza" /></label>
+        <label class="field"><span>Usuário</span><input type="text" id="sLogin" maxlength="120" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ex.: maria.souza ou seu e-mail" /></label>
+        <label class="field">
+          <span>Senha</span>
+          <div class="password-input">
+            <input type="password" id="sSenha" autocomplete="new-password" placeholder="mín. 8 caracteres" />
+            <button type="button" class="pw-toggle" data-pw-toggle="sSenha" aria-label="Mostrar senha" title="Mostrar senha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          </div>
+        </label>
+        <label class="field"><span>Confirmar senha</span><input type="password" id="sConfirma" autocomplete="new-password" /></label>
+        <p class="auth-note">Sua conta é criada na hora. Para cadastrar e editar disparos, um administrador precisa liberar o seu acesso.</p>
+        <p class="form-error" id="sError" role="alert" hidden></p>
+        <button type="submit" class="btn btn-primary" id="sSubmit">Criar conta</button>
+        <p class="auth-switch">Já tem conta? <button type="button" class="link-btn" data-auth-tab="login">Entrar</button></p>
       </form>
     </div>
   </div>
@@ -625,7 +653,7 @@
         <label class="field field-full"><span>Nome</span><input type="text" id="uNome" maxlength="80" placeholder="Ex.: Maria Souza" /></label>
         <label class="field field-full"><span>Login (e-mail ou usuário)</span><input type="text" id="uLogin" maxlength="120" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="maria@empresa.com" /></label>
         <label class="field"><span>Papel</span>
-          <select id="uPapel"><option value="operador">Operador</option><option value="admin">Administrador</option></select>
+          <select id="uPapel"><option value="operador">Operador</option><option value="admin">Administrador</option><option value="pendente">Aguardando liberação</option></select>
         </label>
         <label class="field"><span id="uSenhaLabel">Senha</span>
           <div class="password-input">
