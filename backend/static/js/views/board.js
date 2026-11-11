@@ -4,12 +4,13 @@ import { boardDaysOf, scopeOf, groupByDay, summarize, statusKey, costOf, remaini
 import { todayISO, weekdayIndex, fmtDate, fmtShort } from "../core/dates.js";
 import { fmtInt, fmtMoney, fmtMoneyCompact, fmtTempo, fmtRemaining, escapeHtml, capitalize } from "../core/format.js";
 import { fraseByKey, chipClass } from "../core/frases.js";
-import { moveToDay, setStatus } from "../core/actions.js";
+import { moveToDay, setStatus, removeRecord } from "../core/actions.js";
 import { toast } from "../ui/toast.js";
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const STATUS_LABEL = { run: "Andamento", ok: "Finalizado", err: "Insucesso" };
 const CLOCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
 const PLUS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
 
 let boardEl = null;
@@ -47,7 +48,10 @@ function cardHtml(r){
       </div>
       <div class="dcard-title" data-time="${time}">${escapeHtml(title)}</div>
       <div class="dcard-meta">${meta}</div>
-      ${pills ? `<div class="dcard-pills">${pills}</div>` : ""}
+      <div class="dcard-foot">
+        ${pills ? `<div class="dcard-pills">${pills}</div>` : "<span></span>"}
+        <button type="button" class="dcard-del" data-delete title="Excluir disparo" aria-label="Excluir ${escapeHtml(title)}">${TRASH_ICON}</button>
+      </div>
     </article>`;
 }
 
@@ -139,9 +143,28 @@ function playEnter(){
   enterTimer = setTimeout(() => boardEl.classList.remove("is-entering"), items.length * step + 700);
 }
 
+/** Exclui direto do card (sem abrir os detalhes), com confirmação e animação de saída. */
+async function quickDelete(card){
+  const id = card?.dataset.id;
+  const rec = id && findRecord(id);
+  if (!rec) return;
+  const nome = rec.tipo || fraseByKey(rec.template)?.name || "este disparo";
+  const quando = [rec.data ? rec.data.split("-").reverse().join("/") : "", rec.horario].filter(Boolean).join(" às ");
+  if (!confirm(`Excluir "${nome}"${quando ? ` (${quando})` : ""}?`)) return;
+  card.classList.add("is-removing");
+  await new Promise(r => setTimeout(r, 220));
+  await removeRecord(id);
+}
+
 /* ------------------------------------------------------------------ */
 function bindEvents(){
   boardEl.addEventListener("click", (e) => {
+    const del = e.target.closest("[data-delete]");
+    if (del){
+      e.stopPropagation();
+      quickDelete(del.closest(".dcard"));
+      return;
+    }
     const add = e.target.closest("[data-add]");
     if (add){
       e.stopPropagation();
@@ -159,6 +182,7 @@ function bindEvents(){
 
   boardEl.addEventListener("keydown", (e) => {
     const card = e.target.closest?.(".dcard");
+    if (e.target.closest("button")) return; // Enter na lixeira aciona a lixeira, não abre o card
     if (card && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); handlers.onOpen(card.dataset.id); }
   });
 

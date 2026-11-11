@@ -139,7 +139,25 @@
 }
 .dcard-meta{ display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 11px; color: var(--muted); font-weight: 600; }
 .dcard-meta b{ color: var(--text-2); font-weight: 800; font-variant-numeric: tabular-nums; }
-.dcard-pills{ display: flex; flex-wrap: wrap; gap: 4px; }
+.dcard-foot{ display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; }
+.dcard-pills{ display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+
+/* lixeira: exclui sem abrir os detalhes */
+.dcard-del{
+  flex-shrink: 0; margin-left: auto;
+  width: 28px; height: 28px; padding: 0; border: 0; border-radius: 9px;
+  display: grid; place-items: center; color: #fff;
+  background: linear-gradient(135deg, #ff6b6b 0%, #e5383b 55%, #b5172b 100%);
+  box-shadow: 0 6px 14px -6px rgba(213, 30, 50, .75), inset 0 1px 0 rgba(255, 255, 255, .25);
+  cursor: pointer;
+  transition: transform .18s var(--ease), box-shadow .2s var(--ease), filter .2s var(--ease);
+}
+.dcard-del svg{ width: 14px; height: 14px; }
+.dcard-del:hover{ transform: translateY(-1px) scale(1.07); filter: brightness(1.06); box-shadow: 0 10px 18px -8px rgba(213, 30, 50, .85), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.dcard-del:active{ transform: scale(.94); }
+.dcard-del:focus-visible{ outline: 2px solid #e5383b; outline-offset: 2px; }
+.dcard.is-removing{ animation: card-out .22s var(--ease) forwards; pointer-events: none; }
+@keyframes card-out{ to{ opacity: 0; transform: translateX(14px) scale(.96); } }
 .dcard-pills .chip{ height: 20px; font-size: 10px; padding: 0 6px; }
 .dcard-countdown{ color: var(--tone-ink); }
 
@@ -157,6 +175,22 @@
 .board[data-mode="mes"] .dcard{ padding: 5px 7px 5px 10px; border-radius: 8px; gap: 0; box-shadow: none; }
 .board[data-mode="mes"] .dcard::before{ top: 5px; bottom: 5px; width: 3px; }
 .board[data-mode="mes"] .dcard-top, .board[data-mode="mes"] .dcard-meta, .board[data-mode="mes"] .dcard-pills{ display: none; }
+/* no calendário do mês a lixeira fica compacta e aparece ao passar o mouse */
+.board[data-mode="mes"] .dcard-foot{ display: contents; }
+.board[data-mode="mes"] .dcard-del{
+  position: absolute; right: 3px; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 20px; border-radius: 6px; opacity: 0;
+  transition: opacity .15s var(--ease);
+}
+.board[data-mode="mes"] .dcard-del svg{ width: 11px; height: 11px; }
+.board[data-mode="mes"] .dcard:hover .dcard-del, .board[data-mode="mes"] .dcard-del:focus-visible{ opacity: 1; }
+.board[data-mode="mes"] .dcard-del:hover{ transform: translateY(-50%) scale(1.08); }
+.board[data-mode="mes"] .dcard-del:active{ transform: translateY(-50%) scale(.94); }
+.board[data-mode="mes"] .dcard:hover .dcard-title{ padding-right: 20px; }
+@media (hover: none){
+  .board[data-mode="mes"] .dcard-del{ opacity: 1; }
+  .board[data-mode="mes"] .dcard-title{ padding-right: 20px; }
+}
 .board[data-mode="mes"] .dcard-title{ font-size: 11px; -webkit-line-clamp: 1; }
 .board[data-mode="mes"] .dcard-title::before{ content: attr(data-time) " · "; color: var(--muted); font-weight: 800; }
 
