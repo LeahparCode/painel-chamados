@@ -60,7 +60,9 @@ DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave
 - Crie uma conta de serviço no Google Cloud (com a **Google Sheets API** ativada) e baixe a chave JSON.
 - Compartilhe a planilha com o e-mail da conta de serviço como **Editor**.
 - A aba `Disparos` e o cabeçalho são criados automaticamente se não existirem. Colunas:
-  `ID, Tipo, Tempo, Potes, Volume, Horário, Status, Template, AtualizadoEm, Data, Tags, Tipo Disparo`.
+  `ID, Tipo, Tempo, Potes, Volume, Horário, Status, Template, AtualizadoEm, Data, Tipo Disparo`.
+- `Tipo Disparo` define o valor de cada envio: **SMS R$ 0,070 · RCS R$ 0,070 · WhatsApp R$ 0,12**
+  (tabela em `backend/static/js/core/config.js`).
 - As colunas são localizadas pelo nome, então podem ser reordenadas. **Não apague nem renomeie a coluna `ID`.**
 - Linhas digitadas à mão sem ID recebem um ID automaticamente.
 - Datas: `AAAA-MM-DD` ou `dd/mm/aaaa`. O painel atualiza a cada ~10 s (`SNAPSHOT_TTL`).

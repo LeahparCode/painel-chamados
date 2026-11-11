@@ -14,7 +14,6 @@ FIELDS = [
     ("template", "Template"),
     ("atualizadoEm", "AtualizadoEm"),
     ("data", "Data"),
-    ("tag", "Tags"),
     ("tipoDisparo", "Tipo Disparo"),
 ]
 FIELD_KEYS = [k for k, _ in FIELDS]
@@ -79,6 +78,6 @@ def clean_record(rec: dict) -> dict:
         out[k] = to_int(out[k])
     out["data"] = normalize_date(out["data"])
     out["horario"] = normalize_time(out["horario"])
-    for k in ("id", "tipo", "status", "template", "atualizadoEm", "tag", "tipoDisparo"):
+    for k in ("id", "tipo", "status", "template", "atualizadoEm", "tipoDisparo"):
         out[k] = "" if out[k] is None else str(out[k]).strip()
     return out

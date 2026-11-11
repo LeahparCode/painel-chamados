@@ -176,10 +176,6 @@
             <span>Tipo</span>
             <select id="dashTipo"><option value="">Todos</option></select>
           </label>
-          <label class="select-pill">
-            <span>Tag</span>
-            <select id="dashTag"><option value="">Todas</option></select>
-          </label>
         </div>
 
         <section class="dash-kpis" id="dashKpis"></section>
@@ -272,8 +268,7 @@
           <label class="field"><span>Potes</span><input type="number" id="ePotes" min="0" /></label>
           <label class="field"><span>Data</span><input type="date" id="eData" required /></label>
           <label class="field"><span>Horário</span><select id="eHorario"></select></label>
-          <label class="field"><span>Tag</span><select id="eTag"></select></label>
-          <label class="field"><span>Tipo</span><select id="eTipo"></select></label>
+          <label class="field field-2"><span>Tipo (define o valor)</span><select id="eTipo"></select></label>
           <label class="field field-2"><span>Frase</span><select id="eTemplate"></select></label>
           <div class="field-full edit-actions">
             <button type="button" class="btn btn-danger-ghost" id="dDelete">
@@ -317,8 +312,7 @@
         <label class="field"><span>Horário</span><select id="nHorario"></select></label>
         <label class="field field-full"><span>Frase Safra</span><select id="nTemplate"></select></label>
         <div class="field-full phrase-preview" id="nPreview" hidden></div>
-        <label class="field"><span>Tag</span><select id="nTag"></select></label>
-        <label class="field"><span>Tipo</span><select id="nTipo"></select></label>
+        <label class="field"><span>Tipo (define o valor)</span><select id="nTipo" required></select></label>
         <label class="field"><span>Volume (qtd.)</span><input type="number" id="nVolume" min="0" placeholder="Ex.: 1200" /></label>
         <label class="field"><span>Potes</span><input type="number" id="nPotes" min="0" placeholder="0" /></label>
         <div class="field">
@@ -328,7 +322,7 @@
             <input type="number" id="nMinutos" min="0" max="59" placeholder="00" aria-label="Minutos" /><em>min</em>
           </div>
         </div>
-        <div class="field estimate">
+        <div class="field field-full estimate">
           <span>Valor estimado</span>
           <b id="nEstimate">R$ 0,00</b>
         </div>

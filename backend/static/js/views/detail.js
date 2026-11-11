@@ -1,5 +1,5 @@
 // Modal de detalhes/edição de um disparo.
-import { HORARIOS, TAGS, TIPOS } from "../core/config.js";
+import { HORARIOS, TIPOS } from "../core/config.js";
 import { subscribe, findRecord } from "../core/state.js";
 import { statusKey, costOf, remainingMs, dayOf } from "../core/records.js";
 import { fmtInt, fmtMoney, fmtTempo, fmtRemaining, capitalize } from "../core/format.js";
@@ -78,7 +78,6 @@ function fillForm(r){
   $("ePotes").value = r.potes ?? "";
   $("eData").value = dayOf(r) || "";
   fillSelect($("eHorario"), HORARIOS, null, r.horario || HORARIOS[0]);
-  fillSelect($("eTag"), TAGS, "Sem tag", r.tag || "");
   fillSelect($("eTipo"), TIPOS, "Sem tipo", r.tipoDisparo || "");
   const tplSelect = $("eTemplate");
   fillFraseSelect(tplSelect);
@@ -123,7 +122,6 @@ export function initDetail(){
       potes: Number($("ePotes").value || 0),
       data: $("eData").value,
       horario: $("eHorario").value,
-      tag: $("eTag").value,
       tipoDisparo: $("eTipo").value,
       template: $("eTemplate").value,
     };

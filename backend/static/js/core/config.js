@@ -4,14 +4,12 @@ export const STATUS = ["Em andamento", "Finalizado", "Insucesso"];
 
 export const HORARIOS = ["08:00", "12:00", "16:00", "20:00"];
 
-export const TAGS = ["Vendas", "Conciliação", "SAC", "Recup de Crédito"];
-
-// Custo unitário por tipo de disparo (R$ por mensagem)
+// Tipo do disparo → valor de cada envio (R$ por mensagem).
+// Para mudar preços ou incluir um tipo novo, altere aqui e em VALID_TIPO_DISPARO (backend/app.py).
 export const COST_PER_TIPO = {
-  "Marketing": 0.62,
-  "Marketing Lite": 0.54,
-  "Utilidade": 0.09,
-  "Autenticação": 0.09,
+  "SMS": 0.07,
+  "RCS": 0.07,
+  "WhatsApp": 0.12,
 };
 export const TIPOS = Object.keys(COST_PER_TIPO);
 

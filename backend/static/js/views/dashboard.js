@@ -1,5 +1,5 @@
-// Dashboard: KPIs + gráficos (Chart.js) por período, tipo e tag.
-import { TAGS, TIPOS, COST_PER_TIPO } from "../core/config.js";
+// Dashboard: KPIs + gráficos (Chart.js) por período e tipo.
+import { TIPOS, COST_PER_TIPO } from "../core/config.js";
 import { state, subscribe } from "../core/state.js";
 import { summarize, costOf, dayOf, inRange, statusKey } from "../core/records.js";
 import { todayISO, addDays, startOfMonth, endOfMonth, eachDay, fmtShort } from "../core/dates.js";
@@ -7,7 +7,7 @@ import { fmtInt, fmtMoney } from "../core/format.js";
 import { onThemeChange } from "../ui/theme.js";
 
 const $ = (id) => document.getElementById(id);
-const filters = { from: "", to: "", tipo: "", tag: "", preset: "mes" };
+const filters = { from: "", to: "", tipo: "", preset: "mes" };
 const charts = {};
 let visible = false;
 
@@ -28,7 +28,6 @@ function filtered(){
   return state.records.filter(r => {
     if (!inRange(dayOf(r), filters.from, filters.to)) return false;
     if (filters.tipo && (r.tipoDisparo || "") !== filters.tipo) return false;
-    if (filters.tag && (r.tag || "") !== filters.tag) return false;
     return true;
   });
 }
@@ -182,7 +181,7 @@ function renderCharts(list){
 export function renderDashboard(){
   if (!visible) return;
   const list = filtered();
-  $("dashLabel").textContent = `${fmtShort(filters.from)} – ${fmtShort(filters.to)}${filters.tipo ? " · " + filters.tipo : ""}${filters.tag ? " · " + filters.tag : ""}`;
+  $("dashLabel").textContent = `${fmtShort(filters.from)} – ${fmtShort(filters.to)}${filters.tipo ? " · " + filters.tipo : ""}`;
   renderKpis(list);
   renderCharts(list);
 }
@@ -194,7 +193,6 @@ export function setDashboardVisible(v){
 
 export function initDashboard(){
   TIPOS.forEach(t => $("dashTipo").append(new Option(t, t)));
-  TAGS.forEach(t => $("dashTag").append(new Option(t, t)));
   applyPreset("mes");
 
   $("dashPresets").addEventListener("click", (e) => {
@@ -215,7 +213,6 @@ export function initDashboard(){
   $("dashFrom").addEventListener("change", onRange);
   $("dashTo").addEventListener("change", onRange);
   $("dashTipo").addEventListener("change", (e) => { filters.tipo = e.target.value; renderDashboard(); });
-  $("dashTag").addEventListener("change", (e) => { filters.tag = e.target.value; renderDashboard(); });
 
   subscribe((_, reason) => { if (reason === "records") renderDashboard(); });
   onThemeChange(() => { applyPalette(); });
