@@ -2,11 +2,11 @@ import os, time, json, hashlib, logging, threading
 from datetime import datetime
 
 from flask import Flask, jsonify, request, Response, render_template
-from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from storage import create_store, backend_name, StoreError
 from export_xlsx import build_xlsx, safe_filename, ExportError
+from auth import init_auth, login_required
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 log = logging.getLogger("app")
@@ -21,11 +21,9 @@ VALID_TIPO_DISPARO = {
 VALID_STATUS = {"Em andamento", "Finalizado", "Insucesso"}
 
 # ===== App =====
-# Obs.: o login foi removido temporariamente (será reimplementado depois).
-# Todas as rotas de escrita estão abertas.
+# Visitantes só leem o painel; escrita exige login (ver auth.py).
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
-CORS(app)
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # limite do corpo das requisições (exportação)
 
 # Versão dos assets para "furar" cache do navegador a cada deploy/restart
@@ -63,6 +61,9 @@ def get_store():
             _STORE_ERROR, _STORE_ERROR_TS = str(e), time.time()
             log.error("Falha ao configurar o armazenamento (%s): %s", backend_name(), e)
             raise StoreError(_STORE_ERROR, 503)
+
+
+init_auth(app, get_store)
 
 
 def md5(obj) -> str:
@@ -173,6 +174,7 @@ def api_disparos():
 
 
 @app.post("/api/disparos")
+@login_required
 def create_disparo():
     fields, err = _parse_fields(request.json or {}, partial=False)
     if err:
@@ -186,6 +188,7 @@ def create_disparo():
 
 
 @app.patch("/api/disparos/<rid>")
+@login_required
 def update_disparo(rid):
     fields, err = _parse_fields(request.json or {}, partial=True)
     if err:
@@ -201,6 +204,7 @@ def update_disparo(rid):
 
 
 @app.delete("/api/disparos/<rid>")
+@login_required
 def delete_disparo(rid):
     try:
         get_store().delete(rid)
@@ -237,6 +241,7 @@ def _parse_template(b: dict, partial: bool):
 
 
 @app.get("/api/templates")
+@login_required
 def list_templates():
     if _TPL_CACHE["data"] is not None and time.time() - _TPL_CACHE["ts"] < _TPL_TTL:
         return jsonify(_TPL_CACHE["data"])
@@ -249,6 +254,7 @@ def list_templates():
 
 
 @app.post("/api/templates")
+@login_required
 def create_template():
     data, err = _parse_template(request.json or {}, partial=False)
     if err:
@@ -262,6 +268,7 @@ def create_template():
 
 
 @app.patch("/api/templates/<tid>")
+@login_required
 def update_template(tid):
     data, err = _parse_template(request.json or {}, partial=True)
     if err:
@@ -277,6 +284,7 @@ def update_template(tid):
 
 
 @app.delete("/api/templates/<tid>")
+@login_required
 def delete_template(tid):
     try:
         get_store().delete_template(tid)
@@ -288,6 +296,7 @@ def delete_template(tid):
 
 # ---- Exportação ----
 @app.post("/api/export/xlsx")
+@login_required
 def export_xlsx():
     spec = request.get_json(silent=True) or {}
     try:

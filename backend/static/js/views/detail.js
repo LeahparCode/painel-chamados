@@ -6,6 +6,7 @@ import { fmtInt, fmtMoney, fmtTempo, fmtRemaining, capitalize, escapeHtml } from
 import { fmtLong } from "../core/dates.js";
 import { fraseByKey, fillFraseSelect, templateLabel, smsParts, chipClass } from "../core/frases.js";
 import { openTemplateEditor } from "./template-editor.js";
+import { isLogged } from "../core/auth.js";
 import { saveRecord, setStatus, removeRecord } from "../core/actions.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { toast } from "../ui/toast.js";
@@ -109,6 +110,7 @@ export function openDetail(id){
 
 export function initDetail(){
   $("dStatusActions").addEventListener("click", async (e) => {
+    if (!isLogged()) return;
     const btn = e.target.closest("[data-status]");
     if (!btn || !currentId) return;
     const r = findRecord(currentId);
@@ -132,6 +134,7 @@ export function initDetail(){
 
   $("dEditForm").addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (!isLogged()) return;
     const r = findRecord(currentId);
     if (!r) return;
     let horas = parseInt($("eHoras").value || "0", 10);
@@ -166,6 +169,7 @@ export function initDetail(){
   });
 
   $("dDelete").addEventListener("click", async () => {
+    if (!isLogged()) return;
     if (!currentId) return;
     if (!confirm("Deseja excluir este disparo?")) return;
     const id = currentId;

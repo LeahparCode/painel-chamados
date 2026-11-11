@@ -3,6 +3,8 @@ import { todayISO } from "./dates.js";
 
 export const state = {
   records: [],
+  user: null,         // usuário logado (null = visitante, só visualiza o painel)
+  setupNeeded: false, // nenhum usuário cadastrado ainda
   templates: [],      // templates próprios (aba "Templates" da planilha)
   stale: false,
   connection: "connecting", // connecting | online | stale | offline

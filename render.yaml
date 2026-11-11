@@ -26,3 +26,12 @@ services:
         value: Disparos
       - key: PORT
         value: "8080"
+      # Login: chave que assina a sessão (gerada pelo Render) e o administrador inicial
+      - key: APP_SECRET
+        generateValue: true
+      - key: ADMIN_LOGIN
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_NOME
+        sync: false

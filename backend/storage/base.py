@@ -102,3 +102,36 @@ def clean_template(rec: dict) -> dict:
         out[k] = out[k].strip()
     out["texto"] = out["texto"].replace("\r\n", "\n").strip()
     return out
+
+
+# ---------------- Usuários (login) ----------------
+USER_FIELDS = [
+    ("id", "ID"),
+    ("nome", "Nome"),
+    ("login", "Login"),
+    ("senhaHash", "SenhaHash"),
+    ("papel", "Papel"),
+    ("ativo", "Ativo"),
+    ("criadoEm", "CriadoEm"),
+    ("atualizadoEm", "AtualizadoEm"),
+]
+USER_KEYS = [k for k, _ in USER_FIELDS]
+USER_ROLES = ("admin", "operador")
+
+
+def to_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in ("1", "true", "sim", "s", "yes", "verdadeiro", "ativo")
+
+
+def clean_user(rec: dict) -> dict:
+    out = {k: rec.get(k, "") for k in USER_KEYS}
+    for k in ("id", "nome", "senhaHash", "criadoEm", "atualizadoEm"):
+        out[k] = "" if out[k] is None else str(out[k]).strip()
+    out["login"] = str(out["login"] or "").strip().lower()
+    papel = str(out["papel"] or "").strip().lower()
+    out["papel"] = papel if papel in USER_ROLES else "operador"
+    raw_ativo = rec.get("ativo", "")
+    out["ativo"] = True if raw_ativo in ("", None) else to_bool(raw_ativo)
+    return out

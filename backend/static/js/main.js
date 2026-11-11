@@ -12,15 +12,29 @@ import { initFrases, refreshFrasesView } from "./views/frases.js";
 import { initTemplateEditor } from "./views/template-editor.js";
 import { initDashboard, setDashboardVisible } from "./views/dashboard.js";
 import { initExport, setExportVisible } from "./views/export.js";
+import { initAccount } from "./views/account.js";
+import { initUsers, setUsersVisible } from "./views/users.js";
+import { fetchMe, isLogged, isAdmin } from "./core/auth.js";
 
 /* ---------- navegação entre telas ---------- */
+const LOGGED_VIEWS = ["painel", "dashboard", "frases", "exportar"];
+
+function allowedViews(){
+  if (!isLogged()) return ["painel"];                 // visitante: só o painel
+  return isAdmin() ? [...LOGGED_VIEWS, "usuarios"] : LOGGED_VIEWS;
+}
+
 function switchView(name){
+  if (!allowedViews().includes(name)) name = "painel";
   state.activeView = name;
   document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("is-active", b.dataset.view === name));
   document.querySelectorAll("[data-view-panel]").forEach(s => { s.hidden = s.dataset.viewPanel !== name; });
-  setDashboardVisible(name === "dashboard");
-  setExportVisible(name === "exportar");
-  if (name === "frases") refreshFrasesView();
+  if (isLogged()){
+    setDashboardVisible(name === "dashboard");
+    setExportVisible(name === "exportar");
+    if (name === "frases") refreshFrasesView();
+    if (name === "usuarios") setUsersVisible(true);
+  }
   try{ history.replaceState(null, "", `#${name}`); }catch{}
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -46,22 +60,30 @@ function hideSplash(){
 }
 
 /* ---------- boot ---------- */
-loadTemplatesCache(); // templates próprios já aparecem antes da resposta do servidor
+await fetchMe();      // visitante ou logado? (o servidor confirma; o resto da tela depende disso)
+const logged = isLogged();
+if (logged) loadTemplatesCache(); // templates próprios já aparecem antes da resposta do servidor
+else{ try{ localStorage.removeItem("painel_templates_v1"); }catch{} }
+
 initTheme();
 initClock();
 initModals();
+initAccount();
 initPainel();
 initBoard({ onOpen: openDetail, onNew: (day) => openNewForm({ day }) });
 initDetail();
-initNewForm();
-initTemplateEditor();
-initFrases({ onUse: (template, tipo) => openNewForm({ template, tipo }) });
-initDashboard();
-initExport();
+if (logged){
+  initNewForm();
+  initTemplateEditor();
+  initFrases({ onUse: (template, tipo) => openNewForm({ template, tipo }) });
+  initDashboard();
+  initExport();
+  if (isAdmin()) initUsers();
+}
 
 document.querySelectorAll(".nav-item").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
 const initial = (location.hash || "").replace("#", "");
-switchView(["painel", "dashboard", "frases", "exportar"].includes(initial) ? initial : "painel");
+switchView(initial === "login" ? "painel" : initial);
 
 subscribe((_, reason) => {
   if (reason === "connection") renderConnection();
@@ -72,5 +94,7 @@ renderConnection();
 if (loadCache()) hideSplash();
 setTimeout(hideSplash, 1500);
 connect();
-fetchTemplates().catch(() => {});
-setInterval(() => { if (!document.hidden) fetchTemplates().catch(() => {}); }, 60000);
+if (logged){
+  fetchTemplates().catch(() => {});
+  setInterval(() => { if (!document.hidden) fetchTemplates().catch(() => {}); }, 60000);
+}
