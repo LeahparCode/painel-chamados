@@ -58,6 +58,22 @@
   --shadow-brand: 0 10px 24px -10px rgba(91, 76, 240, .65);
 
   --ease: cubic-bezier(.2, .8, .2, 1);
+
+  /* texto na cor da marca (sobre fundos claros) */
+  --brand-text: #4a3bd8;
+
+  /* sidebar: destaques */
+  --side-strong: #ffffff;
+  --side-glow: rgba(138, 92, 246, .28);
+  --side-active-bg: linear-gradient(90deg, rgba(123, 109, 250, .30), rgba(123, 109, 250, .08));
+  --side-indicator: linear-gradient(180deg, var(--brand-2), var(--brand));
+  --mark-bg: linear-gradient(135deg, var(--brand), var(--brand-2));
+  --mark-fg: #ffffff;
+
+  /* card de valor em destaque */
+  --hero-bg: linear-gradient(135deg, #4a3bd8 0%, #7c4dff 60%, #a35cf6 100%);
+  --hero-text: #ffffff;
+  --hero-shadow: 0 18px 40px -18px rgba(91, 76, 240, .8);
   color-scheme: light;
 }
 
@@ -98,5 +114,116 @@ html.dark{
   --shadow-md: 0 10px 28px -14px rgba(0, 0, 0, .7);
   --shadow-lg: 0 30px 70px -28px rgba(0, 0, 0, .85);
   --shadow-brand: 0 10px 26px -10px rgba(123, 109, 250, .7);
+  --brand-text: #c5beff;
   color-scheme: dark;
+}
+
+/* ================================================================
+   Paletas de cores (seletor "Cores do tema").
+   Cada paleta tem versão clara (:not(.dark)) e escura (.dark).
+   A paleta padrão (violeta) usa os valores acima.
+   ================================================================ */
+
+/* ---------- Vermelho e branco ---------- */
+html[data-palette="vermelho"]:not(.dark){
+  --bg: #f6f4f4; --surface: #ffffff; --surface-2: #faf8f8; --surface-3: #f1eded;
+  --border: #ebe3e3; --border-strong: #dccfcf;
+  --text: #1f1416; --text-2: #4d3d40; --muted: #8a7a7d;
+  --brand: #e00012; --brand-2: #ff3b30; --brand-600: #b8000f;
+  --brand-soft: #fdeaea; --brand-soft-2: #fbd5d6; --brand-ring: rgba(224, 0, 18, .22);
+  --brand-text: #c4000f; --on-brand: #ffffff; --accent: #334155;
+  --shadow-brand: 0 10px 24px -10px rgba(224, 0, 18, .55);
+  --side-bg: #d50010; --side-bg-2: #a3000c; --side-text: #ffe4e5; --side-muted: #ffb7ba;
+  --side-glow: rgba(255, 255, 255, .16);
+  --side-active: rgba(255, 255, 255, .12);
+  --side-active-bg: linear-gradient(90deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .06));
+  --side-indicator: #ffffff;
+  --mark-bg: #ffffff; --mark-fg: #e00012;
+  --hero-bg: linear-gradient(135deg, #b8000f 0%, #e00012 55%, #ff4a3d 100%);
+  --hero-shadow: 0 18px 40px -18px rgba(224, 0, 18, .7);
+}
+html.dark[data-palette="vermelho"]{
+  --bg: #120c0d; --surface: #1b1314; --surface-2: #22181a; --surface-3: #2d2022;
+  --border: #34262a; --border-strong: #4a3539;
+  --text: #f6eded; --text-2: #d2bfc2; --muted: #a08c90;
+  --brand: #ff3b3b; --brand-2: #ff6b5e; --brand-600: #e0202a;
+  --brand-soft: rgba(255, 59, 59, .14); --brand-soft-2: rgba(255, 59, 59, .24); --brand-ring: rgba(255, 59, 59, .35);
+  --brand-text: #ff8f8a; --on-brand: #ffffff; --accent: #94a3b8;
+  --shadow-brand: 0 10px 26px -10px rgba(255, 59, 59, .6);
+  --side-bg: #1c0b0d; --side-bg-2: #110708; --side-text: #f0d6d8; --side-muted: #a37f84;
+  --side-glow: rgba(255, 40, 40, .26);
+  --side-active-bg: linear-gradient(90deg, rgba(255, 59, 59, .30), rgba(255, 59, 59, .06));
+  --side-indicator: linear-gradient(180deg, #ff6b5e, #ff3b3b);
+  --mark-bg: linear-gradient(135deg, #e00012, #ff4a3d); --mark-fg: #ffffff;
+  --hero-bg: linear-gradient(135deg, #9e000d 0%, #d4000f 55%, #ff4a3d 100%);
+  --hero-shadow: 0 18px 40px -18px rgba(255, 40, 40, .55);
+}
+
+/* ---------- Azul e dourado ---------- */
+html[data-palette="azul-dourado"]:not(.dark){
+  --bg: #f3f4f8; --surface: #ffffff; --surface-2: #f7f8fb; --surface-3: #eceef4;
+  --border: #e1e4ec; --border-strong: #cdd2df;
+  --text: #0e1a33; --text-2: #3c4a66; --muted: #76809a;
+  --brand: #c19a45; --brand-2: #e0bd6a; --brand-600: #a7812e;
+  --brand-soft: #f7f0de; --brand-soft-2: #efe2bf; --brand-ring: rgba(193, 154, 69, .3);
+  --brand-text: #85651c; --on-brand: #0b1f45; --accent: #1b3f86;
+  --shadow-brand: 0 10px 24px -10px rgba(193, 154, 69, .65);
+  --side-bg: #0b1f45; --side-bg-2: #061430; --side-text: #d5dcec; --side-muted: #8b98b8;
+  --side-glow: rgba(224, 189, 106, .20);
+  --side-active-bg: linear-gradient(90deg, rgba(224, 189, 106, .22), rgba(224, 189, 106, .04));
+  --side-indicator: linear-gradient(180deg, #e0bd6a, #c19a45);
+  --mark-bg: linear-gradient(135deg, #c19a45, #e8c87a); --mark-fg: #0b1f45;
+  --hero-bg: linear-gradient(135deg, #0b1f45 0%, #14316b 60%, #1d438c 100%);
+  --hero-shadow: 0 18px 40px -18px rgba(11, 31, 69, .7);
+}
+html.dark[data-palette="azul-dourado"]{
+  --bg: #0a0f1c; --surface: #111829; --surface-2: #151d31; --surface-3: #1d2740;
+  --border: #222c45; --border-strong: #33405f;
+  --text: #eaeef7; --text-2: #b9c2d8; --muted: #8691ad;
+  --brand: #d9b45e; --brand-2: #f0d085; --brand-600: #c19a45;
+  --brand-soft: rgba(217, 180, 94, .14); --brand-soft-2: rgba(217, 180, 94, .24); --brand-ring: rgba(217, 180, 94, .35);
+  --brand-text: #e8ca84; --on-brand: #0b1f45; --accent: #7fa6ff;
+  --shadow-brand: 0 10px 26px -10px rgba(217, 180, 94, .55);
+  --side-bg: #08122a; --side-bg-2: #050b1a; --side-text: #d0d8ea; --side-muted: #7f8db0;
+  --side-glow: rgba(217, 180, 94, .18);
+  --side-active-bg: linear-gradient(90deg, rgba(217, 180, 94, .24), rgba(217, 180, 94, .04));
+  --side-indicator: linear-gradient(180deg, #f0d085, #d9b45e);
+  --mark-bg: linear-gradient(135deg, #c19a45, #f0d085); --mark-fg: #0b1f45;
+  --hero-bg: linear-gradient(135deg, #0d2350 0%, #163a7c 60%, #2350a8 100%);
+  --hero-shadow: 0 18px 40px -18px rgba(0, 0, 0, .7);
+}
+
+/* ---------- Azul e branco ---------- */
+html[data-palette="azul"]:not(.dark){
+  --bg: #f2f6fc; --surface: #ffffff; --surface-2: #f6f9fe; --surface-3: #e9f0fa;
+  --border: #dde6f3; --border-strong: #c7d4e8;
+  --text: #0f1b2e; --text-2: #3b4c66; --muted: #73839c;
+  --brand: #1468e0; --brand-2: #3d8bff; --brand-600: #0f55bb;
+  --brand-soft: #e8f1fe; --brand-soft-2: #d3e4fd; --brand-ring: rgba(20, 104, 224, .25);
+  --brand-text: #0f5bc7; --on-brand: #ffffff; --accent: #0e9fb0;
+  --shadow-brand: 0 10px 24px -10px rgba(20, 104, 224, .55);
+  --side-bg: #1262d6; --side-bg-2: #0a419c; --side-text: #e2edff; --side-muted: #a9c4f0;
+  --side-glow: rgba(255, 255, 255, .16);
+  --side-active: rgba(255, 255, 255, .12);
+  --side-active-bg: linear-gradient(90deg, rgba(255, 255, 255, .24), rgba(255, 255, 255, .05));
+  --side-indicator: #ffffff;
+  --mark-bg: #ffffff; --mark-fg: #1468e0;
+  --hero-bg: linear-gradient(135deg, #0f55bb 0%, #1468e0 55%, #3d8bff 100%);
+  --hero-shadow: 0 18px 40px -18px rgba(20, 104, 224, .7);
+}
+html.dark[data-palette="azul"]{
+  --bg: #0a101c; --surface: #111a2b; --surface-2: #152034; --surface-3: #1d2a42;
+  --border: #223049; --border-strong: #33456a;
+  --text: #e9f0fb; --text-2: #b6c4dc; --muted: #8293b0;
+  --brand: #4b93ff; --brand-2: #79b0ff; --brand-600: #2f7cf0;
+  --brand-soft: rgba(75, 147, 255, .14); --brand-soft-2: rgba(75, 147, 255, .24); --brand-ring: rgba(75, 147, 255, .35);
+  --brand-text: #93bfff; --on-brand: #ffffff; --accent: #22c3d6;
+  --shadow-brand: 0 10px 26px -10px rgba(75, 147, 255, .6);
+  --side-bg: #0a1630; --side-bg-2: #07101f; --side-text: #d3e1f7; --side-muted: #7f93b8;
+  --side-glow: rgba(75, 147, 255, .26);
+  --side-active-bg: linear-gradient(90deg, rgba(75, 147, 255, .30), rgba(75, 147, 255, .06));
+  --side-indicator: linear-gradient(180deg, #79b0ff, #4b93ff);
+  --mark-bg: linear-gradient(135deg, #1468e0, #3d8bff); --mark-fg: #ffffff;
+  --hero-bg: linear-gradient(135deg, #0d4bb0 0%, #1468e0 55%, #3d8bff 100%);
+  --hero-shadow: 0 18px 40px -18px rgba(0, 0, 0, .7);
 }

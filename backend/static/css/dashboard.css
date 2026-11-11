@@ -10,8 +10,7 @@
 .kpi span{ font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; }
 .kpi b{ font-size: 24px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi small{ font-size: 12px; color: var(--muted); font-weight: 600; }
-.kpi.kpi-brand b{ color: var(--brand); }
-html.dark .kpi.kpi-brand b{ color: #c5beff; }
+.kpi.kpi-brand b{ color: var(--brand-text); }
 
 .chart-grid{ display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .chart-panel h3{ font-size: 15px; font-weight: 800; letter-spacing: -.01em; margin-bottom: 14px; }

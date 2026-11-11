@@ -73,7 +73,7 @@
 }
 .day-add svg{ width: 14px; height: 14px; }
 .day:hover .day-add, .day.is-focus .day-add{ opacity: 1; }
-.day-add:hover{ background: var(--brand-soft); color: var(--brand); border-color: var(--brand); }
+.day-add:hover{ background: var(--brand-soft); color: var(--brand-text); border-color: var(--brand); }
 
 .day-stats{ display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 6px; font-size: 12px; }
 .day-stats span{ color: var(--muted); font-weight: 600; white-space: nowrap; }
@@ -86,8 +86,8 @@
 .day-empty{ margin: auto 0; text-align: center; color: var(--muted); font-size: 12px; padding: 18px 6px; opacity: .8; }
 
 /* estados */
-.day.is-today .day-num{ background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; box-shadow: 0 8px 16px -8px rgba(91, 76, 240, .8); }
-.day.is-today .day-name small::after{ content: " · hoje"; color: var(--brand); font-weight: 800; }
+.day.is-today .day-num{ background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: var(--on-brand); box-shadow: 0 8px 16px -8px color-mix(in srgb, var(--brand) 80%, transparent); }
+.day.is-today .day-name small::after{ content: " · hoje"; color: var(--brand-text); font-weight: 800; }
 .day.is-focus{ border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-ring), var(--shadow-md); }
 .day.is-dim{ opacity: .72; }
 .day.is-dim:hover{ opacity: 1; }
