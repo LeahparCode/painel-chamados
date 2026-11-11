@@ -3,4 +3,5 @@ flask-cors
 requests
 python-dotenv
 gunicorn
-gevent
+gspread>=6,<7
+google-auth

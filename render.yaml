@@ -1,6 +1,6 @@
 # Blueprint do Render — https://render.com/docs/blueprint-spec
 # No painel do Render: New → Blueprint → selecione este repositório.
-# Os valores de AIRTABLE_TOKEN e AIRTABLE_BASE_ID são pedidos na criação (sync: false).
+# Os valores de GOOGLE_SHEET_ID e GOOGLE_SERVICE_ACCOUNT_JSON são pedidos na criação (sync: false).
 services:
   - type: web
     name: painel-disparos
@@ -13,11 +13,16 @@ services:
     healthCheckPath: /healthz
     autoDeploy: true
     envVars:
-      - key: AIRTABLE_TOKEN
+      # Armazenamento: "sheets" (Google Planilhas) ou "airtable"
+      - key: DATA_BACKEND
+        value: sheets
+      # ID da planilha (trecho da URL entre /d/ e /edit)
+      - key: GOOGLE_SHEET_ID
         sync: false
-      - key: AIRTABLE_BASE_ID
+      # Conteúdo completo do arquivo JSON da chave da conta de serviço
+      - key: GOOGLE_SERVICE_ACCOUNT_JSON
         sync: false
-      - key: AIRTABLE_TABLE_NAME
+      - key: GOOGLE_SHEET_TAB
         value: Disparos
       - key: PORT
         value: "8080"

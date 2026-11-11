@@ -1,12 +1,16 @@
 # Painel de Disparos
 
-Painel operacional de disparos (Flask + Airtable), com atualização em tempo real via SSE.
+Painel operacional de disparos (Flask + Google Planilhas), com atualização em tempo real via SSE.
+O Airtable continua disponível como alternativa (`DATA_BACKEND=airtable`).
 
 ## Estrutura
 
 ```
 backend/
-├── app.py                     # API Flask (Airtable, SSE)
+├── app.py                     # API Flask (rotas, validação, SSE)
+├── storage/                   # camada de dados
+│   ├── sheets_store.py        # Google Planilhas
+│   └── airtable_store.py      # Airtable
 ├── requirements.txt
 ├── templates/
 │   └── index.html             # apenas a marcação das telas
@@ -48,15 +52,25 @@ backend/
 
 ```bash
 pip install -r backend/requirements.txt
-AIRTABLE_TOKEN=... AIRTABLE_BASE_ID=... python backend/app.py
+DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave.json)" python backend/app.py
 ```
+
+## Google Planilhas
+
+- Crie uma conta de serviço no Google Cloud (com a **Google Sheets API** ativada) e baixe a chave JSON.
+- Compartilhe a planilha com o e-mail da conta de serviço como **Editor**.
+- A aba `Disparos` e o cabeçalho são criados automaticamente se não existirem. Colunas:
+  `ID, Tipo, Tempo, Potes, Volume, Horário, Status, Template, AtualizadoEm, Data, Tags, Tipo Disparo`.
+- As colunas são localizadas pelo nome, então podem ser reordenadas. **Não apague nem renomeie a coluna `ID`.**
+- Linhas digitadas à mão sem ID recebem um ID automaticamente.
+- Datas: `AAAA-MM-DD` ou `dd/mm/aaaa`. O painel atualiza a cada ~10 s (`SNAPSHOT_TTL`).
 
 ## Deploy (Render)
 
 O deploy é feito no [Render](https://render.com) usando o `Dockerfile` e o blueprint `render.yaml`.
 
 1. No Render: **New → Blueprint** e selecione este repositório.
-2. Informe `AIRTABLE_TOKEN` e `AIRTABLE_BASE_ID` quando forem pedidos.
+2. Informe `GOOGLE_SHEET_ID` e `GOOGLE_SERVICE_ACCOUNT_JSON` quando forem pedidos.
 3. A cada push na branch configurada o Render faz o deploy automaticamente (`autoDeploy`).
 
 Plano e região ficam no `render.yaml` (`plan: free` dorme após ~15 min sem acesso; use `starter` para ficar sempre ligado).
