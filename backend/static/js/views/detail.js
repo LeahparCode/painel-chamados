@@ -2,9 +2,10 @@
 import { HORARIOS, TIPOS } from "../core/config.js";
 import { subscribe, findRecord } from "../core/state.js";
 import { statusKey, costOf, remainingMs, dayOf } from "../core/records.js";
-import { fmtInt, fmtMoney, fmtTempo, fmtRemaining, capitalize } from "../core/format.js";
+import { fmtInt, fmtMoney, fmtTempo, fmtRemaining, capitalize, escapeHtml } from "../core/format.js";
 import { fmtLong } from "../core/dates.js";
-import { fraseByKey, fillFraseSelect, templateLabel, smsParts } from "../core/frases.js";
+import { fraseByKey, fillFraseSelect, templateLabel, smsParts, chipClass } from "../core/frases.js";
+import { openTemplateEditor } from "./template-editor.js";
 import { saveRecord, setStatus, removeRecord } from "../core/actions.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { toast } from "../ui/toast.js";
@@ -26,11 +27,11 @@ function fillSelect(select, options, emptyLabel, current){
 export function phraseMetaHtml(frase){
   if (!frase) return "";
   const len = [...frase.texto].length;
-  const parts = frase.canal === "SMS" ? smsParts(frase.texto) : 0;
+  const parts = frase.tipo === "SMS" || frase.tipo === "RCS" ? smsParts(frase.texto) : 0;
   return [
-    `<span class="chip chip-brand">#${String(frase.id).padStart(2, "0")}</span>`,
-    `<span class="chip">${frase.tom}</span>`,
-    `<span class="chip ${frase.canal === "SMS" ? "chip-sms" : "chip-wpp"}">${frase.canal}</span>`,
+    `<span class="chip ${frase.custom ? "chip-own" : "chip-brand"}">${escapeHtml(frase.code)}</span>`,
+    `<span class="chip">${escapeHtml(frase.custom ? frase.name : frase.tom)}</span>`,
+    `<span class="chip ${chipClass(frase.tipo)}">${escapeHtml(frase.tipo)}</span>`,
     `<span class="chip ${parts > 1 ? "chip-warn" : ""}">${len} caract.${parts ? ` · ${parts} SMS` : ""}</span>`,
   ].join("");
 }
@@ -39,7 +40,7 @@ function renderPhrase(templateKey){
   const frase = fraseByKey(templateKey);
   const text = $("dPhrase");
   $("dPhraseMeta").innerHTML = frase ? phraseMetaHtml(frase) : `<span class="chip">${templateLabel(templateKey)}</span>`;
-  text.textContent = frase ? frase.texto : "Nenhuma frase Safra associada a este disparo.";
+  text.textContent = frase ? frase.texto : "Nenhuma frase associada a este disparo.";
   text.classList.toggle("is-empty", !frase);
   $("dCopy").disabled = !frase;
 }
@@ -79,11 +80,13 @@ function fillForm(r){
   $("eData").value = dayOf(r) || "";
   fillSelect($("eHorario"), HORARIOS, null, r.horario || HORARIOS[0]);
   fillSelect($("eTipo"), TIPOS, "Sem tipo", r.tipoDisparo || "");
-  const tplSelect = $("eTemplate");
-  fillFraseSelect(tplSelect);
-  const tpl = (r.template || "").trim();
-  if (tpl && !fraseByKey(tpl)) tplSelect.append(new Option(`${tpl} (antigo)`, tpl));
-  tplSelect.value = tpl;
+  fillFraseSelect($("eTemplate"), { tipo: r.tipoDisparo || "", current: (r.template || "").trim() });
+}
+
+/** Ao trocar o tipo na edição, a lista de frases passa a mostrar as daquele tipo. */
+function refreshEditFrases(select){
+  fillFraseSelect($("eTemplate"), { tipo: $("eTipo").value, current: select ?? $("eTemplate").value });
+  renderPhrase($("eTemplate").value);
 }
 
 export function openDetail(id){
@@ -111,6 +114,13 @@ export function initDetail(){
   });
 
   $("eTemplate").addEventListener("change", (e) => renderPhrase(e.target.value));
+  $("eTipo").addEventListener("change", () => refreshEditFrases());
+  document.querySelector('[data-new-template="e"]').addEventListener("click", () => {
+    openTemplateEditor({
+      tipo: $("eTipo").value,
+      onSaved: (t) => { fillSelect($("eTipo"), TIPOS, "Sem tipo", t.tipo); refreshEditFrases(t.id); },
+    });
+  });
 
   $("dEditForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -158,6 +168,7 @@ export function initDetail(){
 
   // Mantém o modal sincronizado com atualizações em tempo real
   subscribe((_, reason) => {
+    if (reason === "templates" && currentId){ refreshEditFrases(); return; }
     if (reason !== "records" || !currentId) return;
     const r = findRecord(currentId);
     if (!r){ closeModal(modal()); return; }

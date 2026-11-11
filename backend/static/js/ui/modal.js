@@ -27,6 +27,8 @@ export function initModals(){
     });
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") document.querySelectorAll(".modal.is-open").forEach(closeModal);
+    if (e.key !== "Escape") return;
+    const open = [...document.querySelectorAll(".modal.is-open")];
+    if (open.length) closeModal(open[open.length - 1]);
   });
 }

@@ -3,7 +3,7 @@ import { state, subscribe, setView, findRecord } from "../core/state.js";
 import { boardDaysOf, scopeOf, groupByDay, summarize, statusKey, costOf, remainingMs, byHorario } from "../core/records.js";
 import { todayISO, weekdayIndex, fmtDate, fmtShort } from "../core/dates.js";
 import { fmtInt, fmtMoney, fmtMoneyCompact, fmtTempo, fmtRemaining, escapeHtml, capitalize } from "../core/format.js";
-import { fraseByKey } from "../core/frases.js";
+import { fraseByKey, chipClass } from "../core/frases.js";
 import { moveToDay, setStatus } from "../core/actions.js";
 import { toast } from "../ui/toast.js";
 
@@ -24,7 +24,7 @@ const autoFinalized = new Set();
 function cardHtml(r){
   const key = statusKey(r.status);
   const frase = fraseByKey(r.template);
-  const title = r.tipo || (frase ? `Safra #${String(frase.id).padStart(2, "0")} · ${frase.tom}` : "(sem nome)");
+  const title = r.tipo || (frase ? frase.name : "(sem nome)");
   const ms = remainingMs(r);
   const showCountdown = key === "run" && ms !== null;
   const meta = [
@@ -35,7 +35,7 @@ function cardHtml(r){
       : (r.tempo ? `<span>Tempo <b>${fmtTempo(r.tempo)}</b></span>` : ""),
   ].join("");
   const pills = [
-    frase ? `<span class="chip ${frase.canal === "SMS" ? "chip-sms" : "chip-wpp"}">#${String(frase.id).padStart(2, "0")} ${frase.canal}</span>` : "",
+    frase ? `<span class="chip ${frase.custom ? "chip-own" : chipClass(frase.canal)}">${escapeHtml(frase.custom ? "Próprio" : `${frase.code} ${frase.canal}`)}</span>` : "",
     r.tipoDisparo ? `<span class="chip chip-brand">${escapeHtml(r.tipoDisparo)}</span>` : "",
   ].join("");
   const time = escapeHtml(r.horario || "--:--");
@@ -225,7 +225,7 @@ export function initBoard(opts){
   boardEl = document.getElementById("board");
   handlers = { ...handlers, ...opts };
   bindEvents();
-  subscribe((_, reason) => { if (reason === "records" || reason === "view" || reason === "day") renderBoard(); });
+  subscribe((_, reason) => { if (reason === "records" || reason === "view" || reason === "day" || reason === "templates") renderBoard(); });
   setInterval(tick, 1000);
   renderBoard();
 }

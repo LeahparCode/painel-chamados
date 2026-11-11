@@ -1,9 +1,11 @@
 // Modal "Novo disparo".
 import { HORARIOS, TIPOS, COST_PER_TIPO } from "../core/config.js";
-import { state } from "../core/state.js";
+import { state, subscribe } from "../core/state.js";
 import { costOf } from "../core/records.js";
 import { fmtMoney, escapeHtml } from "../core/format.js";
-import { fraseByKey, fillFraseSelect } from "../core/frases.js";
+import { fraseByKey, fillFraseSelect, fraseFitsTipo } from "../core/frases.js";
+import { fetchTemplates } from "../core/api.js";
+import { openTemplateEditor } from "./template-editor.js";
 import { addRecord } from "../core/actions.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { toast } from "../ui/toast.js";
@@ -30,36 +32,50 @@ function updateEstimate(){
   $("nEstimate").textContent = fmtMoney(valor);
 }
 
-/** Abre o formulário. Opções: { day, template } */
-export function openNewForm({ day, template } = {}){
+/** Atualiza a lista de frases conforme o tipo escolhido (só aparecem as daquele tipo). */
+function refreshFrases(select = ""){
+  const tipo = $("nTipo").value;
+  let current = select || $("nTemplate").value;
+  if (current && !fraseFitsTipo(fraseByKey(current), tipo)) current = "";
+  fillFraseSelect($("nTemplate"), { tipo, current });
+  updatePreview();
+}
+
+/** Abre o formulário. Opções: { day, template, tipo } */
+export function openNewForm({ day, template, tipo } = {}){
   const form = $("newForm");
   form.reset();
   $("nData").value = day || state.view.ref;
   $("nHorario").value = HORARIOS[0];
-  $("nTemplate").value = template || "";
-  updatePreview();
+  const frase = fraseByKey(template);
+  $("nTipo").value = tipo || frase?.tipo || "";
+  refreshFrases(template || "");
   updateEstimate();
   openModal($("newModal"));
   setTimeout(() => $("nNome").focus(), 40);
+  fetchTemplates().then(() => refreshFrases()).catch(() => {});
 }
 
 export function initNewForm(){
   fill($("nHorario"), HORARIOS);
   fill($("nTipo"), TIPOS, "Selecione o tipo…");
   [...$("nTipo").options].forEach(o => { if (o.value) o.text = `${o.value} — ${fmtMoney3(COST_PER_TIPO[o.value])} por envio`; });
-  fillFraseSelect($("nTemplate"), { emptyLabel: "Selecione uma frase…" });
+  refreshFrases();
 
-  $("nTemplate").addEventListener("change", () => {
-    updatePreview();
-    // sugere o tipo pelo canal da frase (SMS / WhatsApp) quando ainda não foi escolhido
-    const frase = fraseByKey($("nTemplate").value);
-    if (frase && !$("nTipo").value && COST_PER_TIPO[frase.canal] !== undefined){
-      $("nTipo").value = frase.canal;
-      updateEstimate();
-    }
-  });
+  $("nTemplate").addEventListener("change", updatePreview);
   $("nVolume").addEventListener("input", updateEstimate);
-  $("nTipo").addEventListener("change", updateEstimate);
+  $("nTipo").addEventListener("change", () => { updateEstimate(); refreshFrases(); });
+
+  // escrever um template novo sem sair do cadastro: ao salvar, ele já fica selecionado
+  document.querySelector('[data-new-template="n"]').addEventListener("click", () => {
+    openTemplateEditor({
+      tipo: $("nTipo").value,
+      onSaved: (t) => { $("nTipo").value = t.tipo; updateEstimate(); refreshFrases(t.id); },
+    });
+  });
+
+  // templates criados/alterados (por qualquer pessoa) aparecem na lista
+  subscribe((_, reason) => { if (reason === "templates") refreshFrases(); });
 
   $("newForm").addEventListener("submit", async (e) => {
     e.preventDefault();

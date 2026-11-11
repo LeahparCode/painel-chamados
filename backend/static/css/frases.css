@@ -32,3 +32,13 @@
 @media (max-width: 480px){
   .frases-grid{ grid-template-columns: 1fr; }
 }
+
+/* ---------- templates próprios ---------- */
+.frase.is-own{ border-color: color-mix(in srgb, var(--brand) 35%, var(--border)); }
+.frase-id.is-own{ background: var(--brand-soft); color: var(--brand-text); }
+.frase-name{ font-weight: 800; font-size: 14px; margin: -4px 0 -4px; }
+.frase-actions .icon-btn{ flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; }
+.frase-actions .icon-btn svg{ width: 16px; height: 16px; }
+.frase-actions .icon-btn.danger:hover{ color: var(--err); border-color: color-mix(in srgb, var(--err) 40%, transparent); background: var(--err-soft); }
+.frases-note{ font-size: 13px; color: var(--muted); margin-top: -6px; }
+.frases-empty .btn{ margin-top: 12px; }

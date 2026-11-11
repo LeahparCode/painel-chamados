@@ -4,7 +4,7 @@ import time
 import logging
 import requests
 
-from .base import FIELDS, StoreError, clean_record
+from .base import FIELDS, TEMPLATE_FIELDS, StoreError, clean_record, clean_template
 
 log = logging.getLogger("storage.airtable")
 
@@ -16,8 +16,10 @@ class AirtableStore:
     name = "airtable"
     snapshot_ttl = 6.0
 
-    def __init__(self, token: str, base_id: str, table: str, timeout: int = 12, retries: int = 4):
+    def __init__(self, token: str, base_id: str, table: str, timeout: int = 12, retries: int = 4,
+                 templates_table: str = "Templates"):
         self.api = f"https://api.airtable.com/v0/{base_id}/{requests.utils.quote(table, safe='')}"
+        self.templates_api = f"https://api.airtable.com/v0/{base_id}/{requests.utils.quote(templates_table, safe='')}"
         self.timeout = timeout
         self.retries = retries
         self.http = requests.Session()
@@ -30,7 +32,8 @@ class AirtableStore:
         if not token or not base_id:
             raise RuntimeError("Configure AIRTABLE_TOKEN e AIRTABLE_BASE_ID para usar o Airtable.")
         return cls(token, base_id, os.getenv("AIRTABLE_TABLE_NAME", "Disparos"),
-                   int(os.getenv("AIRTABLE_TIMEOUT", "12")), int(os.getenv("AIRTABLE_MAX_RETRIES", "4")))
+                   int(os.getenv("AIRTABLE_TIMEOUT", "12")), int(os.getenv("AIRTABLE_MAX_RETRIES", "4")),
+                   os.getenv("AIRTABLE_TEMPLATES_TABLE", "Templates"))
 
     # ---------- HTTP ----------
     def _request(self, method, url, **kwargs):
@@ -95,3 +98,38 @@ class AirtableStore:
 
     def delete(self, rid: str):
         self._request("DELETE", f"{self.api}/{rid}")
+
+    # ---------- templates (tabela "Templates" com os campos Nome, Tipo e Texto) ----------
+    @staticmethod
+    def _normalize_template(rec):
+        f = rec.get("fields", {}) or {}
+        out = {k: f.get(field, "") for k, field in TEMPLATE_FIELDS}
+        out["id"] = rec.get("id")
+        out["atualizadoEm"] = rec.get("createdTime", "") if not out.get("atualizadoEm") else out["atualizadoEm"]
+        return clean_template(out)
+
+    @staticmethod
+    def _template_fields(data: dict) -> dict:
+        names = {k: f for k, f in TEMPLATE_FIELDS if k in ("nome", "tipo", "texto")}
+        return {names[k]: v for k, v in data.items() if k in names}
+
+    def list_templates(self):
+        records, params = [], {"pageSize": 100}
+        while True:
+            payload = self._request("GET", self.templates_api, params=params)
+            records.extend(payload.get("records", []))
+            if "offset" not in payload:
+                break
+            params["offset"] = payload["offset"]
+        return [self._normalize_template(r) for r in records]
+
+    def create_template(self, data: dict):
+        rec = self._request("POST", self.templates_api, json={"fields": self._template_fields(data)}, params={"typecast": "true"})
+        return self._normalize_template(rec)
+
+    def update_template(self, tid: str, patch: dict):
+        rec = self._request("PATCH", f"{self.templates_api}/{tid}", json={"fields": self._template_fields(patch)}, params={"typecast": "true"})
+        return self._normalize_template(rec)
+
+    def delete_template(self, tid: str):
+        self._request("DELETE", f"{self.templates_api}/{tid}")

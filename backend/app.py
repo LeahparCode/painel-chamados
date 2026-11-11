@@ -210,6 +210,82 @@ def delete_disparo(rid):
     return jsonify({"deleted": True, "id": rid})
 
 
+# ---- Templates personalizados ----
+_TPL_CACHE = {"data": None, "ts": 0.0}
+_TPL_TTL = 10.0
+TEMPLATE_MAX_NOME, TEMPLATE_MAX_TEXTO = 80, 4000
+
+
+def _parse_template(b: dict, partial: bool):
+    out = {}
+    if "nome" in b or not partial:
+        nome = " ".join(str(b.get("nome") or "").split())
+        if not nome or len(nome) > TEMPLATE_MAX_NOME:
+            return None, (jsonify({"error": "invalid_nome", "message": f"Dê um nome ao template (até {TEMPLATE_MAX_NOME} caracteres)."}), 400)
+        out["nome"] = nome
+    if "tipo" in b or not partial:
+        tipo = str(b.get("tipo") or "").strip()
+        if tipo not in VALID_TIPO_DISPARO:
+            return None, (jsonify({"error": "invalid_tipo", "message": "Escolha o tipo: " + ", ".join(sorted(VALID_TIPO_DISPARO))}), 400)
+        out["tipo"] = tipo
+    if "texto" in b or not partial:
+        texto = str(b.get("texto") or "").replace("\r\n", "\n").strip()
+        if not texto or len(texto) > TEMPLATE_MAX_TEXTO:
+            return None, (jsonify({"error": "invalid_texto", "message": f"Escreva o texto do template (até {TEMPLATE_MAX_TEXTO} caracteres)."}), 400)
+        out["texto"] = texto
+    return out, None
+
+
+@app.get("/api/templates")
+def list_templates():
+    if _TPL_CACHE["data"] is not None and time.time() - _TPL_CACHE["ts"] < _TPL_TTL:
+        return jsonify(_TPL_CACHE["data"])
+    try:
+        data = get_store().list_templates()
+    except StoreError as e:
+        return _store_error_response(e)
+    _TPL_CACHE.update(data=data, ts=time.time())
+    return jsonify(data)
+
+
+@app.post("/api/templates")
+def create_template():
+    data, err = _parse_template(request.json or {}, partial=False)
+    if err:
+        return err
+    try:
+        rec = get_store().create_template(data)
+    except StoreError as e:
+        return _store_error_response(e)
+    _TPL_CACHE["data"] = None
+    return jsonify(rec), 201
+
+
+@app.patch("/api/templates/<tid>")
+def update_template(tid):
+    data, err = _parse_template(request.json or {}, partial=True)
+    if err:
+        return err
+    if not data:
+        return jsonify({"error": "empty_update"}), 400
+    try:
+        rec = get_store().update_template(tid, data)
+    except StoreError as e:
+        return _store_error_response(e)
+    _TPL_CACHE["data"] = None
+    return jsonify(rec)
+
+
+@app.delete("/api/templates/<tid>")
+def delete_template(tid):
+    try:
+        get_store().delete_template(tid)
+    except StoreError as e:
+        return _store_error_response(e)
+    _TPL_CACHE["data"] = None
+    return jsonify({"deleted": True, "id": tid})
+
+
 # ---- Exportação ----
 @app.post("/api/export/xlsx")
 def export_xlsx():

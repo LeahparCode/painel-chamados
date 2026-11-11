@@ -56,7 +56,7 @@
         </button>
         <button class="nav-item" type="button" data-view="frases">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 8h8M8 12h5"/></svg>
-          <span>Frases Safra</span>
+          <span>Frases</span>
         </button>
         <button class="nav-item" type="button" data-view="exportar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
@@ -226,26 +226,39 @@
       <section class="view" id="view-frases" data-view-panel="frases" hidden>
         <header class="page-head">
           <div class="page-title">
-            <h1>Frases Safra</h1>
-            <p id="frasesCount">Fraseologia disponível para os disparos</p>
+            <h1>Frases e templates</h1>
+            <p id="frasesCount">Fraseologia Safra e templates próprios</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" type="button" id="btnNewTemplate">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              Novo template
+            </button>
           </div>
         </header>
 
         <div class="toolbar">
           <label class="search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-            <input type="search" id="frasesSearch" placeholder="Buscar por texto, tom ou nº…" />
+            <input type="search" id="frasesSearch" placeholder="Buscar por texto, nome, tom ou nº…" />
           </label>
-          <div class="segmented" id="frasesCanal">
-            <button type="button" data-canal="" class="is-active">Todos</button>
-            <button type="button" data-canal="SMS">SMS</button>
-            <button type="button" data-canal="WhatsApp">WhatsApp</button>
+          <div class="segmented" id="frasesTipo" aria-label="Tipo do disparo">
+            <button type="button" data-tipo="" class="is-active">Todos</button>
+            <button type="button" data-tipo="SMS">SMS</button>
+            <button type="button" data-tipo="RCS">RCS</button>
+            <button type="button" data-tipo="WhatsApp">WhatsApp</button>
+          </div>
+          <div class="segmented" id="frasesOrigem" aria-label="Origem">
+            <button type="button" data-origem="" class="is-active">Todas</button>
+            <button type="button" data-origem="proprios">Meus templates</button>
+            <button type="button" data-origem="safra">Safra</button>
           </div>
           <label class="select-pill">
             <span>Tom</span>
             <select id="frasesTom"><option value="">Todos</option></select>
           </label>
         </div>
+        <p class="frases-note" id="frasesNote" hidden></p>
 
         <div class="frases-grid" id="frasesGrid"></div>
       </section>
@@ -385,7 +398,11 @@
           <label class="field"><span>Data</span><input type="date" id="eData" required /></label>
           <label class="field"><span>Horário</span><select id="eHorario"></select></label>
           <label class="field field-2"><span>Tipo (define o valor)</span><select id="eTipo"></select></label>
-          <label class="field field-2"><span>Frase</span><select id="eTemplate"></select></label>
+          <div class="field field-2">
+            <div class="field-label-row"><label for="eTemplate">Frase</label><button type="button" class="link-btn" data-new-template="e">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Escrever template</button></div>
+            <select id="eTemplate"></select>
+          </div>
           <div class="field-full edit-actions">
             <button type="button" class="btn btn-danger-ghost" id="dDelete">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
@@ -426,10 +443,14 @@
         <label class="field field-full"><span>Nome do disparo</span><input type="text" id="nNome" placeholder="Ex.: Lote preventivo manhã" /></label>
         <label class="field"><span>Data</span><input type="date" id="nData" required /></label>
         <label class="field"><span>Horário</span><select id="nHorario"></select></label>
-        <label class="field field-full"><span>Frase Safra</span><select id="nTemplate"></select></label>
-        <div class="field-full phrase-preview" id="nPreview" hidden></div>
         <label class="field"><span>Tipo (define o valor)</span><select id="nTipo" required></select></label>
         <label class="field"><span>Volume (qtd.)</span><input type="number" id="nVolume" min="0" placeholder="Ex.: 1200" /></label>
+        <div class="field field-full">
+          <div class="field-label-row"><label for="nTemplate">Frase</label><button type="button" class="link-btn" data-new-template="n">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Escrever template</button></div>
+          <select id="nTemplate"></select>
+        </div>
+        <div class="field-full phrase-preview" id="nPreview" hidden></div>
         <label class="field"><span>Potes</span><input type="number" id="nPotes" min="0" placeholder="0" /></label>
         <div class="field">
           <span>Tempo médio</span>
@@ -448,6 +469,50 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             Adicionar disparo
           </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: TEMPLATE PRÓPRIO ===================== -->
+  <div class="modal" id="tplModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tTitle">
+      <header class="modal-head">
+        <div>
+          <span class="eyebrow">Template próprio</span>
+          <h2 id="tTitle">Novo template</h2>
+          <p>Fica salvo na planilha e aparece para todos ao escolher o tipo do disparo.</p>
+        </div>
+        <button class="icon-btn" type="button" data-close aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <form class="modal-body form-grid" id="tplForm" novalidate>
+        <label class="field"><span>Nome do template</span><input type="text" id="tNome" maxlength="80" placeholder="Ex.: Lembrete de vencimento" /></label>
+        <label class="field"><span>Tipo</span><select id="tTipo"></select></label>
+        <div class="field field-full">
+          <div class="field-label-row">
+            <label for="tTexto">Texto da mensagem</label>
+            <span class="tpl-count" id="tCount">0 caracteres</span>
+          </div>
+          <textarea id="tTexto" rows="8" maxlength="4000" placeholder="Escreva a mensagem que será enviada…"></textarea>
+          <div class="tpl-vars">
+            <span>Inserir:</span>
+            <button type="button" class="chip" data-var="[NOME]">[NOME]</button>
+            <button type="button" class="chip" data-var="[VALOR]">[VALOR]</button>
+            <button type="button" class="chip" data-var="[VENCIMENTO]">[VENCIMENTO]</button>
+            <button type="button" class="chip" data-var="0800 604 4500">0800</button>
+            <button type="button" class="chip" data-var="WhatsApp (31) 99457-0744">WhatsApp</button>
+          </div>
+        </div>
+        <div class="field-full form-actions">
+          <button type="button" class="btn btn-danger-ghost" id="tDelete" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+            Excluir
+          </button>
+          <span class="spacer"></span>
+          <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="tSave">Salvar template</button>
         </div>
       </form>
     </div>
