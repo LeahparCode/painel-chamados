@@ -34,7 +34,6 @@ function cardHtml(r){
   ].join("");
   const pills = [
     frase ? `<span class="chip ${frase.canal === "SMS" ? "chip-sms" : "chip-wpp"}">#${String(frase.id).padStart(2, "0")} ${frase.canal}</span>` : "",
-    r.tag ? `<span class="chip">${escapeHtml(r.tag)}</span>` : "",
     r.tipoDisparo ? `<span class="chip chip-brand">${escapeHtml(r.tipoDisparo)}</span>` : "",
   ].join("");
   const time = escapeHtml(r.horario || "--:--");

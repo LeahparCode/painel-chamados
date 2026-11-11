@@ -10,18 +10,11 @@ from storage import create_store, backend_name, StoreError
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 log = logging.getLogger("app")
 
-VALID_TAGS = {
-    "Vendas",
-    "Conciliação",
-    "SAC",
-    "Recup de Crédito",
-}
-
+# Tipos de disparo aceitos (o valor de cada envio fica em static/js/core/config.js → COST_PER_TIPO)
 VALID_TIPO_DISPARO = {
-    "Marketing",
-    "Marketing Lite",
-    "Utilidade",
-    "Autenticação",
+    "SMS",
+    "RCS",
+    "WhatsApp",
 }
 
 VALID_STATUS = {"Em andamento", "Finalizado", "Insucesso"}
@@ -132,12 +125,12 @@ def _parse_fields(b: dict, partial: bool):
             return None, (jsonify({"error": "invalid_status"}), 400)
         fields["status"] = status
 
-    for key, valid, err in (("tag", VALID_TAGS, "invalid_tag"), ("tipoDisparo", VALID_TIPO_DISPARO, "invalid_tipo_disparo")):
-        if key in b or not partial:
-            value = (b.get(key) or "").strip()
-            if value and value not in valid:
-                return None, (jsonify({"error": err}), 400)
-            fields[key] = value
+    if "tipoDisparo" in b or not partial:
+        tipo = (b.get("tipoDisparo") or "").strip()
+        if tipo not in VALID_TIPO_DISPARO and (tipo or not partial):
+            return None, (jsonify({"error": "invalid_tipo_disparo",
+                                   "message": "Escolha o tipo do disparo: " + ", ".join(sorted(VALID_TIPO_DISPARO))}), 400)
+        fields["tipoDisparo"] = tipo
 
     for key in ("tipo", "template"):
         if key in b or not partial:

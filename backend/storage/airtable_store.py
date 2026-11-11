@@ -71,7 +71,7 @@ class AirtableStore:
         fields = {}
         for k, v in data.items():
             if k in _KEY_TO_FIELD:
-                fields[_KEY_TO_FIELD[k]] = None if v == "" and k in ("tag", "tipoDisparo") else v
+                fields[_KEY_TO_FIELD[k]] = None if v == "" and k == "tipoDisparo" else v
         return fields
 
     # ---------- API ----------

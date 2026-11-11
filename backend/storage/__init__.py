@@ -6,7 +6,7 @@ Escolha o armazenamento pela variável DATA_BACKEND:
 
 Todas as implementações trabalham com registros "normalizados" (dicts com as chaves
 usadas pelo front-end: id, tipo, tempo, potes, volume, horario, status, template,
-atualizadoEm, data, tag, tipoDisparo).
+atualizadoEm, data, tipoDisparo).
 """
 import os
 import logging
