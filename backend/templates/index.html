@@ -386,13 +386,20 @@
           <div><span>Volume</span><b id="dVolume">—</b></div>
           <div><span>Valor estimado</span><b id="dValor">—</b></div>
           <div><span>Potes</span><b id="dPotes">—</b></div>
-          <div><span>Tempo médio</span><b id="dTempo">—</b></div>
+          <div class="info-editable" id="dTempoTile" role="button" tabindex="0" title="Editar tempo médio"><span>Tempo médio</span><b id="dTempo">—</b></div>
           <div><span>Restante</span><b id="dRestante">—</b></div>
           <div><span>Atualizado</span><b id="dAtualizado">—</b></div>
         </div>
 
-        <form class="edit-grid" id="dEditForm">
-          <label class="field field-full"><span>Nome do disparo</span><input type="text" id="eNome" /></label>
+        <form class="edit-grid" id="dEditForm" novalidate>
+          <label class="field field-2"><span>Nome do disparo</span><input type="text" id="eNome" /></label>
+          <div class="field field-2">
+            <span>Tempo médio (duração)</span>
+            <div class="time-input" id="eTempoBox">
+              <input type="number" id="eHoras" min="0" max="99" placeholder="0" aria-label="Horas" /><em>h</em>
+              <input type="number" id="eMinutos" min="0" max="59" placeholder="00" aria-label="Minutos" /><em>min</em>
+            </div>
+          </div>
           <label class="field"><span>Volume</span><input type="number" id="eVolume" min="0" /></label>
           <label class="field"><span>Potes</span><input type="number" id="ePotes" min="0" /></label>
           <label class="field"><span>Data</span><input type="date" id="eData" required /></label>
