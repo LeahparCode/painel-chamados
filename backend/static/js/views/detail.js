@@ -75,6 +75,9 @@ function renderRemaining(r){
 
 function fillForm(r){
   $("eNome").value = r.tipo || "";
+  const tempo = Math.max(0, Number(r.tempo) || 0);
+  $("eHoras").value = Math.floor(tempo / 60);
+  $("eMinutos").value = String(tempo % 60).padStart(2, "0");
   $("eVolume").value = r.volume ?? "";
   $("ePotes").value = r.potes ?? "";
   $("eData").value = dayOf(r) || "";
@@ -114,6 +117,11 @@ export function initDetail(){
   });
 
   $("eTemplate").addEventListener("change", (e) => renderPhrase(e.target.value));
+
+  // clicar no quadro "Tempo médio" leva direto para o campo de edição
+  const focusTempo = () => { $("eTempoBox").scrollIntoView({ block: "center", behavior: "smooth" }); setTimeout(() => $("eHoras").select(), 250); };
+  $("dTempoTile").addEventListener("click", focusTempo);
+  $("dTempoTile").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); focusTempo(); } });
   $("eTipo").addEventListener("change", () => refreshEditFrases());
   document.querySelector('[data-new-template="e"]').addEventListener("click", () => {
     openTemplateEditor({
@@ -126,8 +134,16 @@ export function initDetail(){
     e.preventDefault();
     const r = findRecord(currentId);
     if (!r) return;
+    let horas = parseInt($("eHoras").value || "0", 10);
+    let minutos = parseInt($("eMinutos").value || "0", 10);
+    horas = Number.isNaN(horas) ? 0 : horas;
+    minutos = Number.isNaN(minutos) ? 0 : minutos;
+    if (horas < 0 || minutos < 0 || minutos > 59){ toast("Tempo inválido: minutos entre 0 e 59.", "warn"); $("eMinutos").focus(); return; }
+    const tempo = horas * 60 + minutos;
+    if (tempo <= 0){ toast("Informe um tempo médio maior que zero.", "warn"); $("eHoras").focus(); return; }
     const next = {
       tipo: $("eNome").value.trim(),
+      tempo,
       volume: Number($("eVolume").value || 0),
       potes: Number($("ePotes").value || 0),
       data: $("eData").value,
