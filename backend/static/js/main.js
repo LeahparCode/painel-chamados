@@ -10,6 +10,7 @@ import { initDetail, openDetail } from "./views/detail.js";
 import { initNewForm, openNewForm } from "./views/new-form.js";
 import { initFrases } from "./views/frases.js";
 import { initDashboard, setDashboardVisible } from "./views/dashboard.js";
+import { initExport, setExportVisible } from "./views/export.js";
 
 /* ---------- navegação entre telas ---------- */
 function switchView(name){
@@ -17,6 +18,7 @@ function switchView(name){
   document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("is-active", b.dataset.view === name));
   document.querySelectorAll("[data-view-panel]").forEach(s => { s.hidden = s.dataset.viewPanel !== name; });
   setDashboardVisible(name === "dashboard");
+  setExportVisible(name === "exportar");
   try{ history.replaceState(null, "", `#${name}`); }catch{}
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -51,10 +53,11 @@ initDetail();
 initNewForm();
 initFrases({ onUse: (template) => openNewForm({ template }) });
 initDashboard();
+initExport();
 
 document.querySelectorAll(".nav-item").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
 const initial = (location.hash || "").replace("#", "");
-switchView(["painel", "dashboard", "frases"].includes(initial) ? initial : "painel");
+switchView(["painel", "dashboard", "frases", "exportar"].includes(initial) ? initial : "painel");
 
 subscribe((_, reason) => {
   if (reason === "connection") renderConnection();

@@ -26,6 +26,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/board.css') }}?v={{ asset_version }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v={{ asset_version }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/frases.css') }}?v={{ asset_version }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/export.css') }}?v={{ asset_version }}" />
 </head>
 <body>
   <div id="splash" class="splash" aria-hidden="true"><div class="splash-mark"><span></span><span></span><span></span></div></div>
@@ -56,6 +57,10 @@
         <button class="nav-item" type="button" data-view="frases">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 8h8M8 12h5"/></svg>
           <span>Frases Safra</span>
+        </button>
+        <button class="nav-item" type="button" data-view="exportar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+          <span>Exportar</span>
         </button>
       </nav>
 
@@ -243,6 +248,100 @@
         </div>
 
         <div class="frases-grid" id="frasesGrid"></div>
+      </section>
+
+      <!-- ========== EXPORTAR ========== -->
+      <section class="view" id="view-exportar" data-view-panel="exportar" hidden>
+        <header class="page-head">
+          <div class="page-title">
+            <h1>Exportar</h1>
+            <p id="expLabel">Escolha o período, os filtros e o formato</p>
+          </div>
+        </header>
+
+        <div class="toolbar">
+          <div class="segmented" id="expPresets">
+            <button type="button" data-preset="hoje">Hoje</button>
+            <button type="button" data-preset="semana">Semana</button>
+            <button type="button" data-preset="mes" class="is-active">Mês</button>
+            <button type="button" data-preset="mes-anterior">Mês anterior</button>
+          </div>
+          <label class="date-pill"><span>De</span><input type="date" id="expFrom" /></label>
+          <label class="date-pill"><span>Até</span><input type="date" id="expTo" /></label>
+          <label class="select-pill"><span>Tipo</span><select id="expTipo"><option value="">Todos</option></select></label>
+          <label class="select-pill"><span>Status</span><select id="expStatus"><option value="">Todos</option></select></label>
+        </div>
+
+        <section class="dash-kpis export-kpis" id="expKpis" aria-live="polite"></section>
+
+        <div class="export-grid">
+          <article class="export-card">
+            <span class="export-ico ico-xlsx" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>
+            </span>
+            <div class="export-body">
+              <h3>Planilha Excel</h3>
+              <p>Arquivo <b>.xlsx</b> formatado, pronto para análise.</p>
+              <ul>
+                <li>Aba <b>Resumo</b> com os totais</li>
+                <li>Abas <b>Por tipo</b> e <b>Por dia</b></li>
+                <li>Aba <b>Disparos</b> com todos os detalhes e a frase</li>
+              </ul>
+            </div>
+            <button type="button" class="btn btn-primary" data-export="xlsx">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+              Baixar Excel
+            </button>
+          </article>
+
+          <article class="export-card">
+            <span class="export-ico ico-csv" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
+            </span>
+            <div class="export-body">
+              <h3>CSV</h3>
+              <p>Arquivo <b>.csv</b> simples, para importar em outros sistemas.</p>
+              <ul>
+                <li>Uma linha por disparo</li>
+                <li>Separado por ponto e vírgula</li>
+                <li>Abre no Excel e no Google Planilhas</li>
+              </ul>
+            </div>
+            <button type="button" class="btn btn-soft" data-export="csv">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+              Baixar CSV
+            </button>
+          </article>
+
+          <article class="export-card">
+            <span class="export-ico ico-pdf" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>
+            </span>
+            <div class="export-body">
+              <h3>Relatório PDF</h3>
+              <p>Relatório para <b>imprimir</b> ou <b>salvar em PDF</b>.</p>
+              <ul>
+                <li>Indicadores do período</li>
+                <li>Totais por tipo e por dia</li>
+                <li>Lista de disparos</li>
+              </ul>
+            </div>
+            <button type="button" class="btn btn-soft" data-export="pdf">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg>
+              Gerar relatório
+            </button>
+          </article>
+        </div>
+
+        <article class="panel export-preview">
+          <div class="preview-head">
+            <h3>Prévia</h3>
+            <span id="expCount"></span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="expTable"></table>
+          </div>
+        </article>
       </section>
 
       <footer class="footer">Desenvolvido por Leahpar Code &copy; 2025</footer>
