@@ -51,4 +51,14 @@ pip install -r backend/requirements.txt
 AIRTABLE_TOKEN=... AIRTABLE_BASE_ID=... python backend/app.py
 ```
 
+## Deploy (Render)
+
+O deploy é feito no [Render](https://render.com) usando o `Dockerfile` e o blueprint `render.yaml`.
+
+1. No Render: **New → Blueprint** e selecione este repositório.
+2. Informe `AIRTABLE_TOKEN` e `AIRTABLE_BASE_ID` quando forem pedidos.
+3. A cada push na branch configurada o Render faz o deploy automaticamente (`autoDeploy`).
+
+Plano e região ficam no `render.yaml` (`plan: free` dorme após ~15 min sem acesso; use `starter` para ficar sempre ligado).
+
 > O login foi removido temporariamente — todas as rotas de escrita estão abertas.

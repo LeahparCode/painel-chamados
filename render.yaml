@@ -1,0 +1,23 @@
+# Blueprint do Render — https://render.com/docs/blueprint-spec
+# No painel do Render: New → Blueprint → selecione este repositório.
+# Os valores de AIRTABLE_TOKEN e AIRTABLE_BASE_ID são pedidos na criação (sync: false).
+services:
+  - type: web
+    name: painel-disparos
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # free = dorme após ~15 min sem acesso (primeiro acesso demora). Troque para "starter" para ficar sempre ligado.
+    plan: free
+    # O Render não tem região no Brasil; Virginia costuma ter a menor latência a partir daqui.
+    region: virginia
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: AIRTABLE_TOKEN
+        sync: false
+      - key: AIRTABLE_BASE_ID
+        sync: false
+      - key: AIRTABLE_TABLE_NAME
+        value: Disparos
+      - key: PORT
+        value: "8080"
