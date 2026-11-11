@@ -1,0 +1,102 @@
+/* ================================================================
+   Tokens de design — cores, raios, sombras e tipografia
+   Tema claro em :root, tema escuro em html.dark
+   ================================================================ */
+:root{
+  --font: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+
+  /* superfícies */
+  --bg: #f4f3f9;
+  --surface: #ffffff;
+  --surface-2: #f7f6fc;
+  --surface-3: #eeecf7;
+  --border: #e4e1f0;
+  --border-strong: #d2cde6;
+
+  /* texto */
+  --text: #181630;
+  --text-2: #48456a;
+  --muted: #807c9e;
+
+  /* marca */
+  --brand: #5b4cf0;
+  --brand-2: #8a5cf6;
+  --brand-600: #4a3bd8;
+  --brand-soft: #eeecfe;
+  --brand-soft-2: #e1ddfd;
+  --brand-ring: rgba(91, 76, 240, .28);
+  --on-brand: #ffffff;
+  --accent: #0ea5b7;
+
+  /* sidebar */
+  --side-bg: #15132a;
+  --side-bg-2: #1d1a38;
+  --side-text: #c9c5e8;
+  --side-muted: #8682ad;
+  --side-active: rgba(255, 255, 255, .08);
+
+  /* status */
+  --run: #e98b12;
+  --run-soft: #fff3e0;
+  --run-ink: #9a5800;
+  --ok: #17a06a;
+  --ok-soft: #e2f6ed;
+  --ok-ink: #0b6b45;
+  --err: #df3b4a;
+  --err-soft: #fde7ea;
+  --err-ink: #a3192a;
+
+  /* forma */
+  --r-xs: 8px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+  --shadow-sm: 0 1px 2px rgba(24, 22, 48, .06), 0 1px 1px rgba(24, 22, 48, .04);
+  --shadow-md: 0 8px 24px -12px rgba(24, 22, 48, .18), 0 2px 6px -2px rgba(24, 22, 48, .06);
+  --shadow-lg: 0 24px 60px -24px rgba(24, 22, 48, .35);
+  --shadow-brand: 0 10px 24px -10px rgba(91, 76, 240, .65);
+
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  color-scheme: light;
+}
+
+html.dark{
+  --bg: #0e0d1a;
+  --surface: #17152a;
+  --surface-2: #1c1a31;
+  --surface-3: #25223f;
+  --border: #2a2745;
+  --border-strong: #3a3660;
+
+  --text: #eceaf9;
+  --text-2: #bcb8da;
+  --muted: #8b87ad;
+
+  --brand: #7b6dfa;
+  --brand-2: #a17cff;
+  --brand-600: #6a5bf0;
+  --brand-soft: rgba(123, 109, 250, .14);
+  --brand-soft-2: rgba(123, 109, 250, .24);
+  --brand-ring: rgba(123, 109, 250, .35);
+  --accent: #22c3d6;
+
+  --side-bg: #0a0914;
+  --side-bg-2: #12101f;
+
+  --run: #f5a33a;
+  --run-soft: rgba(245, 163, 58, .14);
+  --run-ink: #fbc77f;
+  --ok: #2fc489;
+  --ok-soft: rgba(47, 196, 137, .14);
+  --ok-ink: #7fe3b9;
+  --err: #f0596a;
+  --err-soft: rgba(240, 89, 106, .14);
+  --err-ink: #ff9aa6;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-md: 0 10px 28px -14px rgba(0, 0, 0, .7);
+  --shadow-lg: 0 30px 70px -28px rgba(0, 0, 0, .85);
+  --shadow-brand: 0 10px 26px -10px rgba(123, 109, 250, .7);
+  color-scheme: dark;
+}

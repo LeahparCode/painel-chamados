@@ -1,0 +1,32 @@
+/* ================================================================
+   Dashboard — KPIs e gráficos
+   ================================================================ */
+.dash-kpis{ display: grid; gap: 12px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.kpi{
+  padding: 16px; border-radius: var(--r-lg);
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 6px; min-width: 0;
+}
+.kpi span{ font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .09em; }
+.kpi b{ font-size: 24px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi small{ font-size: 12px; color: var(--muted); font-weight: 600; }
+.kpi.kpi-brand b{ color: var(--brand); }
+html.dark .kpi.kpi-brand b{ color: #c5beff; }
+
+.chart-grid{ display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.chart-panel h3{ font-size: 15px; font-weight: 800; letter-spacing: -.01em; margin-bottom: 14px; }
+.chart-box{ position: relative; height: 280px; }
+.chart-box-sm{ height: 260px; }
+.chart-empty{
+  position: absolute; inset: 0; display: grid; place-items: center;
+  color: var(--muted); font-size: 13px; font-weight: 600;
+}
+
+@media (max-width: 1100px){
+  .dash-kpis{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 820px){
+  .chart-grid{ grid-template-columns: 1fr; }
+  .dash-kpis{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chart-box{ height: 240px; }
+}
