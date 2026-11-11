@@ -42,20 +42,6 @@ html.is-public .info-editable::after{ display: none; }
 .login-btn{ white-space: nowrap; }
 .login-btn svg{ width: 15px; height: 15px; }
 
-.public-note{
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  padding: 12px 14px; border-radius: 14px;
-  background: var(--brand-soft); color: var(--text-2); font-size: 13px;
-  border: 1px solid color-mix(in srgb, var(--brand) 25%, transparent);
-}
-.public-note b{ color: var(--text); }
-.public-note > span:nth-child(2){ flex: 1; min-width: 220px; }
-.public-note-ico{
-  width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
-  display: grid; place-items: center; background: var(--surface); color: var(--brand-text);
-}
-.public-note-ico svg{ width: 16px; height: 16px; }
-
 /* ---------- Conta do usuário (rodapé da sidebar) ---------- */
 .user-box{ position: relative; }
 .user-chip{
