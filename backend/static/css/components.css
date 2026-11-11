@@ -31,11 +31,10 @@
   background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, .28) 50%, transparent 80%);
   transform: translateX(-120%); transition: transform .6s var(--ease);
 }
-.btn-primary:hover{ box-shadow: 0 14px 30px -10px rgba(91, 76, 240, .75), inset 0 1px 0 rgba(255, 255, 255, .22); }
+.btn-primary:hover{ box-shadow: 0 14px 30px -10px color-mix(in srgb, var(--brand) 75%, transparent), inset 0 1px 0 rgba(255, 255, 255, .22); }
 .btn-primary:hover::after{ transform: translateX(120%); }
 
-.btn-soft{ --btn-bg: var(--brand-soft); --btn-fg: var(--brand); --btn-bd: transparent; }
-html.dark .btn-soft{ --btn-fg: #c5beff; }
+.btn-soft{ --btn-bg: var(--brand-soft); --btn-fg: var(--brand-text); --btn-bd: transparent; }
 .btn-soft:hover{ --btn-bg: var(--brand-soft-2); }
 
 .btn-ghost{ --btn-bg: transparent; --btn-fg: var(--text-2); --btn-bd: var(--border); }
@@ -72,7 +71,7 @@ html.dark .btn-soft{ --btn-fg: #c5beff; }
 .segmented button:hover{ color: var(--text); }
 .segmented button.is-active{
   background: linear-gradient(135deg, var(--brand), var(--brand-2));
-  color: #fff; box-shadow: 0 6px 14px -6px rgba(91, 76, 240, .7);
+  color: var(--on-brand); box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--brand) 70%, transparent);
 }
 
 /* ---------- Pílulas de data / select ---------- */
@@ -122,10 +121,9 @@ html.dark input[type="date"]::-webkit-calendar-picker-indicator{ filter: invert(
 .field-2{ grid-column: span 2; }
 .estimate b{
   height: 44px; display: flex; align-items: center; padding: 0 14px;
-  border-radius: 12px; background: var(--brand-soft); color: var(--brand);
+  border-radius: 12px; background: var(--brand-soft); color: var(--brand-text);
   font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums;
 }
-html.dark .estimate b{ color: #c5beff; }
 
 /* ---------- Métricas ---------- */
 .metrics{
@@ -163,16 +161,16 @@ html.dark .estimate b{ color: #c5beff; }
 
 /* métrica de valor em destaque */
 .metric-value{
-  color: #fff; border: 0;
+  color: var(--hero-text); border: 0;
   background:
     radial-gradient(260px 160px at 100% 0%, rgba(255, 255, 255, .22), transparent 70%),
-    linear-gradient(135deg, #4a3bd8 0%, #7c4dff 60%, #a35cf6 100%);
-  box-shadow: 0 18px 40px -18px rgba(91, 76, 240, .8);
+    var(--hero-bg);
+  box-shadow: var(--hero-shadow);
 }
 .metric-value .metric-ico{ background: rgba(255, 255, 255, .18); color: #fff; }
 .metric-value .metric-label{ color: rgba(255, 255, 255, .78); }
 .metric-value .metric-foot{ color: rgba(255, 255, 255, .78); }
-.metric-value .metric-foot b{ color: #fff; }
+.metric-value .metric-foot b{ color: var(--hero-text); }
 .metric-value .metric-num{ font-size: clamp(26px, 2.6vw, 36px); }
 
 /* ---------- Painel genérico ---------- */
@@ -200,8 +198,7 @@ html.dark .estimate b{ color: #c5beff; }
   background: var(--surface-3); color: var(--text-2);
   white-space: nowrap;
 }
-.chip-brand{ background: var(--brand-soft); color: var(--brand); }
-html.dark .chip-brand{ color: #c5beff; }
+.chip-brand{ background: var(--brand-soft); color: var(--brand-text); }
 .chip-sms{ background: #e6f6f8; color: #0b7584; }
 .chip-wpp{ background: #e4f7e9; color: #137a3a; }
 html.dark .chip-sms{ background: rgba(34, 195, 214, .14); color: #7fe1ec; }
@@ -236,7 +233,7 @@ html.dark .chip-wpp{ background: rgba(47, 196, 107, .14); color: #8be6ad; }
 }
 .modal-head h2{ font-size: 20px; font-weight: 800; letter-spacing: -.02em; margin-top: 8px; }
 .modal-head p{ color: var(--muted); font-size: 13px; margin-top: 2px; }
-.eyebrow{ font-size: 11px; font-weight: 800; color: var(--brand); text-transform: uppercase; letter-spacing: .12em; }
+.eyebrow{ font-size: 11px; font-weight: 800; color: var(--brand-text); text-transform: uppercase; letter-spacing: .12em; }
 .modal-body{ padding: 20px 22px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 18px; }
 @keyframes fade-in{ from{ opacity: 0; } to{ opacity: 1; } }
 @keyframes modal-in{ from{ opacity: 0; transform: translateY(14px) scale(.98); } to{ opacity: 1; transform: none; } }

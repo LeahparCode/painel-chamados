@@ -11,6 +11,8 @@
         var t = localStorage.getItem("painel_theme");
         if (!t) t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         if (t === "dark") document.documentElement.classList.add("dark");
+        var p = localStorage.getItem("painel_palette");
+        if (p && p !== "violeta") document.documentElement.setAttribute("data-palette", p);
       }catch(e){}
     })();
   </script>
@@ -64,7 +66,22 @@
         </div>
         <div class="sidebar-row">
           <span class="live" id="liveStatus" data-state="connecting"><i></i><span>Conectando</span></span>
-          <button class="icon-btn" id="themeToggle" type="button" title="Alternar tema" aria-label="Alternar tema"></button>
+          <div class="sidebar-actions">
+            <div class="palette-wrap">
+              <button class="icon-btn" id="paletteBtn" type="button" title="Cores do tema" aria-label="Cores do tema" aria-haspopup="menu" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.9 0-.5-.2-.9-.5-1.3-.3-.3-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11.5" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1.2" fill="currentColor"/></svg>
+              </button>
+              <div class="palette-pop" id="palettePop" role="menu" aria-label="Cores do tema" hidden>
+                <p class="palette-title">Cores do tema</p>
+                <button type="button" role="menuitemradio" data-palette="violeta"><span class="swatch" style="--a:#5b4cf0;--b:#15132a"></span><span>Violeta<small>Padrão</small></span></button>
+                <button type="button" role="menuitemradio" data-palette="vermelho"><span class="swatch" style="--a:#e00012;--b:#ffffff"></span><span>Vermelho<small>Vermelho e branco</small></span></button>
+                <button type="button" role="menuitemradio" data-palette="azul-dourado"><span class="swatch" style="--a:#0b1f45;--b:#c19a45"></span><span>Azul e dourado<small>Marinho com dourado</small></span></button>
+                <button type="button" role="menuitemradio" data-palette="azul"><span class="swatch" style="--a:#1468e0;--b:#ffffff"></span><span>Azul<small>Azul e branco</small></span></button>
+                <p class="palette-hint">O modo claro/escuro funciona em todas as cores.</p>
+              </div>
+            </div>
+            <button class="icon-btn" id="themeToggle" type="button" title="Alternar claro/escuro" aria-label="Alternar claro/escuro"></button>
+          </div>
         </div>
       </div>
     </aside>
