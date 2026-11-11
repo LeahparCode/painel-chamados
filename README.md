@@ -76,6 +76,11 @@ DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave
   sem Frases, Dashboard, Exportar ou Usuários.
 - Com login, tudo fica liberado. **Administradores** também gerenciam os usuários (tela **Usuários**);
   **operadores** cadastram, editam e exportam.
+- **Criar conta:** qualquer pessoa cria a própria conta (usuário e senha à escolha) na tela de login.
+  A conta nasce como **Aguardando liberação** (só visualiza, sem valores) até um administrador
+  clicar em **Liberar** ou mudar o cargo na tela **Usuários**. Só administradores mudam cargos.
+  - `ALLOW_SIGNUP=0` desliga o "Criar conta".
+  - `SIGNUP_ROLE=operador` faz as contas novas já poderem editar (não recomendado).
 - Os logins ficam na aba `Usuarios` da planilha (senha guardada só como hash).
 - Variáveis de ambiente:
   - `APP_SECRET`: chave que assina a sessão (qualquer texto longo e aleatório). Sem ela, todos

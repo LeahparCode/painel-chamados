@@ -5,6 +5,7 @@ export const state = {
   records: [],
   user: null,         // usuário logado (null = visitante, só visualiza o painel)
   setupNeeded: false, // nenhum usuário cadastrado ainda
+  allowSignup: true,  // a própria pessoa pode criar conta
   templates: [],      // templates próprios (aba "Templates" da planilha)
   stale: false,
   connection: "connecting", // connecting | online | stale | offline

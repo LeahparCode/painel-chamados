@@ -4,6 +4,10 @@
 - Usuários logados podem criar, editar e excluir disparos, templates e exportar.
 - Administradores também gerenciam os usuários (tela "Usuários").
 
+Cadastro: qualquer pessoa cria a própria conta (usuário e senha à escolha) na tela de login.
+A conta nasce como "pendente" (só visualiza) até um administrador liberar o cargo.
+ALLOW_SIGNUP=0 desliga o cadastro; SIGNUP_ROLE=operador faz as contas novas já poderem editar.
+
 Primeiro acesso: defina ADMIN_LOGIN e ADMIN_PASSWORD (e opcionalmente ADMIN_NOME) nas
 variáveis de ambiente. Se esse login ainda não existir, ele é criado como administrador.
 A senha nunca é guardada em texto: só o hash (werkzeug/scrypt).
@@ -32,6 +36,17 @@ MIN_PASSWORD, MAX_PASSWORD = 8, 200
 LOGIN_RE = re.compile(r"^[a-z0-9._@+\-]{3,120}$")
 USERS_TTL = 30.0
 MAX_FAILS, FAIL_WINDOW = 8, 600  # 8 tentativas erradas a cada 10 min (por IP + login)
+MAX_SIGNUPS, SIGNUP_WINDOW = 5, 3600  # 5 contas novas por hora por IP
+EDITOR_ROLES = ("admin", "operador")
+
+
+def signup_allowed():
+    return os.getenv("ALLOW_SIGNUP", "1") == "1"
+
+
+def signup_role():
+    role = (os.getenv("SIGNUP_ROLE") or "pendente").strip().lower()
+    return role if role in ("pendente", "operador") else "pendente"
 
 _get_store = None
 _cache = {"users": None, "ts": 0.0}
@@ -159,6 +174,19 @@ def login_required(fn):
     return wrapper
 
 
+def editor_required(fn):
+    """Logado e com cargo que pode editar (admin ou operador). Contas pendentes só visualizam."""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        user = current_user()
+        if not user:
+            return jsonify({"error": "unauthorized", "message": "Faça login para continuar."}), 401
+        if user["papel"] not in EDITOR_ROLES:
+            return jsonify({"error": "pending", "message": "Sua conta aguarda liberação de um administrador."}), 403
+        return fn(*args, **kwargs)
+    return wrapper
+
+
 def admin_required(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -185,12 +213,12 @@ def _store_error(e):
     return _err(str(e), getattr(e, "status", 502), "storage_error")
 
 
-def _too_many(key):
+def _too_many(key, limit=MAX_FAILS, window=FAIL_WINDOW):
     now = time.time()
     with _fails_lock:
-        recent = [t for t in _fails.get(key, []) if now - t < FAIL_WINDOW]
+        recent = [t for t in _fails.get(key, []) if now - t < window]
         _fails[key] = recent
-        return len(recent) >= MAX_FAILS
+        return len(recent) >= limit
 
 
 def _register_fail(key):
@@ -212,7 +240,39 @@ def me():
             setup_needed = not list_users()
         except Exception:
             setup_needed = False
-    return jsonify({"user": public_user(user) if user else None, "setupNeeded": setup_needed})
+    return jsonify({"user": public_user(user) if user else None, "setupNeeded": setup_needed,
+                    "allowSignup": signup_allowed()})
+
+
+@bp.post("/api/auth/signup")
+def signup():
+    """A própria pessoa cria a conta. Entra logada, mas como 'pendente' até o admin liberar."""
+    if not signup_allowed():
+        return _err("O cadastro de novas contas está desativado. Fale com o administrador.", 403, "signup_disabled")
+    key = f"signup|{request.remote_addr}"
+    if _too_many(key, MAX_SIGNUPS, SIGNUP_WINDOW):
+        return _err("Muitas contas criadas daqui. Tente de novo mais tarde.", 429, "too_many_signups")
+    b = request.get_json(silent=True) or {}
+    try:
+        users = list_users(force=True)
+    except Exception as e:
+        return _store_error(e)
+    data, err = _parse_user({"nome": b.get("nome"), "login": b.get("login"), "senha": b.get("senha")}, False, users)
+    if err:
+        return err
+    data.update(papel=signup_role(), ativo=True, criadoEm=now_iso())
+    try:
+        user = _get_store().create_user(data)
+    except StoreError as e:
+        return _store_error(e)
+    _register_fail(key)
+    _invalidate()
+    session.clear()
+    session["uid"] = user["id"]
+    session["fp"] = _fingerprint(user)
+    session.permanent = True
+    log.info("Conta criada pelo próprio usuário: %s (%s)", user["login"], user["papel"])
+    return jsonify({"user": public_user(user)}), 201
 
 
 @bp.post("/api/auth/login")
@@ -342,9 +402,9 @@ def users_update(uid):
     if not data:
         return _err("Nada para alterar.")
     me_ = current_user()
-    if uid == me_["id"] and (data.get("ativo") is False or data.get("papel") == "operador"):
+    if uid == me_["id"] and (data.get("ativo") is False or data.get("papel", "admin") != "admin"):
         return _err("Você não pode desativar nem rebaixar o seu próprio usuário.")
-    loses_admin = target["papel"] == "admin" and (data.get("papel") == "operador" or data.get("ativo") is False)
+    loses_admin = target["papel"] == "admin" and (data.get("papel", "admin") != "admin" or data.get("ativo") is False)
     if loses_admin and not _active_admins(users, exclude_id=uid):
         return _err("É preciso manter pelo menos um administrador ativo.")
     try:
