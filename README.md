@@ -70,6 +70,19 @@ DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave
   aparecem no cadastro de disparos conforme o tipo escolhido.
 - Datas: `AAAA-MM-DD` ou `dd/mm/aaaa`. O painel atualiza a cada ~10 s (`SNAPSHOT_TTL`).
 
+## Login
+
+- Sem login, o painel abre em **modo visualização**: só o quadro de disparos, sem editar,
+  sem Frases, Dashboard, Exportar ou Usuários.
+- Com login, tudo fica liberado. **Administradores** também gerenciam os usuários (tela **Usuários**);
+  **operadores** cadastram, editam e exportam.
+- Os logins ficam na aba `Usuarios` da planilha (senha guardada só como hash).
+- Variáveis de ambiente:
+  - `APP_SECRET`: chave que assina a sessão (qualquer texto longo e aleatório). Sem ela, todos
+    são deslogados a cada reinício/deploy.
+  - `ADMIN_LOGIN` / `ADMIN_PASSWORD` (e opcional `ADMIN_NOME`): criam o primeiro administrador
+    se esse login ainda não existir. Depois, a senha é trocada pelo próprio painel.
+
 ## Deploy (Render)
 
 O deploy é feito no [Render](https://render.com) usando o `Dockerfile` e o blueprint `render.yaml`.

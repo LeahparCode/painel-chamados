@@ -80,7 +80,9 @@ export const fraseLabel = (f) => f.custom ? `${f.name} · ${f.tipo}` : `${f.code
 export function templateLabel(key){
   const f = fraseByKey(key);
   if (f) return fraseLabel(f);
-  return (key || "").trim() || "Sem frase";
+  const k = (key || "").trim();
+  if (k.startsWith("tpl")) return "Template próprio";
+  return k || "Sem frase";
 }
 
 /** Classe do chip de acordo com o tipo/canal */

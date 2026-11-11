@@ -1,6 +1,7 @@
 // Comunicação com o backend: REST + SSE (com fallback para polling) + cache local.
 import { API_BASE, OFFLINE, CACHE_KEY, CACHE_TTL_MS } from "./config.js";
 import { state, setRecords, setConnection, setTemplates } from "./state.js";
+import { toast } from "../ui/toast.js";
 
 const url = (p) => `${API_BASE.replace(/\/+$/, "")}${p}`;
 
@@ -46,6 +47,12 @@ async function request(method, path, body){
   const text = await resp.text().catch(() => "");
   let data = null;
   try{ data = text ? JSON.parse(text) : null; }catch{}
+  if (resp.status === 401 && state.user){
+    // sessão expirou (ou o usuário foi desativado): volta para o modo visitante
+    toast("Sua sessão expirou. Entre novamente.", "warn", 3000, "session-expired");
+    try{ localStorage.removeItem("painel_logged"); }catch{}
+    setTimeout(() => location.reload(), 1500);
+  }
   if (!resp.ok){
     const err = new Error(data?.error?.message || data?.message || data?.error || `HTTP ${resp.status}`);
     err.status = resp.status;

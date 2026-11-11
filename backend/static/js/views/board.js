@@ -6,6 +6,7 @@ import { fmtInt, fmtMoney, fmtMoneyCompact, fmtTempo, fmtRemaining, escapeHtml, 
 import { fraseByKey, chipClass } from "../core/frases.js";
 import { moveToDay, setStatus, deleteWithUndo } from "../core/actions.js";
 import { toast } from "../ui/toast.js";
+import { isLogged } from "../core/auth.js";
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const STATUS_LABEL = { run: "Andamento", ok: "Finalizado", err: "Insucesso" };
@@ -42,7 +43,7 @@ function cardHtml(r){
   ].join("");
   const time = escapeHtml(r.horario || "--:--");
   return `
-    <article class="dcard ${key}" data-id="${escapeHtml(r.id)}" draggable="true" tabindex="0" aria-label="${escapeHtml(title)}">
+    <article class="dcard ${key}" data-id="${escapeHtml(r.id)}" draggable="${isLogged() ? "true" : "false"}" tabindex="0" aria-label="${escapeHtml(title)}">
       <div class="dcard-top">
         <span class="dcard-time">${CLOCK_ICON}${time}</span>
         <span class="dcard-status">${STATUS_LABEL[key]}</span>
@@ -180,7 +181,7 @@ function bindEvents(){
 
   boardEl.addEventListener("click", (e) => {
     const add = e.target.closest("[data-add]");
-    if (add){
+    if (add && isLogged()){
       e.stopPropagation();
       handlers.onNew(add.closest(".day")?.dataset.day);
       return;
@@ -201,6 +202,7 @@ function bindEvents(){
   });
 
   boardEl.addEventListener("dragstart", (e) => {
+    if (!isLogged()){ e.preventDefault(); return; }
     const card = e.target.closest(".dcard");
     if (!card) return;
     dragId = card.dataset.id;
@@ -263,7 +265,8 @@ function tick(){
     if (!rec) return;
     const ms = remainingMs(rec);
     el.textContent = fmtRemaining(ms);
-    if (ms !== null && ms <= 0 && statusKey(rec.status) === "run" && !autoFinalized.has(id)){
+    // só quem está logado grava a finalização automática (visitantes só veem o tempo zerar)
+    if (isLogged() && ms !== null && ms <= 0 && statusKey(rec.status) === "run" && !autoFinalized.has(id)){
       autoFinalized.add(id);
       setStatus(id, "Finalizado", { quiet: true }).then(ok => {
         if (ok) toast(`"${rec.tipo || "Disparo"}" finalizado automaticamente.`, "ok", 2600);

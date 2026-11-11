@@ -11,8 +11,10 @@
         var t = localStorage.getItem("painel_theme");
         if (!t) t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         if (t === "dark") document.documentElement.classList.add("dark");
-        var p = localStorage.getItem("painel_palette");
-        if (p && p !== "violeta") document.documentElement.setAttribute("data-palette", p);
+        var p = localStorage.getItem("painel_palette") || "azul-dourado";
+        if (p !== "violeta") document.documentElement.setAttribute("data-palette", p);
+        /* palpite de login (confirmado pelo servidor ao carregar) para evitar "piscar" a tela */
+        if (localStorage.getItem("painel_logged") !== "1") document.documentElement.classList.add("is-public");
       }catch(e){}
     })();
   </script>
@@ -27,6 +29,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}?v={{ asset_version }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/frases.css') }}?v={{ asset_version }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/export.css') }}?v={{ asset_version }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ asset_version }}" />
 </head>
 <body>
   <div id="splash" class="splash" aria-hidden="true"><div class="splash-mark"><span></span><span></span><span></span></div></div>
@@ -62,9 +65,29 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
           <span>Exportar</span>
         </button>
+        <button class="nav-item admin-only" type="button" data-view="usuarios">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>
+          <span>Usuários</span>
+        </button>
       </nav>
 
       <div class="sidebar-foot">
+        <div class="user-box logged-only" id="userBox">
+          <button type="button" class="user-chip" id="userChip" title="Minha conta" aria-haspopup="menu" aria-expanded="false">
+            <span class="user-avatar" id="userAvatar">?</span>
+            <span class="user-info"><strong id="userName">—</strong><small id="userRole">—</small></span>
+            <svg class="user-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>
+          </button>
+          <div class="user-menu" id="userMenu" role="menu" hidden>
+            <button type="button" role="menuitem" id="btnChangePassword">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Alterar minha senha
+            </button>
+            <button type="button" role="menuitem" class="danger" id="btnLogout">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+              Sair
+            </button>
+          </div>
+        </div>
         <div class="clock" aria-live="off">
           <strong id="clockTime">--:--</strong>
           <small id="clockDate">—</small>
@@ -78,14 +101,17 @@
               </button>
               <div class="palette-pop" id="palettePop" role="menu" aria-label="Cores do tema" hidden>
                 <p class="palette-title">Cores do tema</p>
-                <button type="button" role="menuitemradio" data-palette="violeta"><span class="swatch" style="--a:#5b4cf0;--b:#15132a"></span><span>Violeta<small>Padrão</small></span></button>
+                <button type="button" role="menuitemradio" data-palette="violeta"><span class="swatch" style="--a:#5b4cf0;--b:#15132a"></span><span>Violeta<small>Violeta e grafite</small></span></button>
                 <button type="button" role="menuitemradio" data-palette="vermelho"><span class="swatch" style="--a:#e00012;--b:#ffffff"></span><span>Vermelho<small>Vermelho e branco</small></span></button>
-                <button type="button" role="menuitemradio" data-palette="azul-dourado"><span class="swatch" style="--a:#0b1f45;--b:#c19a45"></span><span>Azul e dourado<small>Marinho com dourado</small></span></button>
+                <button type="button" role="menuitemradio" data-palette="azul-dourado"><span class="swatch" style="--a:#0b1f45;--b:#c19a45"></span><span>Azul e dourado<small>Padrão</small></span></button>
                 <button type="button" role="menuitemradio" data-palette="azul"><span class="swatch" style="--a:#1468e0;--b:#ffffff"></span><span>Azul<small>Azul e branco</small></span></button>
                 <p class="palette-hint">O modo claro/escuro funciona em todas as cores.</p>
               </div>
             </div>
             <button class="icon-btn" id="themeToggle" type="button" title="Alternar claro/escuro" aria-label="Alternar claro/escuro"></button>
+            <button class="btn btn-primary btn-sm public-only login-btn" type="button" data-action="login">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Entrar
+            </button>
           </div>
         </div>
       </div>
@@ -108,6 +134,12 @@
             </button>
           </div>
         </header>
+
+        <div class="public-note public-only">
+          <span class="public-note-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+          <span><b>Modo visualização.</b> Você está vendo o painel sem login. Entre para cadastrar, editar e acessar frases, dashboard e exportação.</span>
+          <button type="button" class="btn btn-soft btn-sm" data-action="login">Entrar</button>
+        </div>
 
         <div class="toolbar">
           <div class="segmented" role="tablist" aria-label="Visão" id="modeSwitch">
@@ -357,6 +389,30 @@
         </article>
       </section>
 
+      <!-- ========== USUÁRIOS (admin) ========== -->
+      <section class="view" id="view-usuarios" data-view-panel="usuarios" hidden>
+        <header class="page-head">
+          <div class="page-title">
+            <h1>Usuários</h1>
+            <p id="usersCount">Quem pode entrar e editar o painel</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" type="button" id="btnNewUser">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              Novo usuário
+            </button>
+          </div>
+        </header>
+        <article class="panel users-panel">
+          <div class="table-wrap">
+            <table class="data-table users-table" id="usersTable"></table>
+          </div>
+        </article>
+        <p class="users-hint">
+          <b>Administrador</b>: faz tudo, inclusive gerenciar usuários. <b>Operador</b>: cadastra, edita e exporta disparos e templates.
+        </p>
+      </section>
+
       <footer class="footer">Desenvolvido por Leahpar Code &copy; 2025</footer>
     </main>
   </div>
@@ -521,6 +577,99 @@
           <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
           <button type="submit" class="btn btn-primary" id="tSave">Salvar template</button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: LOGIN ===================== -->
+  <div class="modal" id="loginModal" aria-hidden="true">
+    <div class="modal-card modal-narrow" role="dialog" aria-modal="true" aria-labelledby="lTitle">
+      <header class="modal-head">
+        <div>
+          <span class="login-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+          <h2 id="lTitle">Entrar no painel</h2>
+          <p>Use o login e a senha cadastrados pelo administrador.</p>
+        </div>
+        <button class="icon-btn" type="button" data-close aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <form class="modal-body login-form" id="loginForm" novalidate>
+        <label class="field"><span>E-mail ou usuário</span><input type="text" id="lLogin" autocomplete="username" autocapitalize="none" spellcheck="false" /></label>
+        <label class="field">
+          <span>Senha</span>
+          <div class="password-input">
+            <input type="password" id="lSenha" autocomplete="current-password" />
+            <button type="button" class="pw-toggle" data-pw-toggle="lSenha" aria-label="Mostrar senha" title="Mostrar senha">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </label>
+        <label class="check"><input type="checkbox" id="lLembrar" checked /> <span>Manter conectado neste computador</span></label>
+        <p class="form-error" id="lError" role="alert" hidden></p>
+        <button type="submit" class="btn btn-primary" id="lSubmit">Entrar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: USUÁRIO ===================== -->
+  <div class="modal" id="userModal" aria-hidden="true">
+    <div class="modal-card modal-narrow" role="dialog" aria-modal="true" aria-labelledby="uTitle">
+      <header class="modal-head">
+        <div>
+          <span class="eyebrow">Usuários</span>
+          <h2 id="uTitle">Novo usuário</h2>
+          <p id="uSub">A pessoa entra com este login e a senha definida aqui.</p>
+        </div>
+        <button class="icon-btn" type="button" data-close aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <form class="modal-body form-grid" id="userForm" novalidate>
+        <label class="field field-full"><span>Nome</span><input type="text" id="uNome" maxlength="80" placeholder="Ex.: Maria Souza" /></label>
+        <label class="field field-full"><span>Login (e-mail ou usuário)</span><input type="text" id="uLogin" maxlength="120" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="maria@empresa.com" /></label>
+        <label class="field"><span>Papel</span>
+          <select id="uPapel"><option value="operador">Operador</option><option value="admin">Administrador</option></select>
+        </label>
+        <label class="field"><span id="uSenhaLabel">Senha</span>
+          <div class="password-input">
+            <input type="password" id="uSenha" autocomplete="new-password" placeholder="mín. 8 caracteres" />
+            <button type="button" class="pw-toggle" data-pw-toggle="uSenha" aria-label="Mostrar senha" title="Mostrar senha">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </label>
+        <label class="check field-full" id="uAtivoRow" hidden><input type="checkbox" id="uAtivo" checked /> <span>Usuário ativo (pode entrar no painel)</span></label>
+        <p class="form-error field-full" id="uError" role="alert" hidden></p>
+        <div class="field-full form-actions">
+          <button type="button" class="btn btn-danger-ghost" id="uDelete" hidden>Excluir</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="uSave">Criar usuário</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: ALTERAR SENHA ===================== -->
+  <div class="modal" id="passwordModal" aria-hidden="true">
+    <div class="modal-card modal-narrow" role="dialog" aria-modal="true" aria-labelledby="pTitle">
+      <header class="modal-head">
+        <div>
+          <span class="eyebrow">Minha conta</span>
+          <h2 id="pTitle">Alterar senha</h2>
+          <p>Ao trocar, as suas outras sessões abertas são encerradas.</p>
+        </div>
+        <button class="icon-btn" type="button" data-close aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <form class="modal-body login-form" id="passwordForm" novalidate>
+        <label class="field"><span>Senha atual</span><input type="password" id="pAtual" autocomplete="current-password" /></label>
+        <label class="field"><span>Nova senha</span><input type="password" id="pNova" autocomplete="new-password" placeholder="mín. 8 caracteres" /></label>
+        <label class="field"><span>Confirmar nova senha</span><input type="password" id="pConfirma" autocomplete="new-password" /></label>
+        <p class="form-error" id="pError" role="alert" hidden></p>
+        <button type="submit" class="btn btn-primary" id="pSubmit">Salvar nova senha</button>
       </form>
     </div>
   </div>

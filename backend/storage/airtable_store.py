@@ -4,7 +4,7 @@ import time
 import logging
 import requests
 
-from .base import FIELDS, TEMPLATE_FIELDS, StoreError, clean_record, clean_template
+from .base import FIELDS, TEMPLATE_FIELDS, USER_FIELDS, StoreError, clean_record, clean_template, clean_user
 
 log = logging.getLogger("storage.airtable")
 
@@ -17,9 +17,10 @@ class AirtableStore:
     snapshot_ttl = 6.0
 
     def __init__(self, token: str, base_id: str, table: str, timeout: int = 12, retries: int = 4,
-                 templates_table: str = "Templates"):
+                 templates_table: str = "Templates", users_table: str = "Usuarios"):
         self.api = f"https://api.airtable.com/v0/{base_id}/{requests.utils.quote(table, safe='')}"
         self.templates_api = f"https://api.airtable.com/v0/{base_id}/{requests.utils.quote(templates_table, safe='')}"
+        self.users_api = f"https://api.airtable.com/v0/{base_id}/{requests.utils.quote(users_table, safe='')}"
         self.timeout = timeout
         self.retries = retries
         self.http = requests.Session()
@@ -33,7 +34,7 @@ class AirtableStore:
             raise RuntimeError("Configure AIRTABLE_TOKEN e AIRTABLE_BASE_ID para usar o Airtable.")
         return cls(token, base_id, os.getenv("AIRTABLE_TABLE_NAME", "Disparos"),
                    int(os.getenv("AIRTABLE_TIMEOUT", "12")), int(os.getenv("AIRTABLE_MAX_RETRIES", "4")),
-                   os.getenv("AIRTABLE_TEMPLATES_TABLE", "Templates"))
+                   os.getenv("AIRTABLE_TEMPLATES_TABLE", "Templates"), os.getenv("AIRTABLE_USERS_TABLE", "Usuarios"))
 
     # ---------- HTTP ----------
     def _request(self, method, url, **kwargs):
@@ -133,3 +134,37 @@ class AirtableStore:
 
     def delete_template(self, tid: str):
         self._request("DELETE", f"{self.templates_api}/{tid}")
+
+    # ---------- usuários (tabela "Usuarios": Nome, Login, SenhaHash, Papel, Ativo, CriadoEm) ----------
+    @staticmethod
+    def _normalize_user(rec):
+        f = rec.get("fields", {}) or {}
+        out = {k: f.get(field, "") for k, field in USER_FIELDS}
+        out["id"] = rec.get("id")
+        return clean_user(out)
+
+    @staticmethod
+    def _user_fields(data: dict) -> dict:
+        names = {k: f for k, f in USER_FIELDS if k not in ("id", "atualizadoEm")}
+        return {names[k]: v for k, v in data.items() if k in names}
+
+    def list_users(self):
+        records, params = [], {"pageSize": 100}
+        while True:
+            payload = self._request("GET", self.users_api, params=params)
+            records.extend(payload.get("records", []))
+            if "offset" not in payload:
+                break
+            params["offset"] = payload["offset"]
+        return [self._normalize_user(r) for r in records]
+
+    def create_user(self, data: dict):
+        rec = self._request("POST", self.users_api, json={"fields": self._user_fields(data)}, params={"typecast": "true"})
+        return self._normalize_user(rec)
+
+    def update_user(self, uid: str, patch: dict):
+        rec = self._request("PATCH", f"{self.users_api}/{uid}", json={"fields": self._user_fields(patch)}, params={"typecast": "true"})
+        return self._normalize_user(rec)
+
+    def delete_user(self, uid: str):
+        self._request("DELETE", f"{self.users_api}/{uid}")

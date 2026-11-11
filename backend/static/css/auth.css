@@ -1,0 +1,151 @@
+/* ================================================================
+   Login, modo visitante, conta do usuário e tela de usuários
+   ================================================================ */
+
+/* ---------- visibilidade por modo ---------- */
+html:not(.is-public) .public-only{ display: none !important; }
+html.is-public .logged-only,
+html.is-public .admin-only{ display: none !important; }
+html:not(.is-admin) .admin-only{ display: none !important; }
+
+/* ---------- Modo visitante: painel em formato "vitrine" ---------- */
+html.is-public .app{ grid-template-columns: minmax(0, 1fr); }
+html.is-public .sidebar{
+  position: sticky; top: 0; z-index: 40;
+  height: auto; flex-direction: row; align-items: center; gap: 20px;
+  padding: 12px 32px;
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, .6);
+}
+html.is-public .brand{ padding: 0; }
+html.is-public .nav{ display: none; }
+html.is-public .sidebar-foot{ margin: 0 0 0 auto; flex-direction: row; align-items: center; gap: 16px; }
+html.is-public .clock{ flex-direction: row; align-items: baseline; gap: 10px; padding: 8px 14px; }
+html.is-public .clock strong{ font-size: 18px; }
+html.is-public .sidebar-row{ gap: 14px; }
+html.is-public .palette-pop{ top: calc(100% + 10px); bottom: auto; left: auto; right: 0; }
+html.is-public .main{ width: 100%; max-width: 1640px; margin: 0 auto; }
+html.is-public .legend-hint,
+html.is-public [data-action="new"],
+html.is-public .day-add,
+html.is-public .day-trash{ display: none !important; }
+html.is-public .dcard{ cursor: pointer; }
+/* detalhes do disparo só para leitura */
+html.is-public #dStatusActions,
+html.is-public #dEditForm{ display: none !important; }
+html.is-public .info-editable{ cursor: default; }
+html.is-public .info-editable:hover{ border-color: var(--border); background: var(--surface-2); }
+html.is-public .info-editable::after{ display: none; }
+
+.login-btn{ white-space: nowrap; }
+.login-btn svg{ width: 15px; height: 15px; }
+
+.public-note{
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 12px 14px; border-radius: 14px;
+  background: var(--brand-soft); color: var(--text-2); font-size: 13px;
+  border: 1px solid color-mix(in srgb, var(--brand) 25%, transparent);
+}
+.public-note b{ color: var(--text); }
+.public-note > span:nth-child(2){ flex: 1; min-width: 220px; }
+.public-note-ico{
+  width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+  display: grid; place-items: center; background: var(--surface); color: var(--brand-text);
+}
+.public-note-ico svg{ width: 16px; height: 16px; }
+
+/* ---------- Conta do usuário (rodapé da sidebar) ---------- */
+.user-box{ position: relative; }
+.user-chip{
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px 10px; border-radius: 14px;
+  background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .08);
+  color: var(--side-text); text-align: left;
+  transition: background .2s var(--ease);
+}
+.user-chip:hover, .user-chip[aria-expanded="true"]{ background: rgba(255, 255, 255, .12); }
+.user-avatar{
+  width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: var(--mark-bg); color: var(--mark-fg);
+  font-weight: 800; font-size: 13px; letter-spacing: .02em;
+}
+.user-info{ display: flex; flex-direction: column; min-width: 0; line-height: 1.2; flex: 1; }
+.user-info strong{ color: var(--side-strong); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.user-info small{ color: var(--side-muted); font-size: 11px; }
+.user-caret{ width: 16px; height: 16px; opacity: .7; }
+.user-menu{
+  position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 80;
+  padding: 6px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; gap: 2px;
+  animation: pop-in .2s var(--ease) both;
+}
+.user-menu button{
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 10px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--text); font-weight: 600; font-size: 13px; text-align: left;
+}
+.user-menu button svg{ width: 16px; height: 16px; color: var(--muted); }
+.user-menu button:hover{ background: var(--surface-2); }
+.user-menu button.danger{ color: var(--err); }
+.user-menu button.danger svg{ color: var(--err); }
+
+/* ---------- Modais de login / usuário / senha ---------- */
+.modal-narrow{ width: min(460px, 100%); }
+.login-badge{
+  width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: var(--on-brand);
+  box-shadow: var(--shadow-brand);
+}
+.login-badge svg{ width: 22px; height: 22px; }
+.login-form{ display: flex; flex-direction: column; gap: 14px; }
+.login-form .btn{ width: 100%; height: 46px; }
+.password-input{ position: relative; }
+.password-input input{ padding-right: 44px !important; }
+.pw-toggle{
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border: 0; border-radius: 9px;
+  display: grid; place-items: center; background: transparent; color: var(--muted);
+}
+.pw-toggle:hover{ background: var(--surface-3); color: var(--text); }
+.pw-toggle svg{ width: 17px; height: 17px; }
+.pw-toggle.is-on{ color: var(--brand-text); }
+.check{ display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-2); cursor: pointer; }
+.check input{ width: 18px; height: 18px; accent-color: var(--brand); }
+.form-error{
+  margin: 0; padding: 10px 12px; border-radius: 10px;
+  background: var(--err-soft); color: var(--err-ink); font-size: 13px; font-weight: 600;
+}
+
+/* ---------- Tela de usuários ---------- */
+.users-panel{ padding: 0; overflow: hidden; }
+.users-table td{ vertical-align: middle; }
+.users-table .u-person{ display: flex; align-items: center; gap: 10px; }
+.users-table .u-person .user-avatar{ width: 32px; height: 32px; border-radius: 10px; font-size: 12px; }
+.users-table .u-person b{ display: block; font-size: 13px; }
+.users-table .u-person small{ color: var(--muted); font-size: 12px; }
+.users-table .u-actions{ text-align: right; }
+.users-table .u-actions .btn{ height: 32px; }
+.role-chip{ display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 99px; font-size: 11px; font-weight: 800; }
+.role-chip.admin{ background: var(--brand-soft); color: var(--brand-text); }
+.role-chip.operador{ background: var(--surface-3); color: var(--text-2); }
+.state-chip{ display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
+.state-chip::before{ content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.state-chip.off{ color: var(--muted); }
+.state-chip.off::before{ background: var(--border-strong); }
+.you-chip{ margin-left: 6px; font-size: 10px; font-weight: 800; color: var(--brand-text); background: var(--brand-soft); padding: 2px 6px; border-radius: 6px; }
+.users-hint{ font-size: 13px; color: var(--muted); }
+.users-hint b{ color: var(--text-2); }
+
+@media (max-width: 900px){
+  html.is-public .sidebar{ padding: 10px 16px; }
+  html.is-public .clock{ display: none; }
+  .user-box{ order: -1; }
+  .user-chip{ width: auto; padding: 4px; background: transparent; border: 0; }
+  .user-info, .user-caret{ display: none; }
+  .user-menu{ left: auto; right: 0; bottom: auto; top: calc(100% + 8px); width: 220px; }
+}
+@media (max-width: 560px){
+  html.is-public .live span{ display: none; }
+  .users-table th:nth-child(3), .users-table td:nth-child(3){ display: none; }
+}

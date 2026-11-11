@@ -3,6 +3,7 @@
 Duas abas na mesma planilha:
   - "Disparos"  (GOOGLE_SHEET_TAB)            → os disparos do painel
   - "Templates" (GOOGLE_TEMPLATES_TAB)        → templates escritos pelos usuários
+  - "Usuarios"  (GOOGLE_USERS_TAB)            → logins do painel (senha guardada só como hash)
 Ambas são criadas automaticamente, com cabeçalho, se não existirem.
 
 Como a planilha não gera ID nem data de modificação sozinha, o servidor:
@@ -20,7 +21,7 @@ import threading
 import unicodedata
 import logging
 
-from .base import FIELDS, TEMPLATE_FIELDS, StoreError, clean_record, clean_template, now_iso
+from .base import FIELDS, TEMPLATE_FIELDS, USER_FIELDS, StoreError, clean_record, clean_template, clean_user, now_iso
 
 log = logging.getLogger("storage.sheets")
 
@@ -183,12 +184,22 @@ class SheetsStore:
     name = "sheets"
     snapshot_ttl = 10.0
 
-    def __init__(self, worksheet, templates_worksheet=None):
-        """templates_worksheet: aba de templates ou função que a devolve (criada sob demanda)."""
+    def __init__(self, worksheet, templates_worksheet=None, users_worksheet=None):
+        """templates_worksheet / users_worksheet: a aba ou uma função que a devolve (criada sob demanda)."""
         self.disparos = SheetTable(worksheet, FIELDS, clean_record, "rec")
-        self._templates_ws = templates_worksheet
-        self._templates = None
-        self._tpl_lock = threading.Lock()
+        self._providers = {"templates": templates_worksheet, "users": users_worksheet}
+        self._tables = {}
+        self._tables_lock = threading.Lock()
+
+    def _lazy_table(self, name, fields, clean, prefix):
+        with self._tables_lock:
+            if name not in self._tables:
+                provider = self._providers.get(name)
+                if provider is None:
+                    raise StoreError(f"Aba de {name} não configurada.", 503)
+                ws = provider() if callable(provider) else provider
+                self._tables[name] = SheetTable(ws, fields, clean, prefix)
+            return self._tables[name]
 
     # compatibilidade com o código/testes existentes
     @property
@@ -240,7 +251,11 @@ class SheetsStore:
                 return sh.add_worksheet(title=title, rows=1000, cols=cols)
 
         ws = tab(os.getenv("GOOGLE_SHEET_TAB", "Disparos"), len(FIELDS))
-        store = cls(ws, lambda: tab(os.getenv("GOOGLE_TEMPLATES_TAB", "Templates"), len(TEMPLATE_FIELDS)))
+        store = cls(
+            ws,
+            lambda: tab(os.getenv("GOOGLE_TEMPLATES_TAB", "Templates"), len(TEMPLATE_FIELDS)),
+            lambda: tab(os.getenv("GOOGLE_USERS_TAB", "Usuarios"), len(USER_FIELDS)),
+        )
         store.ensure_headers()
         return store
 
@@ -260,13 +275,11 @@ class SheetsStore:
     # ---------- templates ----------
     @property
     def templates(self) -> SheetTable:
-        with self._tpl_lock:
-            if self._templates is None:
-                if self._templates_ws is None:
-                    raise StoreError("Aba de templates não configurada.", 503)
-                ws = self._templates_ws() if callable(self._templates_ws) else self._templates_ws
-                self._templates = SheetTable(ws, TEMPLATE_FIELDS, clean_template, "tpl")
-            return self._templates
+        return self._lazy_table("templates", TEMPLATE_FIELDS, clean_template, "tpl")
+
+    @property
+    def users(self) -> SheetTable:
+        return self._lazy_table("users", USER_FIELDS, clean_user, "usr")
 
     def list_templates(self):
         return self.templates.list()
@@ -279,3 +292,16 @@ class SheetsStore:
 
     def delete_template(self, tid: str):
         self.templates.delete(tid)
+
+    # ---------- usuários ----------
+    def list_users(self):
+        return self.users.list()
+
+    def create_user(self, data: dict):
+        return self.users.create(data)
+
+    def update_user(self, uid: str, patch: dict):
+        return self.users.update(uid, patch)
+
+    def delete_user(self, uid: str):
+        self.users.delete(uid)
