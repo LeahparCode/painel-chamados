@@ -6,6 +6,7 @@ from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from storage import create_store, backend_name, StoreError
+from export_xlsx import build_xlsx, safe_filename, ExportError
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 log = logging.getLogger("app")
@@ -25,6 +26,7 @@ VALID_STATUS = {"Em andamento", "Finalizado", "Insucesso"}
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 CORS(app)
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # limite do corpo das requisições (exportação)
 
 # Versão dos assets para "furar" cache do navegador a cada deploy/restart
 ASSET_VERSION = os.getenv("ASSET_VERSION") or str(int(time.time()))
@@ -206,6 +208,22 @@ def delete_disparo(rid):
         return _store_error_response(e)
     _refresh_quietly()
     return jsonify({"deleted": True, "id": rid})
+
+
+# ---- Exportação ----
+@app.post("/api/export/xlsx")
+def export_xlsx():
+    spec = request.get_json(silent=True) or {}
+    try:
+        data = build_xlsx(spec)
+    except ExportError as e:
+        return jsonify({"error": "invalid_export", "message": str(e)}), 400
+    filename = safe_filename(spec.get("filename"))
+    return Response(
+        data,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ---- SSE ----
