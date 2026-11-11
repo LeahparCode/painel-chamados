@@ -81,3 +81,24 @@ def clean_record(rec: dict) -> dict:
     for k in ("id", "tipo", "status", "template", "atualizadoEm", "tipoDisparo"):
         out[k] = "" if out[k] is None else str(out[k]).strip()
     return out
+
+
+# ---------------- Templates personalizados ----------------
+TEMPLATE_FIELDS = [
+    ("id", "ID"),
+    ("nome", "Nome"),
+    ("tipo", "Tipo"),
+    ("texto", "Texto"),
+    ("atualizadoEm", "AtualizadoEm"),
+]
+TEMPLATE_KEYS = [k for k, _ in TEMPLATE_FIELDS]
+
+
+def clean_template(rec: dict) -> dict:
+    out = {k: rec.get(k, "") for k in TEMPLATE_KEYS}
+    for k in TEMPLATE_KEYS:
+        out[k] = "" if out[k] is None else str(out[k])
+    for k in ("id", "nome", "tipo", "atualizadoEm"):
+        out[k] = out[k].strip()
+    out["texto"] = out["texto"].replace("\r\n", "\n").strip()
+    return out

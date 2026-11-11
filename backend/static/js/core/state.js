@@ -3,6 +3,7 @@ import { todayISO } from "./dates.js";
 
 export const state = {
   records: [],
+  templates: [],      // templates próprios (aba "Templates" da planilha)
   stale: false,
   connection: "connecting", // connecting | online | stale | offline
   activeView: "painel",
@@ -28,6 +29,11 @@ export function setRecords(records, { stale = false } = {}){
   state.records = Array.isArray(records) ? records : [];
   state.stale = stale;
   emit("records");
+}
+
+export function setTemplates(list){
+  state.templates = Array.isArray(list) ? list : [];
+  emit("templates");
 }
 
 export function setView(patch){

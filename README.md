@@ -65,6 +65,9 @@ DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave
   (tabela em `backend/static/js/core/config.js`).
 - As colunas são localizadas pelo nome, então podem ser reordenadas. **Não apague nem renomeie a coluna `ID`.**
 - Linhas digitadas à mão sem ID recebem um ID automaticamente.
+- Templates próprios ficam na aba `Templates` (criada automaticamente), com as colunas
+  `ID, Nome, Tipo, Texto, AtualizadoEm`. Podem ser escritos pelo painel (tela **Frases**) e
+  aparecem no cadastro de disparos conforme o tipo escolhido.
 - Datas: `AAAA-MM-DD` ou `dd/mm/aaaa`. O painel atualiza a cada ~10 s (`SNAPSHOT_TTL`).
 
 ## Deploy (Render)

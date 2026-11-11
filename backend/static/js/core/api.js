@@ -1,6 +1,6 @@
 // Comunicação com o backend: REST + SSE (com fallback para polling) + cache local.
 import { API_BASE, OFFLINE, CACHE_KEY, CACHE_TTL_MS } from "./config.js";
-import { state, setRecords, setConnection } from "./state.js";
+import { state, setRecords, setConnection, setTemplates } from "./state.js";
 
 const url = (p) => `${API_BASE.replace(/\/+$/, "")}${p}`;
 
@@ -63,6 +63,37 @@ export async function fetchRecords(){
 export const createRecord = (payload) => request("POST", "/api/disparos", payload).then(r => r.data);
 export const updateRecord = (id, patch) => request("PATCH", `/api/disparos/${encodeURIComponent(id)}`, patch).then(r => r.data);
 export const deleteRecord = (id) => request("DELETE", `/api/disparos/${encodeURIComponent(id)}`).then(r => r.data);
+
+/* ---------- templates próprios ---------- */
+const TPL_CACHE_KEY = "painel_templates_v1";
+
+export async function fetchTemplates(){
+  if (OFFLINE) return state.templates;
+  const { data } = await request("GET", "/api/templates");
+  setTemplates(data || []);
+  try{ localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(data || [])); }catch{}
+  return data;
+}
+
+export function loadTemplatesCache(){
+  try{
+    const raw = localStorage.getItem(TPL_CACHE_KEY);
+    if (raw) setTemplates(JSON.parse(raw));
+  }catch{}
+}
+
+export async function saveTemplate(id, payload){
+  const { data } = id
+    ? await request("PATCH", `/api/templates/${encodeURIComponent(id)}`, payload)
+    : await request("POST", "/api/templates", payload);
+  await fetchTemplates().catch(() => {});
+  return data;
+}
+
+export async function removeTemplate(id){
+  await request("DELETE", `/api/templates/${encodeURIComponent(id)}`);
+  await fetchTemplates().catch(() => {});
+}
 
 export function refreshSoon(delay = 300){
   if (OFFLINE) return;

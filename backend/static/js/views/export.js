@@ -54,7 +54,7 @@ function rowOf(r){
     data: day,
     dia: capitalize(fmtDate(day, { weekday: "long" })),
     horario: r.horario || "",
-    nome: r.tipo || (frase ? `Safra #${String(frase.id).padStart(2, "0")} · ${frase.tom}` : ""),
+    nome: r.tipo || (frase ? frase.name : ""),
     status: r.status || "Em andamento",
     tipo,
     unit: COST_PER_TIPO[tipo] || 0,
