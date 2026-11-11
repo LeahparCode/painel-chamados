@@ -141,30 +141,48 @@
 .dcard-meta b{ color: var(--text-2); font-weight: 800; font-variant-numeric: tabular-nums; }
 .dcard-pills{ display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
 
-/* ---------- Lixeira (aparece no fim de cada dia só durante o arraste) ---------- */
+/* ---------- Lixeira: surge só no dia do card que está sendo arrastado ---------- */
 .day-trash{
-  display: none;
-  margin: 0 10px 10px; min-height: 58px; padding: 10px;
-  align-items: center; justify-content: center; gap: 8px;
-  border-radius: 12px; border: 1.5px dashed rgba(229, 56, 59, .35);
-  background: linear-gradient(180deg, rgba(255, 107, 107, .06) 0%, rgba(229, 56, 59, .16) 100%);
-  color: #c4223a; font-size: 12px; font-weight: 700; text-align: center;
-  transition: background .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease), color .2s var(--ease);
+  --trash: 229, 56, 59;
+  display: flex; align-items: center; justify-content: center;
+  height: 0; opacity: 0; overflow: hidden;
+  transform: translateY(12px);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  /* gradiente de baixo para cima: vermelho na base, transparente no topo */
+  background: linear-gradient(to top, rgba(var(--trash), .30) 0%, rgba(var(--trash), .12) 45%, rgba(var(--trash), 0) 100%);
+  pointer-events: none;
+  transition: height .32s var(--ease), opacity .28s var(--ease), transform .32s var(--ease), background .25s var(--ease);
 }
-.day-trash svg{ width: 18px; height: 18px; flex-shrink: 0; pointer-events: none; }
-.day-trash span{ pointer-events: none; }
-.board.is-dragging .day-trash{ display: flex; animation: trash-in .22s var(--ease) both; }
+.day.is-trash-active .day-trash{
+  height: 84px; opacity: 1; transform: none; pointer-events: auto;
+}
+.day-trash-ico{
+  width: 42px; height: 42px; border-radius: 50%;
+  display: grid; place-items: center; pointer-events: none;
+  color: rgb(var(--trash));
+  background: rgba(255, 255, 255, .75);
+  box-shadow: 0 6px 16px -8px rgba(var(--trash), .6), inset 0 0 0 1px rgba(var(--trash), .18);
+  transform: scale(.9);
+  transition: transform .25s var(--ease), background .25s var(--ease), color .25s var(--ease), box-shadow .25s var(--ease);
+}
+.day-trash-ico svg{ width: 20px; height: 20px; }
+.day.is-trash-active .day-trash-ico{ transform: scale(1); }
+/* card por cima da lixeira */
 .day-trash.is-over{
-  border-style: solid; border-color: rgba(229, 56, 59, .7); color: #fff;
-  background: linear-gradient(135deg, rgba(255, 107, 107, .85) 0%, rgba(229, 56, 59, .9) 60%, rgba(181, 23, 43, .9) 100%);
-  transform: scale(1.03);
-  box-shadow: 0 10px 22px -10px rgba(213, 30, 50, .7);
+  background: linear-gradient(to top, rgba(var(--trash), .62) 0%, rgba(var(--trash), .26) 55%, rgba(var(--trash), 0) 100%);
 }
-.day-trash.is-over svg{ animation: trash-shake .4s var(--ease) infinite alternate; }
-html.dark .day-trash{ color: #ff9aa6; border-color: rgba(255, 107, 107, .35); background: linear-gradient(180deg, rgba(255, 107, 107, .06) 0%, rgba(255, 70, 80, .16) 100%); }
-html.dark .day-trash.is-over{ color: #fff; }
-@keyframes trash-in{ from{ opacity: 0; transform: translateY(8px); } to{ opacity: 1; transform: none; } }
-@keyframes trash-shake{ from{ transform: rotate(-8deg); } to{ transform: rotate(8deg); } }
+.day-trash.is-over .day-trash-ico{
+  transform: scale(1.18);
+  color: #fff;
+  background: linear-gradient(135deg, #ff6b6b, #d7263d);
+  box-shadow: 0 10px 22px -8px rgba(var(--trash), .85);
+}
+.day-trash.is-over .day-trash-ico svg{ animation: trash-shake .35s var(--ease) infinite alternate; }
+html.dark .day-trash{ --trash: 255, 90, 100; }
+html.dark .day-trash-ico{ background: rgba(20, 16, 30, .7); }
+/* dia de onde o card saiu: não fica tracejado como alvo de "mover" */
+.day.is-trash-active.is-drop{ border-style: solid; }
+@keyframes trash-shake{ from{ transform: rotate(-9deg); } to{ transform: rotate(9deg); } }
 .dcard-pills .chip{ height: 20px; font-size: 10px; padding: 0 6px; }
 .dcard-countdown{ color: var(--tone-ink); }
 
@@ -183,9 +201,10 @@ html.dark .day-trash.is-over{ color: #fff; }
 .board[data-mode="mes"] .dcard::before{ top: 5px; bottom: 5px; width: 3px; }
 .board[data-mode="mes"] .dcard-top, .board[data-mode="mes"] .dcard-meta, .board[data-mode="mes"] .dcard-pills{ display: none; }
 /* no calendário do mês a lixeira é compacta (só o ícone) */
-.board[data-mode="mes"] .day-trash{ margin: 0 6px 6px; min-height: 34px; padding: 6px; border-radius: 8px; }
-.board[data-mode="mes"] .day-trash span{ display: none; }
-.board[data-mode="dia"] .day.is-dim .day-trash span{ display: none; }
+.board[data-mode="mes"] .day-trash{ border-radius: 0 0 14px 14px; }
+.board[data-mode="mes"] .day.is-trash-active .day-trash{ height: 52px; }
+.board[data-mode="mes"] .day-trash-ico{ width: 30px; height: 30px; }
+.board[data-mode="mes"] .day-trash-ico svg{ width: 15px; height: 15px; }
 
 .board[data-mode="mes"] .dcard-title{ font-size: 11px; -webkit-line-clamp: 1; }
 .board[data-mode="mes"] .dcard-title::before{ content: attr(data-time) " · "; color: var(--muted); font-weight: 800; }

@@ -17,6 +17,7 @@ let boardEl = null;
 let handlers = { onOpen: () => {}, onNew: () => {} };
 let dragId = null;
 let pendingRender = false;
+let dragDay = null;          // coluna do dia de onde saiu o card arrastado (só ela mostra a lixeira)
 let lastViewKey = null;
 let enterTimer = null;
 const autoFinalized = new Set();
@@ -89,13 +90,14 @@ function dayHtml(day, records, { today, focus, scope, mode }){
         <div class="day-bar">${bar}</div>
       </header>
       <div class="day-body">${cards}</div>
-      <div class="day-trash" data-trash aria-hidden="true">${TRASH_ICON}<span>Solte para excluir</span></div>
+      <div class="day-trash" data-trash title="Solte aqui para excluir" aria-hidden="true"><span class="day-trash-ico">${TRASH_ICON}</span></div>
     </section>`;
 }
 
 export function renderBoard(){
   if (!boardEl) return;
   if (dragId){ pendingRender = true; return; }
+  dragDay = null;
   const { view } = state;
   const today = todayISO();
   const days = boardDaysOf(view);
@@ -149,13 +151,33 @@ function trashCard(id){
   deleteWithUndo(id, { label: `"${nome}" excluído.` });
 }
 
+/**
+ * Encerra o estado de arraste (lixeira some com transição, destaques saem).
+ * Chamado em TODOS os finais possíveis: soltar no dia, na lixeira, fora do quadro, cancelar (Esc)
+ * e, por segurança, no primeiro movimento do mouse depois do arraste.
+ */
 function endDrag(){
-  boardEl.classList.remove("is-dragging");
-  boardEl.querySelectorAll(".is-drop, .is-over").forEach(el => el.classList.remove("is-drop", "is-over"));
+  if (!boardEl) return;
+  boardEl.querySelectorAll(".is-trash-active, .is-drop, .is-over, .dcard.is-dragging")
+    .forEach(el => el.classList.remove("is-trash-active", "is-drop", "is-over", "is-dragging"));
+  dragDay = null;
+}
+
+function finishDrag(){
+  endDrag();
+  dragId = null;
+  if (pendingRender){ pendingRender = false; renderBoard(); }
 }
 
 /* ------------------------------------------------------------------ */
 function bindEvents(){
+  // redes de segurança: se o navegador não avisar o fim do arraste ao quadro
+  // (card solto fora da página, quadro redesenhado no meio do caminho etc.)
+  document.addEventListener("dragend", () => { if (dragId) finishDrag(); }, true);
+  document.addEventListener("drop", (e) => { if (dragId && !boardEl.contains(e.target)) finishDrag(); }, true);
+  document.addEventListener("mousemove", (e) => { if (e.buttons === 0 && (dragId || dragDay)) finishDrag(); });
+  window.addEventListener("blur", () => { if (dragId) finishDrag(); });
+
   boardEl.addEventListener("click", (e) => {
     const add = e.target.closest("[data-add]");
     if (add){
@@ -182,24 +204,20 @@ function bindEvents(){
     const card = e.target.closest(".dcard");
     if (!card) return;
     dragId = card.dataset.id;
+    dragDay = card.closest(".day");
     card.classList.add("is-dragging");
     try{ e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragId); }catch{}
-    // a lixeira aparece no fim de cada dia só enquanto o card está sendo arrastado
-    requestAnimationFrame(() => boardEl.classList.add("is-dragging"));
+    // a lixeira surge (com transição) só no fim do dia de onde o card saiu
+    requestAnimationFrame(() => { if (dragId) dragDay?.classList.add("is-trash-active"); });
   });
-  boardEl.addEventListener("dragend", (e) => {
-    e.target.closest(".dcard")?.classList.remove("is-dragging");
-    endDrag();
-    dragId = null;
-    if (pendingRender){ pendingRender = false; renderBoard(); }
-  });
+  boardEl.addEventListener("dragend", finishDrag);
   boardEl.addEventListener("dragover", (e) => {
     const day = e.target.closest(".day");
     if (!day || !dragId) return;
     e.preventDefault();
     const trash = e.target.closest("[data-trash]");
     try{ e.dataTransfer.dropEffect = "move"; }catch{}
-    if (trash){
+    if (trash && trash.closest(".day")?.classList.contains("is-trash-active")){
       if (!trash.classList.contains("is-over")){
         boardEl.querySelectorAll(".is-drop, .is-over").forEach(el => el.classList.remove("is-drop", "is-over"));
         trash.classList.add("is-over");
@@ -213,6 +231,8 @@ function bindEvents(){
     }
   });
   boardEl.addEventListener("dragleave", (e) => {
+    const trash = e.target.closest("[data-trash]");
+    if (trash && !trash.contains(e.relatedTarget)) trash.classList.remove("is-over");
     const day = e.target.closest(".day");
     if (day && !day.contains(e.relatedTarget)) day.classList.remove("is-drop");
   });
@@ -221,16 +241,13 @@ function bindEvents(){
     if (!dayEl || !dragId) return;
     e.preventDefault();
     const id = dragId;
-    if (e.target.closest("[data-trash]")){
-      dragId = null;
-      pendingRender = false;
-      endDrag();
-      trashCard(id);
-      return;
-    }
-    const target = dayEl.dataset.day;
+    const onTrash = !!e.target.closest("[data-trash]") && dayEl.classList.contains("is-trash-active");
+    // limpa o arraste ANTES de atualizar o quadro (antes, soltar em outro dia deixava as lixeiras na tela)
+    endDrag();
     dragId = null;
     pendingRender = false;
+    if (onTrash){ trashCard(id); return; }
+    const target = dayEl.dataset.day;
     const rec = findRecord(id);
     if (!rec || rec.data === target){ renderBoard(); return; }
     moveToDay(id, target);
