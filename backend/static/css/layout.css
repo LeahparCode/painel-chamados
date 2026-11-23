@@ -68,8 +68,12 @@
 .live i{ width: 8px; height: 8px; border-radius: 50%; background: var(--side-muted); }
 .live[data-state="online"] i{ background: #2fc489; box-shadow: 0 0 0 0 rgba(47, 196, 137, .6); animation: live-pulse 2s infinite; }
 .live[data-state="online"]{ color: var(--side-text); }
-.live[data-state="stale"] i, .live[data-state="offline"] i{ background: #f5a33a; }
-.live[data-state="stale"], .live[data-state="offline"]{ color: var(--side-text); }
+/* conectando: setinha em círculo girando no lugar da bolinha */
+.live-spin{ display: none; width: 14px; height: 14px; color: #f5b453; animation: live-spin 1s linear infinite; }
+.live:not([data-state="online"]) i{ display: none; }
+.live:not([data-state="online"]) .live-spin{ display: block; }
+.live:not([data-state="online"]){ color: var(--side-text); }
+@keyframes live-spin{ to{ transform: rotate(360deg); } }
 @keyframes live-pulse{
   0%{ box-shadow: 0 0 0 0 rgba(47, 196, 137, .6); }
   70%{ box-shadow: 0 0 0 8px rgba(47, 196, 137, 0); }
