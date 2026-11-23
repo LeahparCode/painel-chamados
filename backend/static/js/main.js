@@ -45,13 +45,14 @@ function switchView(name){
 }
 
 /* ---------- conexão ---------- */
-const CONN_LABEL = { connecting: "Conectando", online: "Ao vivo", stale: "Dados em cache", offline: "Offline" };
+// Só dois estados visíveis: "Conectado" (dados em tempo real) ou "Conectando" (abrindo / tentando de novo)
+const CONN_LABEL = { connecting: "Conectando", online: "Conectado", stale: "Conectando", offline: "Conectando" };
 function renderConnection(){
   const el = document.getElementById("liveStatus");
   if (!el) return;
   el.dataset.state = state.connection;
-  el.querySelector("span").textContent = CONN_LABEL[state.connection] || "";
-  el.title = CONN_LABEL[state.connection] || "";
+  el.querySelector(":scope > span").textContent = CONN_LABEL[state.connection] || "";
+  el.title = state.connection === "online" ? "Conectado: dados atualizados em tempo real" : "Conectando ao servidor…";
 }
 
 /* ---------- splash ---------- */
