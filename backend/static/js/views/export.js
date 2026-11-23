@@ -200,18 +200,41 @@ function csvCell(value, { text = false } = {}){
 }
 const num = (v, digits = 2) => Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false });
 
+/** Texto em uma linha só: quebras de linha viram " · " (o Excel não "estica" a linha). */
+function umaLinha(texto){
+  return String(texto || "")
+    .split(/\r?\n/)
+    .map(l => l.trim().replace(/[;.]+$/, "").trim())
+    .filter(Boolean)
+    .join(" · ")
+    .replace(/\s{2,}/g, " ");
+}
+
 function exportCsv(list){
-  const header = ["Data", "Horário", "Nome", "Status", "Tipo", "Valor por envio", "Volume", "Valor", "Frase", "Texto da frase", "Observações", "Potes", "Tempo médio (min)", "Atualizado em", "ID"];
+  // Ordem pensada para leitura: quando / situação / o quê / quanto / detalhes; ID por último.
+  const header = ["Data", "Dia", "Horário", "Status", "Tipo", "Nome", "Observações", "Volume",
+    "Valor por envio (R$)", "Valor (R$)", "Frase", "Tempo médio (min)", "Potes", "ID"];
   const lines = [header.join(";")];
   list.map(rowOf).forEach(r => {
     lines.push([
-      csvCell(fmtBR(r.data)), csvCell(r.horario), csvCell(r.nome, { text: true }), csvCell(r.status), csvCell(r.tipo),
-      csvCell(num(r.unit, 3)), csvCell(r.volume), csvCell(num(r.valor)), csvCell(r.frase, { text: true }), csvCell(r.texto, { text: true }), csvCell(r.obs, { text: true }),
-      csvCell(r.potes), csvCell(r.tempo), csvCell(r.atualizado ? `${fmtBR(r.atualizado.slice(0, 10))} ${r.atualizado.slice(11)}` : ""), csvCell(r.id),
+      csvCell(fmtBR(r.data)),
+      csvCell(capitalize(fmtDate(r.data, { weekday: "short" }).replace(".", ""))),
+      csvCell(r.horario),
+      csvCell(r.status),
+      csvCell(r.tipo),
+      csvCell(umaLinha(r.nome), { text: true }),
+      csvCell(umaLinha(r.obs), { text: true }),
+      csvCell(r.volume),
+      csvCell(num(r.unit, 3)),
+      csvCell(num(r.valor)),
+      csvCell(umaLinha(r.frase), { text: true }),
+      csvCell(r.tempo),
+      csvCell(r.potes),
+      csvCell(r.id),
     ].join(";"));
   });
   // BOM para o Excel reconhecer acentos (UTF-8)
-  download(new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), `${fileBase()}.csv`);
+  download(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), `${fileBase()}.csv`);
 }
 
 /* ---------------- Relatório PDF (impressão) ---------------- */
