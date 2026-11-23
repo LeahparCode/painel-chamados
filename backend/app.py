@@ -189,6 +189,13 @@ def _parse_fields(b: dict, partial: bool):
 def add_headers(resp):
     if request.path.startswith("/api/"):
         resp.headers.setdefault("Cache-Control", "no-store")
+    # Segurança: o painel não pode ser aberto dentro de outro site (evita "clonar" a tela via iframe
+    # e ataques de clique disfarçado), o navegador não adivinha tipos de arquivo e não vaza a URL completa.
+    resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    resp.headers.setdefault("Content-Security-Policy", "frame-ancestors 'self'")
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
     return resp
 
 

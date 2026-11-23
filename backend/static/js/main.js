@@ -65,6 +65,14 @@ function hideSplash(){
   setTimeout(() => s?.remove(), 350);
 }
 
+/* ---------- aviso no console do navegador ---------- */
+try{
+  console.log("%cPare!", "color:#d7263d;font-size:42px;font-weight:800;");
+  console.log("%cEste sistema é propriedade da Leahpar Code. Todos os direitos reservados.\n" +
+    "Copiar, reproduzir ou redistribuir o código ou o design sem autorização é proibido.",
+    "font-size:14px;");
+}catch{}
+
 /* ---------- boot ---------- */
 await fetchMe();      // visitante ou logado? (o servidor confirma; o resto da tela depende disso)
 const logged = canEdit();   // admin ou operador (conta pendente vê como visitante)
