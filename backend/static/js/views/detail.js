@@ -71,7 +71,7 @@ function renderStatic(r){
 
 function renderRemaining(r){
   const key = statusKey(r.status);
-  $("dRestante").textContent = key === "ok" ? "Finalizado" : key === "err" ? "—" : fmtRemaining(remainingMs(r));
+  $("dRestante").textContent = key === "ok" ? "Finalizado" : key === "err" ? "—" : key === "sched" ? "Programado" : fmtRemaining(remainingMs(r));
 }
 
 function fillForm(r){

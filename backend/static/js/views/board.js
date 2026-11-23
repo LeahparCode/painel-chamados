@@ -9,7 +9,7 @@ import { toast } from "../ui/toast.js";
 import { canEdit } from "../core/auth.js";
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-const STATUS_LABEL = { run: "Andamento", ok: "Finalizado", err: "Insucesso" };
+const STATUS_LABEL = { sched: "Programado", run: "Andamento", ok: "Finalizado", err: "Insucesso" };
 const CLOCK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 const TRASH_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>';
 const PLUS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
@@ -67,7 +67,7 @@ function dayHtml(day, records, { today, focus, scope, mode }){
   if (!records.length) classes.push("is-empty");
 
   const bar = s.total
-    ? ["run", "ok", "err"].filter(k => s[k]).map(k => `<i class="${k}" style="flex:${s[k]}"></i>`).join("")
+    ? ["sched", "run", "ok", "err"].filter(k => s[k]).map(k => `<i class="${k}" style="flex:${s[k]}"></i>`).join("")
     : "";
   const cards = records.length
     ? records.slice().sort(byHorario).map(cardHtml).join("")

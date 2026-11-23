@@ -7,7 +7,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from storage import create_store, backend_name, StoreError
 from export_xlsx import build_xlsx, safe_filename, ExportError
 from auth import init_auth, editor_required
-from importers.calendario import parse_calendar, ImportError_
+from importers.calendario import parse_calendar, ajustes_existentes, ImportError_
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 log = logging.getLogger("app")
@@ -23,7 +23,8 @@ PRECO_POR_TIPO = {
 }
 VALID_TIPO_DISPARO = set(PRECO_POR_TIPO)
 
-VALID_STATUS = {"Em andamento", "Finalizado", "Insucesso"}
+# Programado: disparo de dia futuro, ainda não iniciado
+VALID_STATUS = {"Em andamento", "Finalizado", "Insucesso", "Programado"}
 
 # ===== App =====
 # Visitantes só leem o painel; escrita exige login (ver auth.py).
@@ -316,10 +317,12 @@ def delete_template(tid):
 @app.post("/api/import/calendario")
 @editor_required
 def import_calendario():
-    """?confirmar=1 grava; sem isso, só devolve a prévia (nada é gravado)."""
+    """?confirmar=1 grava; sem isso, só devolve a prévia (nada é gravado).
+    ?hoje=AAAA-MM-DD: data de hoje no navegador de quem importa (define passado / hoje / futuro)."""
     data = request.get_json(silent=True)
+    hoje = request.args.get("hoje") or None
     try:
-        registros, avisos = parse_calendar(data)
+        registros, avisos = parse_calendar(data, hoje=hoje)
     except ImportError_ as e:
         return jsonify({"error": "invalid_calendar", "message": str(e)}), 400
 
@@ -329,26 +332,34 @@ def import_calendario():
     refs = {r.get("ref") for r in existentes if r.get("ref")}
     novos = [r for r in registros if r["ref"] not in refs]
     duplicados = len(registros) - len(novos)
+    ajustes = ajustes_existentes(registros, existentes)
 
-    por_tipo = {}
-    for r in novos:
-        por_tipo[r["tipoDisparo"]] = por_tipo.get(r["tipoDisparo"], 0) + 1
+    def contar(lista, chave):
+        out = {}
+        for r in lista:
+            out[r[chave]] = out.get(r[chave], 0) + 1
+        return out
+
     datas = sorted(r["data"] for r in registros)
     resumo = {
         "total": len(registros), "novos": len(novos), "duplicados": duplicados,
-        "porTipo": por_tipo, "de": datas[0] if datas else None, "ate": datas[-1] if datas else None,
+        "porTipo": contar(novos, "tipoDisparo"), "porStatus": contar(novos, "status"),
+        "de": datas[0] if datas else None, "ate": datas[-1] if datas else None,
         "finalizados": sum(1 for r in novos if r["status"] == "Finalizado"),
+        "atualizar": len(ajustes),
+        "atualizarPorStatus": contar([{"s": a["patch"].get("status", "Em andamento (10 min)")} for a in ajustes], "s"),
         "avisos": avisos[:20], "amostra": novos[:8],
     }
     if request.args.get("confirmar") != "1":
         return jsonify({**resumo, "confirmado": False})
     try:
         criados = get_store().create_many(novos) if novos else []
+        atualizados = get_store().update_many([(a["id"], a["patch"]) for a in ajustes]) if ajustes else 0
     except StoreError as e:
         return _store_error_response(e)
     _refresh_quietly()
-    log.info("Calendário importado: %d disparos novos, %d já existiam", len(criados), duplicados)
-    return jsonify({**resumo, "confirmado": True, "criados": len(criados)})
+    log.info("Calendário importado: %d novos, %d atualizados, %d já existiam", len(criados), atualizados, duplicados)
+    return jsonify({**resumo, "confirmado": True, "criados": len(criados), "atualizados": atualizados})
 
 
 # ---- Exportação ----

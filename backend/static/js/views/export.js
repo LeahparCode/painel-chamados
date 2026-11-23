@@ -133,6 +133,7 @@ function xlsxSpec(list){
           ["Disparos", { v: s.total, t: "int" }],
           ["Volume", { v: s.volume, t: "int" }],
           ["Valor total", { v: s.valor, t: "money" }],
+          ["Programados", { v: s.sched, t: "int" }],
           ["Em andamento", { v: s.run, t: "int" }],
           ["Finalizados", { v: s.ok, t: "int" }],
           ["Insucessos", { v: s.err, t: "int" }],
@@ -153,10 +154,10 @@ function xlsxSpec(list){
         columns: [
           { title: "Data", type: "date", width: 12 }, { title: "Dia", type: "text", width: 16 },
           { title: "Disparos", type: "int", width: 11 }, { title: "Volume", type: "int", width: 12 }, { title: "Valor", type: "money", width: 15 },
-          { title: "Em andamento", type: "int", width: 14 }, { title: "Finalizados", type: "int", width: 12 }, { title: "Insucessos", type: "int", width: 12 },
+          { title: "Programados", type: "int", width: 13 }, { title: "Em andamento", type: "int", width: 14 }, { title: "Finalizados", type: "int", width: 12 }, { title: "Insucessos", type: "int", width: 12 },
         ],
-        rows: dias.map(d => [d.day, capitalize(fmtDate(d.day, { weekday: "long" })), d.total, d.volume, d.valor, d.run, d.ok, d.err]),
-        totals: ["Total", "", s.total, s.volume, s.valor, s.run, s.ok, s.err],
+        rows: dias.map(d => [d.day, capitalize(fmtDate(d.day, { weekday: "long" })), d.total, d.volume, d.valor, d.sched, d.run, d.ok, d.err]),
+        totals: ["Total", "", s.total, s.volume, s.valor, s.sched, s.run, s.ok, s.err],
       },
       {
         name: "Disparos",
@@ -253,7 +254,7 @@ function reportHtml(list){
     <div class="kpi"><span>Volume</span><b>${fmtInt(s.volume)}</b></div>
     <div class="kpi"><span>Taxa de sucesso</span><b>${decided ? Math.round((s.ok / decided) * 100) + "%" : "—"}</b></div>
   </div>
-  <p class="muted">${fmtInt(s.run)} em andamento · ${fmtInt(s.ok)} finalizados · ${fmtInt(s.err)} insucessos</p>
+  <p class="muted">${fmtInt(s.sched)} programados · ${fmtInt(s.run)} em andamento · ${fmtInt(s.ok)} finalizados · ${fmtInt(s.err)} insucessos</p>
 
   <h2>Por tipo</h2>
   <table><thead><tr><th>Tipo</th><th class="num">Valor por envio</th><th class="num">Disparos</th><th class="num">Volume</th><th class="num">Valor</th></tr></thead>

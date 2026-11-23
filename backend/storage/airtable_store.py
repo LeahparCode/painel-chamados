@@ -107,6 +107,14 @@ class AirtableStore:
             out.extend(self._normalize(r) for r in res.get("records", []))
         return out
 
+    def update_many(self, items):
+        n = 0
+        for i in range(0, len(items), 10):
+            lote = [{"id": rid, "fields": self._to_fields(patch)} for rid, patch in items[i:i + 10]]
+            res = self._request("PATCH", self.api, json={"records": lote}, params={"typecast": "true"})
+            n += len(res.get("records", []))
+        return n
+
     def delete(self, rid: str):
         self._request("DELETE", f"{self.api}/{rid}")
 

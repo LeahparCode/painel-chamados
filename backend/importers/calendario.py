@@ -13,15 +13,16 @@ Cada ação vira um disparo:
   - tipo (nome)     → resumo do texto (sem a linha "Agendar para o dia X")
   - obs             → texto completo da ação
   - volume          → "Qtd: N" quando informado
-  - status          → antes de hoje: Finalizado; hoje e depois: Em andamento
+  - status          → antes de hoje: Finalizado; hoje: Em andamento (10 min); depois: Programado
   - horario         → padrão (o calendário não tem horário)
   - ref             → cal-<segmento>-<id>, usado para não importar a mesma ação duas vezes
 """
 import re
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 CANAL_PARA_TIPO = {"sms": "SMS", "rcs": "RCS", "whatsapp": "WhatsApp", "email": "E-mail", "e-mail": "E-mail"}
 HORARIO_PADRAO = "08:00"
+TEMPO_HOJE_MIN = 10   # disparos do dia atual entram "Em andamento" com 10 minutos para finalizar
 MAX_ACOES = 5000
 
 _AGENDAR = re.compile(r"^agend\w*\s+pa\w*\s+o\s+dia\s+\d+", re.I)   # aceita "Papar" (erro de digitação no calendário)
@@ -54,11 +55,27 @@ def _volume(texto):
     return int(m.group(1).replace(".", "")) if m else 0
 
 
+def hoje_brasil():
+    """Data de hoje no horário de Brasília (UTC-3), para não "virar o dia" às 21h por causa do UTC."""
+    return (datetime.now(timezone.utc) - timedelta(hours=3)).date()
+
+
+def status_para(dia, hoje):
+    """Regra de status/tempo de uma ação pela data: passado, hoje ou futuro."""
+    if dia < hoje:
+        return "Finalizado", 0
+    if dia == hoje:
+        return "Em andamento", TEMPO_HOJE_MIN
+    return "Programado", 0
+
+
 def parse_calendar(data, hoje=None, seg=None):
-    """Devolve (registros, avisos). Não grava nada."""
+    """Devolve (registros, avisos). Não grava nada. `hoje` pode ser date ou "AAAA-MM-DD"."""
     if not isinstance(data, dict) or not isinstance(data.get("segs"), list):
         raise ImportError_("Arquivo não parece um calendário de ações (falta a lista 'segs').")
-    hoje = (hoje or date.today()).isoformat()
+    if isinstance(hoje, str) and _DATA.match(hoje):
+        hoje = date.fromisoformat(hoje)
+    hoje = (hoje if isinstance(hoje, date) else hoje_brasil()).isoformat()
     segs = data["segs"]
     alvo = seg or data.get("activeSeg")
     if alvo:
@@ -90,6 +107,7 @@ def parse_calendar(data, hoje=None, seg=None):
                     avisos.append(f"{dia}: canal desconhecido {canal!r} (ação {a.get('id')}) ignorado")
                     continue
                 texto = "\n".join(_linhas(a.get("text")))
+                status, tempo = status_para(dia, hoje)
                 registros.append({
                     "data": dia,
                     "horario": HORARIO_PADRAO,
@@ -98,9 +116,29 @@ def parse_calendar(data, hoje=None, seg=None):
                     "obs": texto[:1000],
                     "volume": _volume(texto),
                     "potes": 0,
-                    "tempo": 0,
+                    "tempo": tempo,
                     "template": "",
-                    "status": "Finalizado" if dia < hoje else "Em andamento",
+                    "status": status,
                     "ref": f"cal-{sid}-{a.get('id')}",
                 })
     return registros, avisos
+
+
+def ajustes_existentes(registros, existentes):
+    """Ações já importadas antes que ainda estão com o status automático "Em andamento":
+    aplica a regra atual (passado → Finalizado, hoje → 10 min, futuro → Programado).
+    Nunca mexe em disparos com status escolhido à mão (Finalizado, Insucesso, Programado)."""
+    por_ref = {r.get("ref"): r for r in existentes if r.get("ref")}
+    out = []
+    for novo in registros:
+        atual = por_ref.get(novo["ref"])
+        if not atual or (atual.get("status") or "Em andamento") != "Em andamento":
+            continue
+        patch = {}
+        if novo["status"] != "Em andamento":
+            patch["status"] = novo["status"]
+        elif not int(atual.get("tempo") or 0):
+            patch["tempo"] = novo["tempo"]   # hoje: ganha os 10 minutos (contados a partir de agora)
+        if patch:
+            out.append({"id": atual["id"], "ref": novo["ref"], "data": novo["data"], "tipo": atual.get("tipo", ""), "patch": patch})
+    return out

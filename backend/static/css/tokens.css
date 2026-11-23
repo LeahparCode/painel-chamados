@@ -45,6 +45,9 @@
   --err: #df3b4a;
   --err-soft: #fde7ea;
   --err-ink: #a3192a;
+  --sched: #3b7be8;
+  --sched-soft: #e6efff;
+  --sched-ink: #1d4fb8;
 
   /* forma */
   --r-xs: 8px;
@@ -109,6 +112,9 @@ html.dark{
   --err: #f0596a;
   --err-soft: rgba(240, 89, 106, .14);
   --err-ink: #ff9aa6;
+  --sched: #6aa5ff;
+  --sched-soft: rgba(106, 165, 255, .14);
+  --sched-ink: #a9c8ff;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
   --shadow-md: 0 10px 28px -14px rgba(0, 0, 0, .7);
