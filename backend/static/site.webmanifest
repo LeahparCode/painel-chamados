@@ -1,0 +1,13 @@
+{
+  "name": "Painel de Disparos",
+  "short_name": "Disparos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f4f8",
+  "theme_color": "#0b1f45",
+  "icons": [
+    { "src": "/static/img/favicon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/img/favicon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/static/img/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

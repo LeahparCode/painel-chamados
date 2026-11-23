@@ -197,6 +197,12 @@ def index():
     return render_template("index.html")
 
 
+@app.get("/favicon.ico")
+def favicon():
+    # alguns navegadores pedem /favicon.ico direto, sem olhar o <link rel="icon">
+    return app.send_static_file("img/favicon.ico")
+
+
 @app.get("/healthz")
 def health():
     return jsonify(ok=True, storage=backend_name())
