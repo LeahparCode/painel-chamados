@@ -39,7 +39,7 @@ function cardHtml(r){
   ].join("");
   const pills = [
     frase ? `<span class="chip ${frase.custom ? "chip-own" : chipClass(frase.canal)}">${escapeHtml(frase.custom ? "Próprio" : `${frase.code} ${frase.canal}`)}</span>` : "",
-    r.tipoDisparo ? `<span class="chip chip-brand">${escapeHtml(r.tipoDisparo)}</span>` : "",
+    r.tipoDisparo ? `<span class="chip ${chipClass(r.tipoDisparo) || "chip-brand"}">${escapeHtml(r.tipoDisparo)}</span>` : "",
   ].join("");
   const time = escapeHtml(r.horario || "--:--");
   return `

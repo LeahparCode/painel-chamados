@@ -157,6 +157,27 @@ class SheetTable:
                 raise _api_error(e)
         return rec
 
+    def create_many(self, items):
+        """Grava várias linhas numa única chamada à API (importações)."""
+        import gspread
+        recs = [self.clean({**d, "id": new_id(self.id_prefix), "atualizadoEm": now_iso()}) for d in items]
+        if not recs:
+            return []
+        with self.lock:
+            try:
+                self.ensure_headers()
+                width = max(self.cols.values())
+                rows = []
+                for rec in recs:
+                    row = [""] * width
+                    for key, col in self.cols.items():
+                        row[col - 1] = rec.get(key, "")
+                    rows.append(row)
+                self.ws.append_rows(rows, value_input_option="RAW", table_range="A1")
+            except gspread.exceptions.APIError as e:
+                raise _api_error(e)
+        return recs
+
     def update(self, rid: str, patch: dict):
         import gspread
         patch = {k: v for k, v in patch.items() if k != "id"}
@@ -265,6 +286,9 @@ class SheetsStore:
 
     def create(self, data: dict):
         return self.disparos.create(data)
+
+    def create_many(self, items):
+        return self.disparos.create_many(items)
 
     def update(self, rid: str, patch: dict):
         return self.disparos.update(rid, patch)

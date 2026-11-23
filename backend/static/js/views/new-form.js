@@ -102,6 +102,7 @@ export function initNewForm(){
       tipoDisparo: $("nTipo").value,
       volume: Number($("nVolume").value || 0),
       potes: Number($("nPotes").value || 0),
+      obs: $("nObs").value.trim(),
       tempo,
       status: "Em andamento",
     };

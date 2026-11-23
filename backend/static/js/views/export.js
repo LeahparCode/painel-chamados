@@ -62,6 +62,7 @@ function rowOf(r){
     valor: r2(costOf(r)),
     frase: frase ? fraseLabel(frase) : (r.template || ""),
     texto: frase ? frase.texto : "",
+    obs: r.obs || "",
     potes: Number(r.potes || 0) || 0,
     tempo: Number(r.tempo || 0) || 0,
     atualizado: localDateTime(r.atualizadoEm),
@@ -165,11 +166,12 @@ function xlsxSpec(list){
           { title: "Tipo", type: "text", width: 11 }, { title: "Valor por envio", type: "money3", width: 15 },
           { title: "Volume", type: "int", width: 11 }, { title: "Valor", type: "money", width: 14 },
           { title: "Frase", type: "text", width: 30 }, { title: "Texto da frase", type: "longtext", width: 70 },
+          { title: "Observações", type: "longtext", width: 40 },
           { title: "Potes", type: "int", width: 8 }, { title: "Tempo médio (min)", type: "int", width: 12 },
           { title: "Atualizado em", type: "datetime", width: 17 }, { title: "ID", type: "text", width: 20 },
         ],
-        rows: rows.map(r => [r.data, r.horario, r.nome, r.status, r.tipo, r.unit, r.volume, r.valor, r.frase, r.texto, r.potes, r.tempo, r.atualizado, r.id]),
-        totals: ["Total", "", `${fmtInt(rows.length)} disparos`, "", "", "", s.volume, s.valor, "", "", "", "", "", ""],
+        rows: rows.map(r => [r.data, r.horario, r.nome, r.status, r.tipo, r.unit, r.volume, r.valor, r.frase, r.texto, r.obs, r.potes, r.tempo, r.atualizado, r.id]),
+        totals: ["Total", "", `${fmtInt(rows.length)} disparos`, "", "", "", s.volume, s.valor, "", "", "", "", "", "", ""],
       },
     ],
   };
@@ -198,12 +200,12 @@ function csvCell(value, { text = false } = {}){
 const num = (v, digits = 2) => Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false });
 
 function exportCsv(list){
-  const header = ["Data", "Horário", "Nome", "Status", "Tipo", "Valor por envio", "Volume", "Valor", "Frase", "Texto da frase", "Potes", "Tempo médio (min)", "Atualizado em", "ID"];
+  const header = ["Data", "Horário", "Nome", "Status", "Tipo", "Valor por envio", "Volume", "Valor", "Frase", "Texto da frase", "Observações", "Potes", "Tempo médio (min)", "Atualizado em", "ID"];
   const lines = [header.join(";")];
   list.map(rowOf).forEach(r => {
     lines.push([
       csvCell(fmtBR(r.data)), csvCell(r.horario), csvCell(r.nome, { text: true }), csvCell(r.status), csvCell(r.tipo),
-      csvCell(num(r.unit, 3)), csvCell(r.volume), csvCell(num(r.valor)), csvCell(r.frase, { text: true }), csvCell(r.texto, { text: true }),
+      csvCell(num(r.unit, 3)), csvCell(r.volume), csvCell(num(r.valor)), csvCell(r.frase, { text: true }), csvCell(r.texto, { text: true }), csvCell(r.obs, { text: true }),
       csvCell(r.potes), csvCell(r.tempo), csvCell(r.atualizado ? `${fmtBR(r.atualizado.slice(0, 10))} ${r.atualizado.slice(11)}` : ""), csvCell(r.id),
     ].join(";"));
   });

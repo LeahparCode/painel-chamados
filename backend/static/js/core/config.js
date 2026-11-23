@@ -5,7 +5,7 @@ export const STATUS = ["Em andamento", "Finalizado", "Insucesso"];
 export const HORARIOS = ["08:00", "12:00", "16:00", "20:00"];
 
 // Tipos de disparo aceitos.
-export const TIPOS = ["SMS", "RCS", "WhatsApp"];
+export const TIPOS = ["SMS", "RCS", "WhatsApp", "E-mail"];
 
 // Valor de cada envio por tipo (R$ por mensagem). Os preços NÃO ficam no código da página:
 // vêm do servidor (GET /api/config) e só para quem está logado. Para visitantes fica vazio,

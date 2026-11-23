@@ -380,6 +380,22 @@
           </article>
         </div>
 
+        <article class="panel import-panel" id="importPanel">
+          <div class="import-head">
+            <span class="export-ico ico-import" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg></span>
+            <div class="import-text">
+              <h3>Importar calendário de ações</h3>
+              <p>Envie o arquivo <b>.json</b> do calendário. Cada ação vira um disparo no painel; ações que já foram importadas são ignoradas.</p>
+            </div>
+            <label class="btn btn-soft import-pick">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
+              Escolher arquivo
+              <input type="file" id="importFile" accept=".json,application/json" hidden />
+            </label>
+          </div>
+          <div class="import-result" id="importResult" hidden></div>
+        </article>
+
         <article class="panel export-preview">
           <div class="preview-head">
             <h3>Prévia</h3>
@@ -469,6 +485,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Escrever template</button></div>
             <select id="eTemplate"></select>
           </div>
+          <label class="field field-full"><span>Observações</span><textarea id="eObs" rows="3" maxlength="1000" placeholder="Público, fonte, fatia, frase…"></textarea></label>
           <div class="field-full edit-actions">
             <button type="button" class="btn btn-danger-ghost" id="dDelete">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
@@ -518,6 +535,7 @@
         </div>
         <div class="field-full phrase-preview" id="nPreview" hidden></div>
         <label class="field"><span>Potes</span><input type="number" id="nPotes" min="0" placeholder="0" /></label>
+        <label class="field field-full"><span>Observações (opcional)</span><textarea id="nObs" rows="2" maxlength="1000" placeholder="Ex.: Fonte: Waba · Fatia: 21 a 360"></textarea></label>
         <div class="field">
           <span>Tempo médio</span>
           <div class="time-input">

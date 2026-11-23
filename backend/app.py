@@ -7,6 +7,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from storage import create_store, backend_name, StoreError
 from export_xlsx import build_xlsx, safe_filename, ExportError
 from auth import init_auth, editor_required
+from importers.calendario import parse_calendar, ImportError_
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 log = logging.getLogger("app")
@@ -18,6 +19,7 @@ PRECO_POR_TIPO = {
     "SMS": 0.07,
     "RCS": 0.07,
     "WhatsApp": 0.12,
+    "E-mail": 0.0,   # sem custo informado; ajuste aqui se houver
 }
 VALID_TIPO_DISPARO = set(PRECO_POR_TIPO)
 
@@ -141,6 +143,12 @@ def _parse_fields(b: dict, partial: bool):
     for key in ("tipo", "template"):
         if key in b or not partial:
             fields[key] = (b.get(key) or "").strip()
+
+    if "obs" in b:
+        obs = str(b.get("obs") or "").replace("\r\n", "\n").strip()
+        if len(obs) > 1000:
+            return None, (jsonify({"error": "invalid_obs", "message": "Observações: no máximo 1000 caracteres."}), 400)
+        fields["obs"] = obs
 
     if "horario" in b or not partial:
         fields["horario"] = b.get("horario") or "08:00"
@@ -302,6 +310,45 @@ def delete_template(tid):
         return _store_error_response(e)
     _TPL_CACHE["data"] = None
     return jsonify({"deleted": True, "id": tid})
+
+
+# ---- Importação do calendário de ações ----
+@app.post("/api/import/calendario")
+@editor_required
+def import_calendario():
+    """?confirmar=1 grava; sem isso, só devolve a prévia (nada é gravado)."""
+    data = request.get_json(silent=True)
+    try:
+        registros, avisos = parse_calendar(data)
+    except ImportError_ as e:
+        return jsonify({"error": "invalid_calendar", "message": str(e)}), 400
+
+    existentes, stale = get_snapshot(force=True)
+    if stale:
+        return jsonify({"error": "storage_unavailable", "message": "Não consegui ler os disparos atuais para evitar duplicados. Tente de novo."}), 503
+    refs = {r.get("ref") for r in existentes if r.get("ref")}
+    novos = [r for r in registros if r["ref"] not in refs]
+    duplicados = len(registros) - len(novos)
+
+    por_tipo = {}
+    for r in novos:
+        por_tipo[r["tipoDisparo"]] = por_tipo.get(r["tipoDisparo"], 0) + 1
+    datas = sorted(r["data"] for r in registros)
+    resumo = {
+        "total": len(registros), "novos": len(novos), "duplicados": duplicados,
+        "porTipo": por_tipo, "de": datas[0] if datas else None, "ate": datas[-1] if datas else None,
+        "finalizados": sum(1 for r in novos if r["status"] == "Finalizado"),
+        "avisos": avisos[:20], "amostra": novos[:8],
+    }
+    if request.args.get("confirmar") != "1":
+        return jsonify({**resumo, "confirmado": False})
+    try:
+        criados = get_store().create_many(novos) if novos else []
+    except StoreError as e:
+        return _store_error_response(e)
+    _refresh_quietly()
+    log.info("Calendário importado: %d disparos novos, %d já existiam", len(criados), duplicados)
+    return jsonify({**resumo, "confirmado": True, "criados": len(criados)})
 
 
 # ---- Exportação ----

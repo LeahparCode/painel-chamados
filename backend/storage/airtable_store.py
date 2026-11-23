@@ -75,6 +75,8 @@ class AirtableStore:
         fields = {}
         for k, v in data.items():
             if k in _KEY_TO_FIELD:
+                if k in ("obs", "ref") and not v:
+                    continue  # campos opcionais: só enviados se preenchidos (crie-os na tabela para usar)
                 fields[_KEY_TO_FIELD[k]] = None if v == "" and k == "tipoDisparo" else v
         return fields
 
@@ -96,6 +98,14 @@ class AirtableStore:
     def update(self, rid: str, patch: dict):
         rec = self._request("PATCH", f"{self.api}/{rid}", json={"fields": self._to_fields(patch)}, params={"typecast": "true"})
         return self._normalize(rec)
+
+    def create_many(self, items):
+        out = []
+        for i in range(0, len(items), 10):  # o Airtable aceita até 10 registros por chamada
+            payload = {"records": [{"fields": self._to_fields(d)} for d in items[i:i + 10]]}
+            res = self._request("POST", self.api, json=payload, params={"typecast": "true"})
+            out.extend(self._normalize(r) for r in res.get("records", []))
+        return out
 
     def delete(self, rid: str):
         self._request("DELETE", f"{self.api}/{rid}")

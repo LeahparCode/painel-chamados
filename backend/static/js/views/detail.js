@@ -85,6 +85,7 @@ function fillForm(r){
   fillSelect($("eHorario"), HORARIOS, null, r.horario || HORARIOS[0]);
   fillSelect($("eTipo"), TIPOS, "Sem tipo", r.tipoDisparo || "");
   fillFraseSelect($("eTemplate"), { tipo: r.tipoDisparo || "", current: (r.template || "").trim() });
+  $("eObs").value = r.obs || "";
 }
 
 /** Ao trocar o tipo na edição, a lista de frases passa a mostrar as daquele tipo. */
@@ -153,6 +154,7 @@ export function initDetail(){
       horario: $("eHorario").value,
       tipoDisparo: $("eTipo").value,
       template: $("eTemplate").value,
+      obs: $("eObs").value.trim(),
     };
     if (!next.data){ toast("Informe a data do disparo.", "warn"); return; }
     const patch = {};
