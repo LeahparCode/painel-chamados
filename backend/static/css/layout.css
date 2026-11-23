@@ -245,3 +245,22 @@ html.dark[data-palette="azul-dourado"] .brand-watermark{ --wm-color: #ffffff; op
 @media print{
   .brand-watermark{ display: none; }
 }
+
+/* ---------- Link do desenvolvedor no rodapé (brilho azul suave) ---------- */
+.dev-link{
+  color: #3b82f6; font-weight: 700; text-decoration: none;
+  border-radius: 6px; padding: 1px 3px;
+  text-shadow: 0 0 6px rgba(59, 130, 246, .35);
+  animation: dev-glow 2.8s ease-in-out infinite;
+  transition: color .2s var(--ease), background .2s var(--ease);
+}
+.dev-link:hover, .dev-link:focus-visible{
+  color: #2563eb; background: rgba(59, 130, 246, .1);
+  text-decoration: underline; text-underline-offset: 3px;
+}
+html.dark .dev-link{ color: #7db3ff; }
+html.dark .dev-link:hover, html.dark .dev-link:focus-visible{ color: #a9cbff; background: rgba(125, 179, 255, .12); }
+@keyframes dev-glow{
+  0%, 100%{ text-shadow: 0 0 4px rgba(59, 130, 246, .25); }
+  50%{ text-shadow: 0 0 10px rgba(59, 130, 246, .65), 0 0 18px rgba(59, 130, 246, .3); }
+}
