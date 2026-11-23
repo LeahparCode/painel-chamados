@@ -12,6 +12,7 @@ import { initFrases, refreshFrasesView } from "./views/frases.js";
 import { initTemplateEditor } from "./views/template-editor.js";
 import { initDashboard, setDashboardVisible } from "./views/dashboard.js";
 import { initExport, setExportVisible } from "./views/export.js";
+import { initImport } from "./views/import.js";
 import { initAccount } from "./views/account.js";
 import { initUsers, setUsersVisible } from "./views/users.js";
 import { fetchMe, fetchConfig, canEdit, isAdmin } from "./core/auth.js";
@@ -79,6 +80,7 @@ if (logged){
   initFrases({ onUse: (template, tipo) => openNewForm({ template, tipo }) });
   initDashboard();
   initExport();
+  initImport();
   if (isAdmin()) initUsers();
 }
 

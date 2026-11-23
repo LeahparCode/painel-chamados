@@ -56,3 +56,27 @@
   .export-card{ flex-direction: column; align-items: stretch; }
   .export-card .btn{ width: 100%; }
 }
+
+/* ---------- Importar calendário ---------- */
+.import-panel{ display: flex; flex-direction: column; gap: 16px; }
+.import-head{ display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.import-text{ flex: 1; min-width: 220px; }
+.import-text h3{ font-size: 16px; font-weight: 800; }
+.import-text p{ font-size: 13px; color: var(--text-2); margin-top: 2px; }
+.export-ico.ico-import{ background: var(--brand-soft); color: var(--brand-text); }
+.import-pick{ cursor: pointer; }
+.import-result{ display: flex; flex-direction: column; gap: 14px; border-top: 1px solid var(--border); padding-top: 16px; animation: view-in .3s var(--ease) both; }
+.import-file{ font-size: 13px; color: var(--muted); }
+.import-file b{ color: var(--text); }
+.import-kpis{ display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.import-kpis .kpi{ box-shadow: none; background: var(--surface-2); }
+.import-kpis .kpi b{ font-size: 20px; }
+.import-chips{ display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); }
+.import-rules{ margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 12px; color: var(--text-2); line-height: 1.6; }
+.import-rules b{ color: var(--text); }
+.import-actions{ display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.import-table td.wrap{ white-space: normal; min-width: 220px; }
+@media (max-width: 720px){
+  .import-kpis{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .import-pick, .import-actions .btn{ width: 100%; }
+}

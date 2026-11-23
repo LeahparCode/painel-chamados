@@ -16,7 +16,7 @@ export const keyOf = (f) => `safra_${pad2(f.id)}`;
  * Não há frases Safra próprias de RCS; como o RCS também é entregue como mensagem de texto,
  * ele usa as frases de SMS (além dos templates próprios de RCS).
  */
-export const SAFRA_CANAIS_POR_TIPO = { SMS: ["SMS"], RCS: ["SMS"], WhatsApp: ["WhatsApp"] };
+export const SAFRA_CANAIS_POR_TIPO = { SMS: ["SMS"], RCS: ["SMS"], WhatsApp: ["WhatsApp"], "E-mail": [] }; // e-mail: só templates próprios
 
 const SAFRA = FRASES_SAFRA.map(f => ({
   key: keyOf(f),
@@ -86,7 +86,7 @@ export function templateLabel(key){
 }
 
 /** Classe do chip de acordo com o tipo/canal */
-export const chipClass = (tipo) => ({ SMS: "chip-sms", WhatsApp: "chip-wpp", RCS: "chip-rcs" }[tipo] || "");
+export const chipClass = (tipo) => ({ SMS: "chip-sms", WhatsApp: "chip-wpp", RCS: "chip-rcs", "E-mail": "chip-mail" }[tipo] || "");
 
 export const TONS = [...new Set(SAFRA.map(f => f.tom))].sort((a, b) => a.localeCompare(b, "pt-BR"));
 export { TIPOS };
