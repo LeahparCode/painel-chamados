@@ -41,6 +41,7 @@
   position: relative;
 }
 .nav-item svg{ width: 19px; height: 19px; opacity: .85; }
+.nav-item .lbl-short{ display: none; }
 .nav-item:hover{ background: var(--side-active); color: var(--side-strong); }
 .nav-item.is-active{
   background: var(--side-active-bg);
@@ -145,6 +146,8 @@
   }
   .nav-item svg{ display: block; width: 21px; height: 21px; }
   .nav-item span{ font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .nav-item .lbl-full{ display: none; }
+  .nav-item .lbl-short{ display: inline; }
   .nav-item.is-active{ background: var(--side-active-bg); }
   .nav-item.is-active::before{
     display: block; left: 32%; right: 32%; top: -6px; bottom: auto; width: auto; height: 3px;

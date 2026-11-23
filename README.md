@@ -72,7 +72,7 @@ DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave
 
 ## Importar calendário de ações
 
-Na tela **Exportar**, seção **Importar calendário de ações**, envie o `.json` exportado da ferramenta de
+Na tela **Importar/Exportar**, aba **Importar** (atalho: `#importar`), envie o `.json` exportado da ferramenta de
 calendário (formato `segs[].actionsByDate`). O painel mostra uma prévia e só grava ao confirmar.
 Cada ação vira um disparo (data e canal do calendário; texto completo em **Observações**; horário 08:00;
 antes de hoje = Finalizado). Cada ação guarda a origem na coluna `Ref`, então reimportar não duplica.

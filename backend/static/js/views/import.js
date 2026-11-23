@@ -63,7 +63,27 @@ function limpar(){
   $("importResult").innerHTML = "";
 }
 
+/** Alterna entre as abas "Exportar" e "Importar" da tela Importar/Exportar. */
+export function setIoTab(tab){
+  const importar = tab === "importar";
+  $("ioExport").hidden = importar;
+  $("ioImport").hidden = !importar;
+  $("expLabel").hidden = importar;
+  $("importLabel").hidden = !importar;
+  document.querySelectorAll("#ioTabs [data-io]").forEach(b => {
+    const on = b.dataset.io === (importar ? "importar" : "exportar");
+    b.classList.toggle("is-active", on);
+    b.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  try{ history.replaceState(null, "", importar ? "#importar" : "#exportar"); }catch{}
+}
+
 export function initImport(){
+  $("ioTabs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-io]");
+    if (b) setIoTab(b.dataset.io);
+  });
+
   $("importFile").addEventListener("change", async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
