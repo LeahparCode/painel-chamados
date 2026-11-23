@@ -8,6 +8,7 @@ from storage import create_store, backend_name, StoreError
 from export_xlsx import build_xlsx, safe_filename, ExportError
 from auth import init_auth, editor_required
 from importers.calendario import parse_calendar, ajustes_existentes, ImportError_
+from automacao import transicoes
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
 log = logging.getLogger("app")
@@ -96,12 +97,37 @@ def get_snapshot(force: bool = False):
             return _LAST_SNAPSHOT, False
         try:
             data = get_store().list_records()
+            data = _aplicar_automacoes(data)
             _LAST_SNAPSHOT, _LAST_FETCH_TS = data, time.time()
             return data, False
         except Exception as e:
             log.warning("Falha ao ler registros: %s", e)
             _LAST_FETCH_TS = time.time()  # evita martelar a API quando ela está fora
             return _LAST_SNAPSHOT, True
+
+
+_LAST_AUTO_TS = 0.0
+AUTO_INTERVAL = float(os.getenv("AUTO_INTERVAL", "30"))
+
+
+def _aplicar_automacoes(data):
+    """Programado → Em andamento na virada do dia; Em andamento → Finalizado quando o timer acaba.
+    Roda no máximo a cada AUTO_INTERVAL segundos e grava tudo numa única atualização em lote."""
+    global _LAST_AUTO_TS
+    if time.time() - _LAST_AUTO_TS < AUTO_INTERVAL:
+        return data
+    _LAST_AUTO_TS = time.time()
+    try:
+        mudancas = transicoes(data)
+        if not mudancas:
+            return data
+        get_store().update_many([(rid, patch) for rid, patch, _ in mudancas])
+        inicios = sum(1 for *_, m in mudancas if m == "inicio")
+        log.info("Automação: %d programado(s) iniciado(s), %d finalizado(s) pelo timer", inicios, len(mudancas) - inicios)
+        return get_store().list_records()
+    except Exception as e:
+        log.warning("Falha na automação de status: %s", e)
+        return data
 
 
 def _refresh_quietly():

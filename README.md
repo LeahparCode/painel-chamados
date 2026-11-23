@@ -80,6 +80,15 @@ dias futuros = **Programado**. Reimportar também corrige ações já importadas
 (nunca altera o que foi mudado à mão). Cada ação guarda a origem na coluna `Ref`, então reimportar não duplica.
 Canais: SMS, RCS, WhatsApp e E-mail (E-mail sem custo; preço em `PRECO_POR_TIPO`).
 
+## Status automáticos
+
+O servidor ajusta os status sozinho (sem depender de alguém com o painel aberto):
+- **Virada do dia:** disparo **Programado** cuja data chegou vira **Em andamento** com timer de
+  15 minutos (ou o tempo próprio do disparo, se tiver). Variável `AUTO_START_MINUTES` muda o padrão.
+- **Fim do timer:** **Em andamento** com tempo vira **Finalizado** quando o tempo acaba.
+- A verificação roda nas leituras do painel (no máximo a cada 30 s). Com o serviço "dormindo",
+  a troca acontece no primeiro acesso seguinte e o timer conta a partir dali.
+
 ## Login
 
 - Sem login, o painel abre em **modo visualização**: só o quadro de disparos, sem editar,

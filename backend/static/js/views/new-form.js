@@ -47,6 +47,9 @@ export function openNewForm({ day, template, tipo } = {}){
   form.reset();
   $("nData").value = day || state.view.ref;
   $("nHorario").value = HORARIOS[0];
+  // timer padrão de 15 minutos (o mesmo que o servidor usa ao iniciar disparos programados)
+  $("nHoras").value = "0";
+  $("nMinutos").value = "15";
   const frase = fraseByKey(template);
   $("nTipo").value = tipo || frase?.tipo || "";
   refreshFrases(template || "");
