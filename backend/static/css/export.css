@@ -80,3 +80,13 @@
   .import-kpis{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .import-pick, .import-actions .btn{ width: 100%; }
 }
+
+/* ---------- Abas Exportar / Importar ---------- */
+.io-tabs{ align-self: flex-start; }
+.io-tabs button{ display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; }
+.io-tabs button svg{ width: 16px; height: 16px; }
+.io-pane{ display: flex; flex-direction: column; gap: 18px; animation: view-in .3s var(--ease) both; }
+@media (max-width: 480px){
+  .io-tabs{ align-self: stretch; }
+  .io-tabs button{ flex: 1; justify-content: center; }
+}

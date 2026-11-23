@@ -63,9 +63,9 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 8h8M8 12h5"/></svg>
           <span>Frases</span>
         </button>
-        <button class="nav-item" type="button" data-view="exportar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-          <span>Exportar</span>
+        <button class="nav-item" type="button" data-view="exportar" title="Importar ou exportar disparos">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v14"/><path d="m3 13 4 4 4-4"/><path d="M17 21V7"/><path d="m13 11 4-4 4 4"/></svg>
+          <span class="lbl-full">Importar/Exportar</span><span class="lbl-short">Imp./Exp.</span>
         </button>
         <button class="nav-item admin-only" type="button" data-view="usuarios">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>
@@ -301,10 +301,18 @@
       <section class="view" id="view-exportar" data-view-panel="exportar" hidden>
         <header class="page-head">
           <div class="page-title">
-            <h1>Exportar</h1>
+            <h1>Importar e exportar</h1>
             <p id="expLabel">Escolha o período, os filtros e o formato</p>
+            <p id="importLabel" hidden>Traga o calendário de ações (.json) para o painel</p>
           </div>
         </header>
+
+        <div class="segmented io-tabs" id="ioTabs" role="tablist" aria-label="Importar ou exportar">
+          <button type="button" role="tab" data-io="exportar" class="is-active" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>Exportar</button>
+          <button type="button" role="tab" data-io="importar" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>Importar</button>
+        </div>
+
+        <div class="io-pane" id="ioExport" role="tabpanel">
 
         <div class="toolbar">
           <div class="segmented" id="expPresets">
@@ -380,6 +388,18 @@
           </article>
         </div>
 
+        <article class="panel export-preview">
+          <div class="preview-head">
+            <h3>Prévia</h3>
+            <span id="expCount"></span>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table" id="expTable"></table>
+          </div>
+        </article>
+        </div>
+
+        <div class="io-pane" id="ioImport" role="tabpanel" hidden>
         <article class="panel import-panel" id="importPanel">
           <div class="import-head">
             <span class="export-ico ico-import" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg></span>
@@ -395,16 +415,7 @@
           </div>
           <div class="import-result" id="importResult" hidden></div>
         </article>
-
-        <article class="panel export-preview">
-          <div class="preview-head">
-            <h3>Prévia</h3>
-            <span id="expCount"></span>
-          </div>
-          <div class="table-wrap">
-            <table class="data-table" id="expTable"></table>
-          </div>
-        </article>
+        </div>
       </section>
 
       <!-- ========== USUÁRIOS (admin) ========== -->
