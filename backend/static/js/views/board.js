@@ -79,9 +79,9 @@ function dayHtml(day, records, { today, focus, scope, mode }){
     <section class="${classes.join(" ")}" data-day="${day}">
       <header class="day-head" data-focus title="Focar neste dia">
         <div class="day-title">
-          <span class="day-num">${Number(day.slice(8, 10))}</span>
+          <span class="day-num">${Number(day.slice(8, 10))}${s.total
+            ? `<span class="day-mini" title="${s.total} ${s.total === 1 ? "disparo" : "disparos"}">${s.total}</span>` : ""}</span>
           <span class="day-name"><strong>${weekday}</strong><small>${fmtShort(day)}</small></span>
-          <span class="day-mini">${s.total || ""}</span>
           <button type="button" class="day-add" data-add title="Novo disparo neste dia" aria-label="Novo disparo em ${fmtShort(day)}">${PLUS_ICON}</button>
         </div>
         <div class="day-stats">

@@ -194,8 +194,19 @@ html.dark .day-trash-ico{ background: rgba(20, 16, 30, .7); }
 .board[data-mode="mes"] .day-name{ display: none; }
 .board[data-mode="mes"] .day-stats{ font-size: 11px; }
 .board[data-mode="mes"] .day-stats span{ display: none; }
-.board[data-mode="mes"] .day-title .day-mini{ display: inline; margin-left: auto; font-size: 11px; font-weight: 700; color: var(--muted); }
-.board[data-mode="mes"] .day-add{ margin-left: 0; width: 24px; height: 24px; }
+/* quantidade de disparos: selo no canto do número do dia */
+.board[data-mode="mes"] .day-num{ position: relative; }
+.board[data-mode="mes"] .day-mini{
+  display: grid; place-items: center;
+  position: absolute; top: -6px; right: -8px;
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 99px;
+  background: var(--brand); color: var(--on-brand);
+  border: 2px solid var(--surface);
+  font-size: 10px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums;
+}
+.board[data-mode="mes"] .day.is-today .day-mini{ background: var(--text); color: var(--surface); }
+.board[data-mode="mes"] .day.is-weekend .day-mini{ border-color: var(--surface-2); }
+.board[data-mode="mes"] .day-add{ width: 24px; height: 24px; }
 .board[data-mode="mes"] .day-body{ padding: 6px; gap: 4px; }
 .board[data-mode="mes"] .day-empty{ display: none; }
 .board[data-mode="mes"] .dcard{ padding: 5px 7px 5px 10px; border-radius: 8px; gap: 0; box-shadow: none; }
@@ -226,6 +237,7 @@ html.dark .day-trash-ico{ background: rgba(20, 16, 30, .7); }
   .board[data-mode="dia"] .day:not(.is-focus){ display: none; }
   .day.is-empty .day-body{ display: none; }
   .board[data-mode="mes"] .day-name{ display: flex; }
+  .board[data-mode="mes"] .day-mini{ display: none; }
   .board[data-mode="mes"] .day-stats span{ display: inline; }
   .board[data-mode="mes"] .dcard-title::before{ content: attr(data-time) " · "; }
 }
