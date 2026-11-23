@@ -224,6 +224,40 @@ class SheetTable:
             except gspread.exceptions.APIError as e:
                 raise _api_error(e)
 
+    def delete_many(self, ids):
+        """Exclui várias linhas de uma vez. Linhas vizinhas viram um só intervalo e tudo vai
+        numa única requisição à planilha (de baixo para cima, para os números de linha não mudarem)."""
+        import gspread
+        alvo = {str(i).strip() for i in ids if str(i).strip()}
+        if not alvo:
+            return 0
+        with self.lock:
+            try:
+                self.ensure_headers()
+                col = self.ws.col_values(self.cols["id"])
+                linhas = sorted((i for i, v in enumerate(col, start=1) if i > 1 and str(v).strip() in alvo), reverse=True)
+                if not linhas:
+                    return 0
+                faixas = []  # [(inicio, fim)] inclusivos, de baixo para cima
+                for ln in linhas:
+                    if faixas and faixas[-1][0] - 1 == ln:
+                        faixas[-1] = (ln, faixas[-1][1])
+                    else:
+                        faixas.append((ln, ln))
+                planilha = getattr(self.ws, "spreadsheet", None)
+                if planilha is not None and hasattr(planilha, "batch_update"):
+                    planilha.batch_update({"requests": [
+                        {"deleteDimension": {"range": {"sheetId": self.ws.id, "dimension": "ROWS",
+                                                       "startIndex": ini - 1, "endIndex": fim}}}
+                        for ini, fim in faixas
+                    ]})
+                else:
+                    for ini, fim in faixas:
+                        self.ws.delete_rows(ini, fim)
+                return len(linhas)
+            except gspread.exceptions.APIError as e:
+                raise _api_error(e)
+
 
 class SheetsStore:
     name = "sheets"
@@ -322,6 +356,9 @@ class SheetsStore:
 
     def delete(self, rid: str):
         self.disparos.delete(rid)
+
+    def delete_many(self, ids):
+        return self.disparos.delete_many(ids)
 
     # ---------- templates ----------
     @property
