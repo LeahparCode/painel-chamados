@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Painel de Disparos</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}?v={{ asset_version }}" type="image/svg+xml" />
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon-32.png') }}?v={{ asset_version }}" type="image/png" sizes="32x32" />
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon-16.png') }}?v={{ asset_version }}" type="image/png" sizes="16x16" />
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}?v={{ asset_version }}" />
+  <link rel="manifest" href="{{ url_for('static', filename='site.webmanifest') }}" />
+  <meta name="theme-color" content="#0b1f45" />
   <script>
     /* aplica o tema antes de pintar a tela (evita "piscar") */
     (function(){
