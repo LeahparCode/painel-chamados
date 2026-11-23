@@ -89,6 +89,14 @@ O servidor ajusta os status sozinho (sem depender de alguém com o painel aberto
 - A verificação roda nas leituras do painel (no máximo a cada 30 s). Com o serviço "dormindo",
   a troca acontece no primeiro acesso seguinte e o timer conta a partir dali.
 
+## Proteção
+
+- Código proprietário: veja `LICENSE` (todos os direitos reservados).
+- Cabeçalhos de segurança: o painel não pode ser aberto dentro de outro site (`X-Frame-Options`,
+  `frame-ancestors`), além de `nosniff`, `Referrer-Policy` e `Permissions-Policy`.
+- Aviso de propriedade no console do navegador.
+- Mantenha este repositório **privado** no GitHub.
+
 ## Login
 
 - Sem login, o painel abre em **modo visualização**: só o quadro de disparos, sem editar,
