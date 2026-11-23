@@ -74,8 +74,10 @@ DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave
 
 Na tela **Importar/Exportar**, aba **Importar** (atalho: `#importar`), envie o `.json` exportado da ferramenta de
 calendário (formato `segs[].actionsByDate`). O painel mostra uma prévia e só grava ao confirmar.
-Cada ação vira um disparo (data e canal do calendário; texto completo em **Observações**; horário 08:00;
-antes de hoje = Finalizado). Cada ação guarda a origem na coluna `Ref`, então reimportar não duplica.
+Cada ação vira um disparo (data e canal do calendário; texto completo em **Observações**; horário 08:00).
+Status pela data: antes de hoje = **Finalizado**; hoje = **Em andamento** com 10 minutos para finalizar;
+dias futuros = **Programado**. Reimportar também corrige ações já importadas que ainda estão "Em andamento"
+(nunca altera o que foi mudado à mão). Cada ação guarda a origem na coluna `Ref`, então reimportar não duplica.
 Canais: SMS, RCS, WhatsApp e E-mail (E-mail sem custo; preço em `PRECO_POR_TIPO`).
 
 ## Login

@@ -178,6 +178,30 @@ class SheetTable:
                 raise _api_error(e)
         return recs
 
+    def update_many(self, items):
+        """Atualiza vários registros [(id, patch), ...] com uma leitura e uma gravação."""
+        import gspread
+        if not items:
+            return 0
+        with self.lock:
+            try:
+                self.ensure_headers()
+                ids = self.ws.col_values(self.cols["id"])
+                linha = {str(v).strip(): i for i, v in enumerate(ids, start=1) if i > 1}
+                dados, n = [], 0
+                for rid, patch in items:
+                    row = linha.get(rid)
+                    if not row:
+                        continue
+                    patch = {**{k: v for k, v in patch.items() if k != "id"}, "atualizadoEm": now_iso()}
+                    dados.extend(self._cell_updates(row, patch))
+                    n += 1
+                if dados:
+                    self.ws.batch_update(dados, value_input_option="RAW")
+            except gspread.exceptions.APIError as e:
+                raise _api_error(e)
+        return n
+
     def update(self, rid: str, patch: dict):
         import gspread
         patch = {k: v for k, v in patch.items() if k != "id"}
@@ -289,6 +313,9 @@ class SheetsStore:
 
     def create_many(self, items):
         return self.disparos.create_many(items)
+
+    def update_many(self, items):
+        return self.disparos.update_many(items)
 
     def update(self, rid: str, patch: dict):
         return self.disparos.update(rid, patch)

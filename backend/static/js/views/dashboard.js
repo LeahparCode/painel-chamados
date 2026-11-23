@@ -40,7 +40,7 @@ function renderKpis(list){
   const days = eachDay(filters.from, filters.to).length || 1;
   $("dashKpis").innerHTML = [
     `<div class="kpi kpi-brand"><span>Valor no período</span><b>${fmtMoney(s.valor)}</b><small>Média/dia: ${fmtMoney(s.valor / days)}</small></div>`,
-    `<div class="kpi"><span>Disparos</span><b>${fmtInt(s.total)}</b><small>${fmtInt(s.run)} em andamento</small></div>`,
+    `<div class="kpi"><span>Disparos</span><b>${fmtInt(s.total)}</b><small>${fmtInt(s.run)} em andamento · ${fmtInt(s.sched)} programados</small></div>`,
     `<div class="kpi"><span>Volume</span><b>${fmtInt(s.volume)}</b><small>mensagens enviadas</small></div>`,
     `<div class="kpi"><span>Taxa de sucesso</span><b>${taxa === null ? "—" : taxa + "%"}</b><small>${fmtInt(s.ok)} finalizados · ${fmtInt(s.err)} insucessos</small></div>`,
     `<div class="kpi"><span>Custo médio</span><b>${custoMedio.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2, maximumFractionDigits: 3 })}</b><small>por mensagem</small></div>`,
@@ -101,7 +101,7 @@ function ensureCharts(){
   });
   charts.status = new Chart($("chartStatus"), {
     type: "bar",
-    data: { labels: ["Em andamento", "Finalizado", "Insucesso"], datasets: [{ label: "Disparos", data: [], ...bar, maxBarThickness: 34 }] },
+    data: { labels: ["Programado", "Em andamento", "Finalizado", "Insucesso"], datasets: [{ label: "Disparos", data: [], ...bar, maxBarThickness: 34 }] },
     options: baseOptions({ horizontal: true }),
   });
   charts.tipo = new Chart($("chartTipo"), {
@@ -129,7 +129,7 @@ function applyPalette(){
     g.addColorStop(1, accent + "00");
     return g;
   };
-  charts.status.data.datasets[0].backgroundColor = [css("--run"), css("--ok"), css("--err")];
+  charts.status.data.datasets[0].backgroundColor = [css("--sched"), css("--run"), css("--ok"), css("--err")];
   charts.tipo.data.datasets[0].backgroundColor = brand;
   // eixos/tooltip seguem o tema
   charts.volume.options = baseOptions();
@@ -164,7 +164,7 @@ function renderCharts(list){
   charts.valor.data.datasets[0].data = days.map(d => Number(byDay.get(d).valor.toFixed(2)));
 
   const s = summarize(list);
-  charts.status.data.datasets[0].data = [s.run, s.ok, s.err];
+  charts.status.data.datasets[0].data = [s.sched, s.run, s.ok, s.err];
 
   const tipos = TIPOS.filter(t => COST_PER_TIPO[t]);
   const valorTipo = tipos.map(t => list.filter(r => r.tipoDisparo === t).reduce((acc, r) => acc + costOf(r), 0));

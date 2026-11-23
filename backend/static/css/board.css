@@ -80,7 +80,7 @@
 .day-stats b{ color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .day-bar{ display: flex; height: 5px; border-radius: 99px; overflow: hidden; background: var(--surface-3); gap: 2px; }
 .day-bar i{ display: block; height: 100%; }
-.day-bar .run{ background: var(--run); } .day-bar .ok{ background: var(--ok); } .day-bar .err{ background: var(--err); }
+.day-bar .sched{ background: var(--sched); } .day-bar .run{ background: var(--run); } .day-bar .ok{ background: var(--ok); } .day-bar .err{ background: var(--err); }
 
 .day-body{ flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 8px; border-radius: 0 0 var(--r-lg) var(--r-lg); }
 .day-empty{ margin: auto 0; text-align: center; color: var(--muted); font-size: 12px; padding: 18px 6px; opacity: .8; }
@@ -113,6 +113,7 @@
   content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 4px;
   border-radius: 0 4px 4px 0; background: var(--tone);
 }
+.dcard.sched{ --tone: var(--sched); --tone-soft: var(--sched-soft); --tone-ink: var(--sched-ink); }
 .dcard.ok{ --tone: var(--ok); --tone-soft: var(--ok-soft); --tone-ink: var(--ok-ink); }
 .dcard.err{ --tone: var(--err); --tone-soft: var(--err-soft); --tone-ink: var(--err-ink); }
 .dcard:hover{ transform: translateY(-2px); box-shadow: var(--shadow-md); border-color: var(--border-strong); }

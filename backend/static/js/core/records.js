@@ -3,11 +3,12 @@ import { COST_PER_TIPO } from "./config.js";
 import { toISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDay, fmtLong, fmtShort, fmtMonth } from "./dates.js";
 import { capitalize } from "./format.js";
 
-/** "run" | "ok" | "err" */
+/** "sched" (Programado) | "run" (Em andamento) | "ok" (Finalizado) | "err" (Insucesso) */
 export function statusKey(status){
   const s = (status || "").toLowerCase();
   if (s.includes("final")) return "ok";
   if (s.includes("insu")) return "err";
+  if (s.includes("program")) return "sched";
   return "run";
 }
 
@@ -36,7 +37,7 @@ export const byHorario = (a, b) => (a.horario || "").localeCompare(b.horario || 
 
 /** Soma de indicadores para uma lista de registros */
 export function summarize(list){
-  const out = { total: 0, volume: 0, valor: 0, run: 0, ok: 0, err: 0 };
+  const out = { total: 0, volume: 0, valor: 0, sched: 0, run: 0, ok: 0, err: 0 };
   for (const r of list){
     out.total++;
     out.volume += Number(r?.volume || 0) || 0;

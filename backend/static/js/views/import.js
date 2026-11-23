@@ -3,6 +3,7 @@ import { fetchRecords } from "../core/api.js";
 import { chipClass } from "../core/frases.js";
 import { fmtInt, escapeHtml } from "../core/format.js";
 import { toast } from "../ui/toast.js";
+import { todayISO } from "../core/dates.js";
 
 const $ = (id) => document.getElementById(id);
 let calendario = null;
@@ -11,7 +12,10 @@ let arquivo = "";
 const fmtBR = (iso) => iso ? iso.split("-").reverse().join("/") : "—";
 
 async function enviar(confirmar){
-  const resp = await fetch(`/api/import/calendario${confirmar ? "?confirmar=1" : ""}`, {
+  // "hoje" do navegador de quem importa define o que é passado, hoje e futuro
+  const params = new URLSearchParams({ hoje: todayISO() });
+  if (confirmar) params.set("confirmar", "1");
+  const resp = await fetch(`/api/import/calendario?${params}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(calendario),
@@ -25,6 +29,10 @@ async function enviar(confirmar){
 function renderPrevia(r){
   const box = $("importResult");
   const tipos = Object.entries(r.porTipo || {}).map(([t, n]) => `<span class="chip ${chipClass(t)}">${escapeHtml(t)}: ${fmtInt(n)}</span>`).join("");
+  const STATUS_CLS = { "Finalizado": "ok", "Em andamento": "", "Programado": "sched", "Em andamento (10 min)": "" };
+  const chipsStatus = (obj) => ["Finalizado", "Em andamento", "Em andamento (10 min)", "Programado"]
+    .filter(k => obj?.[k]).map(k => `<span class="status-chip ${STATUS_CLS[k]}">${escapeHtml(k)}: ${fmtInt(obj[k])}</span>`).join(" ");
+  const temAlgo = r.novos || r.atualizar;
   const linhas = (r.amostra || []).map(a => `
     <tr><td>${fmtBR(a.data)}</td><td><span class="chip ${chipClass(a.tipoDisparo)}">${escapeHtml(a.tipoDisparo)}</span></td>
     <td class="wrap">${escapeHtml(a.tipo)}</td><td>${escapeHtml(a.status)}</td><td class="num">${a.volume ? fmtInt(a.volume) : "—"}</td></tr>`).join("");
@@ -34,13 +42,17 @@ function renderPrevia(r){
       <div class="kpi"><span>Ações no arquivo</span><b>${fmtInt(r.total)}</b></div>
       <div class="kpi kpi-brand"><span>Novas</span><b>${fmtInt(r.novos)}</b></div>
       <div class="kpi"><span>Já importadas</span><b>${fmtInt(r.duplicados)}</b><small>serão ignoradas</small></div>
-      <div class="kpi"><span>Já passadas</span><b>${fmtInt(r.finalizados)}</b><small>entram como Finalizado</small></div>
+      <div class="kpi"><span>A corrigir</span><b>${fmtInt(r.atualizar)}</b><small>já importadas, status pela regra nova</small></div>
     </div>
     ${tipos ? `<div class="import-chips">Novas por tipo: ${tipos}</div>` : ""}
+    ${r.novos ? `<div class="import-chips">Novas por status: ${chipsStatus(r.porStatus)}</div>` : ""}
+    ${r.atualizar ? `<div class="import-chips">Já importadas que serão corrigidas: ${chipsStatus(r.atualizarPorStatus)}</div>` : ""}
     <p class="import-rules">
       <b>Como cada ação entra:</b> data e canal do calendário · nome = resumo do texto · texto completo em <b>Observações</b> ·
-      horário <b>08:00</b> (o calendário não tem horário) · dias anteriores a hoje como <b>Finalizado</b>, hoje e os próximos como
-      <b>Em andamento</b> · volume quando houver "Qtd" · E-mail com valor <b>R$ 0,00</b>. Tudo pode ser editado depois em cada disparo.
+      horário <b>08:00</b> (o calendário não tem horário) · dias anteriores a hoje como <b>Finalizado</b> · hoje como
+      <b>Em andamento</b> com <b>10 minutos</b> para finalizar · dias futuros como <b>Programado</b> · volume quando houver "Qtd" ·
+      E-mail sem custo. Ações já importadas que ainda estão "Em andamento" são corrigidas pela mesma regra; o que foi mudado
+      à mão não é alterado. Tudo pode ser editado depois em cada disparo.
     </p>
     ${(r.avisos || []).length ? `<p class="import-rules">Avisos: ${r.avisos.map(escapeHtml).join(" · ")}</p>` : ""}
     ${linhas ? `<div class="table-wrap"><table class="data-table import-table">
@@ -49,8 +61,10 @@ function renderPrevia(r){
       ${r.novos > (r.amostra || []).length ? `<p class="import-file">… e mais ${fmtInt(r.novos - r.amostra.length)} ação(ões).</p>` : ""}` : ""}
     <div class="import-actions">
       <button type="button" class="btn btn-ghost" data-import="cancelar">Cancelar</button>
-      <button type="button" class="btn btn-primary" data-import="confirmar" ${r.novos ? "" : "disabled"}>
-        ${r.novos ? `Importar ${fmtInt(r.novos)} disparo(s)` : "Nada novo para importar"}
+      <button type="button" class="btn btn-primary" data-import="confirmar" ${temAlgo ? "" : "disabled"}>
+        ${!temAlgo ? "Nada novo para importar"
+          : [r.novos ? `Importar ${fmtInt(r.novos)}` : "", r.atualizar ? `corrigir ${fmtInt(r.atualizar)}` : ""].filter(Boolean).join(" e ")
+            .replace(/^c/, "C") + " disparo(s)"}
       </button>
     </div>`;
   box.hidden = false;
@@ -108,7 +122,8 @@ export function initImport(){
     b.disabled = true; b.textContent = "Importando…";
     try{
       const r = await enviar(true);
-      toast(`${fmtInt(r.criados)} disparo(s) importado(s) para o painel.`, "ok", 3500);
+      toast([r.criados ? `${fmtInt(r.criados)} disparo(s) importado(s)` : "", r.atualizados ? `${fmtInt(r.atualizados)} corrigido(s)` : ""]
+        .filter(Boolean).join(" e ") + ".", "ok", 3500);
       limpar();
       fetchRecords().catch(() => {});
     }catch(err){

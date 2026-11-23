@@ -214,6 +214,7 @@ html.dark input[type="date"]::-webkit-calendar-picker-indicator{ filter: invert(
   background: var(--run-soft); color: var(--run-ink);
 }
 .status-chip::before{ content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.status-chip.sched{ background: var(--sched-soft); color: var(--sched-ink); }
 .status-chip.ok{ background: var(--ok-soft); color: var(--ok-ink); }
 .status-chip.err{ background: var(--err-soft); color: var(--err-ink); }
 
@@ -237,7 +238,7 @@ html.dark .chip-mail{ background: rgba(120, 160, 230, .16); color: #a9c4f5; }
 .chip-own{ background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: var(--on-brand); }
 
 .dot{ display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
-.dot-run{ background: var(--run); } .dot-ok{ background: var(--ok); } .dot-err{ background: var(--err); }
+.dot-sched{ background: var(--sched); } .dot-run{ background: var(--run); } .dot-ok{ background: var(--ok); } .dot-err{ background: var(--err); }
 
 /* ---------- Modal ---------- */
 .modal{
@@ -273,7 +274,7 @@ html.dark .chip-mail{ background: rgba(120, 160, 230, .16); color: #a9c4f5; }
 .form-actions, .edit-actions{ display: flex; justify-content: flex-end; gap: 10px; padding-top: 4px; }
 .edit-actions{ justify-content: space-between; }
 
-.status-actions{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.status-actions{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .status-btn{
   --tone: var(--run); --tone-soft: var(--run-soft);
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -282,6 +283,7 @@ html.dark .chip-mail{ background: rgba(120, 160, 230, .16); color: #a9c4f5; }
   color: var(--text-2); font-weight: 700; font-size: 13px;
   transition: all .2s var(--ease);
 }
+.status-btn.sched{ --tone: var(--sched); --tone-soft: var(--sched-soft); }
 .status-btn.ok{ --tone: var(--ok); --tone-soft: var(--ok-soft); }
 .status-btn.err{ --tone: var(--err); --tone-soft: var(--err-soft); }
 .status-btn i{ width: 10px; height: 10px; border-radius: 50%; background: var(--tone); }
@@ -377,7 +379,7 @@ html.dark .toast .toast-action{ background: rgba(0, 0, 0, .08); }
 @media (max-width: 480px){
   .form-grid, .edit-grid{ grid-template-columns: 1fr; }
   .field-2{ grid-column: 1 / -1; }
-  .status-actions{ grid-template-columns: 1fr; }
+  .status-actions{ grid-template-columns: 1fr 1fr; }
   .edit-actions{ flex-direction: column-reverse; }
   .edit-actions .btn, .form-actions .btn{ width: 100%; }
   .form-actions{ flex-direction: column-reverse; }

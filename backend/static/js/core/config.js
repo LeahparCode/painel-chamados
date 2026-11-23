@@ -1,6 +1,6 @@
 // Configurações e listas fixas do painel.
 
-export const STATUS = ["Em andamento", "Finalizado", "Insucesso"];
+export const STATUS = ["Programado", "Em andamento", "Finalizado", "Insucesso"];
 
 export const HORARIOS = ["08:00", "12:00", "16:00", "20:00"];
 
