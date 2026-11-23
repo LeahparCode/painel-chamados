@@ -6,7 +6,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from storage import create_store, backend_name, StoreError
 from export_xlsx import build_xlsx, safe_filename, ExportError
-from auth import init_auth, editor_required
+from auth import init_auth, editor_required, admin_required
 from importers.calendario import parse_calendar, ajustes_existentes, ImportError_
 from automacao import transicoes
 
@@ -252,6 +252,26 @@ def update_disparo(rid):
         return _store_error_response(e)
     _refresh_quietly()
     return jsonify(rec)
+
+
+@app.post("/api/disparos/excluir-lote")
+@admin_required
+def delete_disparos_lote():
+    """Exclusão em massa (somente administradores). Recebe exatamente os IDs mostrados na prévia."""
+    b = request.get_json(silent=True) or {}
+    ids = b.get("ids")
+    if not isinstance(ids, list) or not ids:
+        return jsonify({"error": "empty", "message": "Nenhum disparo selecionado."}), 400
+    if len(ids) > 5000:
+        return jsonify({"error": "too_many", "message": "No máximo 5000 disparos por vez."}), 400
+    ids = list(dict.fromkeys(str(i).strip() for i in ids if str(i).strip()))
+    try:
+        excluidos = get_store().delete_many(ids)
+    except StoreError as e:
+        return _store_error_response(e)
+    _refresh_quietly()
+    log.info("Exclusão em massa: %d disparo(s) excluído(s) de %d pedido(s)", excluidos, len(ids))
+    return jsonify({"excluidos": excluidos, "pedidos": len(ids)})
 
 
 @app.delete("/api/disparos/<rid>")

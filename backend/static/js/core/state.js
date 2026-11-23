@@ -69,6 +69,12 @@ export function addLocal(record){
   emit("records");
 }
 
+export function removeManyLocal(ids){
+  const set = new Set([...ids].map(String));
+  state.records = state.records.filter(r => !set.has(`${r.id}`));
+  emit("records");
+}
+
 export function removeLocal(id){
   state.records = state.records.filter(r => `${r.id}` !== `${id}`);
   emit("records");

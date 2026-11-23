@@ -118,6 +118,14 @@ class AirtableStore:
     def delete(self, rid: str):
         self._request("DELETE", f"{self.api}/{rid}")
 
+    def delete_many(self, ids):
+        ids = [i for i in ids if i]
+        n = 0
+        for i in range(0, len(ids), 10):  # até 10 por chamada
+            res = self._request("DELETE", self.api, params=[("records[]", rid) for rid in ids[i:i + 10]])
+            n += len(res.get("records", []))
+        return n
+
     # ---------- templates (tabela "Templates" com os campos Nome, Tipo e Texto) ----------
     @staticmethod
     def _normalize_template(rec):

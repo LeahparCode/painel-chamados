@@ -15,6 +15,7 @@ import { initExport, setExportVisible } from "./views/export.js";
 import { initImport, setIoTab } from "./views/import.js";
 import { initAccount } from "./views/account.js";
 import { initUsers, setUsersVisible } from "./views/users.js";
+import { initBulkDelete } from "./views/bulk-delete.js";
 import { fetchMe, fetchConfig, canEdit, isAdmin } from "./core/auth.js";
 
 /* ---------- navegação entre telas ---------- */
@@ -94,7 +95,7 @@ if (logged){
   initDashboard();
   initExport();
   initImport();
-  if (isAdmin()) initUsers();
+  if (isAdmin()){ initUsers(); initBulkDelete(); }
 }
 
 document.querySelectorAll(".nav-item").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));

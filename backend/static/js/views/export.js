@@ -210,7 +210,7 @@ function umaLinha(texto){
     .replace(/\s{2,}/g, " ");
 }
 
-function exportCsv(list){
+function exportCsv(list, filename = `${fileBase()}.csv`){
   // Ordem pensada para leitura: quando / situação / o quê / quanto / detalhes; ID por último.
   const header = ["Data", "Dia", "Horário", "Status", "Tipo", "Nome", "Observações", "Volume",
     "Valor por envio (R$)", "Valor (R$)", "Frase", "Tempo médio (min)", "Potes", "ID"];
@@ -234,8 +234,12 @@ function exportCsv(list){
     ].join(";"));
   });
   // BOM para o Excel reconhecer acentos (UTF-8)
-  download(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), `${fileBase()}.csv`);
+  download(new Blob(["\ufeff" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" }), filename);
 }
+
+/** Baixa um CSV (mesmo formato da exportação) de uma lista qualquer — usado como cópia de segurança. */
+export const downloadCsv = (list, filename) => exportCsv(
+  [...list].sort((a, b) => dayOf(a).localeCompare(dayOf(b)) || byHorario(a, b)), filename);
 
 /* ---------------- Relatório PDF (impressão) ---------------- */
 function reportHtml(list){

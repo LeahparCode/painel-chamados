@@ -70,6 +70,7 @@ export async function fetchRecords(){
 export const createRecord = (payload) => request("POST", "/api/disparos", payload).then(r => r.data);
 export const updateRecord = (id, patch) => request("PATCH", `/api/disparos/${encodeURIComponent(id)}`, patch).then(r => r.data);
 export const deleteRecord = (id) => request("DELETE", `/api/disparos/${encodeURIComponent(id)}`).then(r => r.data);
+export const deleteMany = (ids) => request("POST", "/api/disparos/excluir-lote", { ids }).then(r => r.data);
 
 /* ---------- templates próprios ---------- */
 const TPL_CACHE_KEY = "painel_templates_v1";
