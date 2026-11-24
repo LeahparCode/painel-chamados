@@ -13,6 +13,8 @@ export const tempId = () => "tmp_" + Math.random().toString(36).slice(2);
 export async function saveRecord(id, patch, { success = "Disparo atualizado.", quiet = false } = {}){
   const before = findRecord(id);
   if (!before) return false;
+  // virou "Em andamento" agora: o timer começa já (o servidor grava o mesmo Inicio)
+  if (patch.status === "Em andamento" && before.status !== "Em andamento") patch = { ...patch, inicio: new Date().toISOString() };
   const previous = Object.fromEntries(Object.keys(patch).map(k => [k, before[k]]));
   patchLocal(id, patch);
 
@@ -38,7 +40,8 @@ export const setStatus = (id, status, opts) => saveRecord(id, { status }, { succ
 export const moveToDay = (id, data) => saveRecord(id, { data }, { success: "Disparo remarcado." });
 
 export async function addRecord(payload){
-  const optimistic = { id: tempId(), status: "Em andamento", atualizadoEm: new Date().toISOString(), ...payload };
+  const agora = new Date().toISOString();
+  const optimistic = { id: tempId(), status: "Em andamento", atualizadoEm: agora, inicio: agora, ...payload };
   addLocal(optimistic);
   if (OFFLINE){
     toast("Disparo adicionado localmente (offline).", "warn");

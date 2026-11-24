@@ -17,6 +17,7 @@ FIELDS = [
     ("tipoDisparo", "Tipo Disparo"),
     ("obs", "Observacoes"),   # texto livre (ex.: público, fonte e fatia vindos do calendário)
     ("ref", "Ref"),           # origem do disparo (ex.: cal-safra-1002), evita duplicar importações
+    ("inicio", "Inicio"),     # quando ficou "Em andamento" (o timer conta daqui, não da última edição)
 ]
 FIELD_KEYS = [k for k, _ in FIELDS]
 INT_KEYS = {"tempo", "potes", "volume"}
@@ -80,7 +81,7 @@ def clean_record(rec: dict) -> dict:
         out[k] = to_int(out[k])
     out["data"] = normalize_date(out["data"])
     out["horario"] = normalize_time(out["horario"])
-    for k in ("id", "tipo", "status", "template", "atualizadoEm", "tipoDisparo", "ref"):
+    for k in ("id", "tipo", "status", "template", "atualizadoEm", "tipoDisparo", "ref", "inicio"):
         out[k] = "" if out[k] is None else str(out[k]).strip()
     out["obs"] = "" if out["obs"] is None else str(out["obs"]).replace("\r\n", "\n").strip()
     return out

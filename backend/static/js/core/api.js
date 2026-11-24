@@ -134,15 +134,13 @@ function stopPolling(){
   if (pollTimer){ clearTimeout(pollTimer); pollTimer = null; }
 }
 
-export function connect(){
-  if (OFFLINE){ setConnection("offline"); return; }
-  fetchRecords()
-    .then(() => setConnection(state.stale ? "stale" : "online"))
-    .catch(() => setConnection("offline"));
-
+function openStream(){
+  closeStream();
   try{
-    sse = new EventSource(url(`/api/stream?inst=${encodeURIComponent(instId())}`));
-    sse.onopen = () => { stopPolling(); };
+    const es = sse = new EventSource(url(`/api/stream?inst=${encodeURIComponent(instId())}`));
+    // proteção: se a conexão não abrir em 10 s, os dados seguem chegando por consulta periódica
+    const guard = setTimeout(() => { if (sse === es && es.readyState !== 1) startPolling(); }, 10000);
+    sse.onopen = () => { clearTimeout(guard); stopPolling(); };
     sse.onmessage = (evt) => {
       try{
         const payload = JSON.parse(evt.data);
@@ -153,8 +151,40 @@ export function connect(){
       }catch{}
     };
     sse.addEventListener("ping", () => setConnection(state.stale ? "stale" : "online"));
+    // o servidor renova a conexão de tempos em tempos: reconecta na hora, sem mostrar "Conectando"
+    sse.addEventListener("bye", () => openStream());
     sse.onerror = () => { setConnection("connecting"); startPolling(); };
   }catch{
     startPolling();
   }
+}
+
+function closeStream(){
+  if (sse){ sse.close(); sse = null; }
+}
+
+/* aba em segundo plano por mais de 1 min: desconecta (libera o servidor) e volta ao reabrir */
+let hiddenTimer = null;
+function watchVisibility(){
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden){
+      clearTimeout(hiddenTimer);
+      hiddenTimer = setTimeout(() => { closeStream(); stopPolling(); }, 60000);
+    }else{
+      clearTimeout(hiddenTimer);
+      if (!sse){
+        fetchRecords().then(() => setConnection(state.stale ? "stale" : "online")).catch(() => setConnection("offline"));
+        openStream();
+      }
+    }
+  });
+}
+
+export function connect(){
+  if (OFFLINE){ setConnection("offline"); return; }
+  fetchRecords()
+    .then(() => setConnection(state.stale ? "stale" : "online"))
+    .catch(() => setConnection("offline"));
+  openStream();
+  watchVisibility();
 }
