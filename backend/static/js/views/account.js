@@ -21,8 +21,38 @@ function setTab(tab){
   $("signupForm").hidden = !signupTab;
   document.querySelectorAll("#authTabs [data-auth-tab]").forEach(b => b.classList.toggle("is-active", b.dataset.authTab === tab));
   $("lTitle").textContent = signupTab ? "Criar conta" : "Entrar no painel";
-  $("lSub").textContent = signupTab ? "Escolha o seu usuário e a sua senha." : "Use o seu usuário e senha.";
+  $("lSub").textContent = signupTab ? "Escolha o seu usuário e a sua senha." : "Bem-vindo(a) de volta. Use o seu usuário e senha.";
   setTimeout(() => (signupTab ? $("sNome") : $("lLogin")).focus(), 40);
+}
+
+/** Sem sessão: só a tela de login aparece (o painel não é montado nem carrega dados). */
+export function showLoginGate(){
+  const root = document.documentElement;
+  root.classList.add("needs-login");
+  root.classList.remove("inst-safra"); // sem marca d'água na tela de entrada
+  loadLoginVideos();
+  openLogin(location.hash === "#criar-conta" ? "signup" : "login");
+}
+
+/** Os microvídeos só são baixados aqui (quem já está logado não carrega nada disso). */
+function loadLoginVideos(){
+  const calm = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const videos = [...document.querySelectorAll("#authScreen video")];
+  videos.forEach((v, i) => {
+    v.poster = v.dataset.poster || "";
+    if (calm) return; // movimento reduzido: fica só a imagem parada
+    v.querySelectorAll("source[data-src]").forEach(s => { s.src = s.dataset.src; });
+    v.load();
+    // os vídeos começam em sequência, para a entrada ficar mais suave
+    setTimeout(() => v.play().catch(() => {}), 120 + i * 180);
+  });
+  // aba em segundo plano: pausa (economiza bateria) e volta ao reabrir
+  document.addEventListener("visibilitychange", () => {
+    videos.forEach(v => {
+      if (document.hidden) v.pause();
+      else if (!calm) v.play().catch(() => {});
+    });
+  });
 }
 
 export function openLogin(tab = "login"){
@@ -30,7 +60,6 @@ export function openLogin(tab = "login"){
     ? "Nenhum usuário cadastrado ainda. Configure ADMIN_LOGIN e ADMIN_PASSWORD no servidor para criar o primeiro acesso."
     : "");
   showError($("sError"), "");
-  openModal($("loginModal"));
   setTab(tab);
 }
 
@@ -66,7 +95,7 @@ export function initAccount(){
   // ---- login / criar conta ----
   document.documentElement.classList.toggle("no-signup", !state.allowSignup);
   document.querySelectorAll('[data-action="login"]').forEach(b => b.addEventListener("click", () => openLogin()));
-  document.querySelectorAll("#loginModal [data-auth-tab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.authTab)));
+  document.querySelectorAll("#authScreen [data-auth-tab]").forEach(b => b.addEventListener("click", () => setTab(b.dataset.authTab)));
 
   $("signupForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -112,9 +141,6 @@ export function initAccount(){
       btn.disabled = false; btn.textContent = "Entrar";
     }
   });
-  if (!state.user && location.hash === "#login") openLogin();
-  if (!state.user && location.hash === "#criar-conta") openLogin("signup");
-
   if (!state.user) return;
 
   // ---- conta logada ----
