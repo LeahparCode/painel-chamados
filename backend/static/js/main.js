@@ -13,7 +13,7 @@ import { initTemplateEditor } from "./views/template-editor.js";
 import { initDashboard, setDashboardVisible } from "./views/dashboard.js";
 import { initExport, setExportVisible } from "./views/export.js";
 import { initImport, setIoTab } from "./views/import.js";
-import { initAccount } from "./views/account.js";
+import { initAccount, showLoginGate } from "./views/account.js";
 import { initUsers, setUsersVisible } from "./views/users.js";
 import { initBulkDelete } from "./views/bulk-delete.js";
 import { fetchMe, fetchConfig, canEdit, isAdmin, isLogged, applyAuthMode } from "./core/auth.js";
@@ -80,69 +80,73 @@ try{
 }catch{}
 
 /* ---------- boot ---------- */
-await fetchMe();      // visitante ou logado? (o servidor confirma; o resto da tela depende disso)
-await fetchInstancias();  // instâncias que esta pessoa pode ver
-pickInstance();       // ?i= na URL → última aberta → primeira; aplica cores e recursos da instância
-applyAuthMode();      // editar depende da instância aberta
-const logged = canEdit();   // admin, ou operador com acesso a esta instância (os demais só visualizam)
-if (logged) await fetchConfig().catch(err => console.error("Não consegui carregar os preços", err));
-if (logged) loadTemplatesCache(); // templates próprios já aparecem antes da resposta do servidor
-else{ try{ localStorage.removeItem("painel_templates_v1"); }catch{} }
+await fetchMe();      // logado? (o servidor confirma; o resto da tela depende disso)
 
-initTheme();
-initClock();
-initModals();
-initAccount();
-initInstanceSwitcher({ onManage: () => switchView("instancias") });
-initPainel();
-initBoard({ onOpen: openDetail, onNew: (day) => openNewForm({ day }) });
-initDetail();
-if (logged){
-  initNewForm();
-  initTemplateEditor();
-  initFrases({ onUse: (template, tipo) => openNewForm({ template, tipo }) });
-  initDashboard();
-  initExport();
-  initImport();
-  if (isAdmin()){
-    initUsers();
-    initBulkDelete();
-    if (state.gerenciarInst) initInstancesAdmin();
-  }
+if (!isLogged()){
+  // sem login ninguém vê o painel: só a tela de entrar / criar conta
+  initTheme();
+  initModals();
+  initAccount();
+  showLoginGate();
+  hideSplash();
+}else{
+  await startApp();
 }
 
-document.querySelectorAll(".nav-item").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
-const initial = (location.hash || "").replace("#", "");
-switchView(initial === "login" ? "painel" : initial);
+async function startApp(){
+  document.documentElement.classList.remove("needs-login");
+  await fetchInstancias();  // instâncias que esta pessoa pode ver
+  pickInstance();       // ?i= na URL → última aberta → primeira; aplica cores e recursos da instância
+  applyAuthMode();      // editar depende da instância aberta
+  const logged = canEdit();   // admin, ou operador com acesso a esta instância (os demais só visualizam)
+  if (logged) await fetchConfig().catch(err => console.error("Não consegui carregar os preços", err));
+  if (logged) loadTemplatesCache(); // templates próprios já aparecem antes da resposta do servidor
 
-subscribe((_, reason) => {
-  if (reason === "connection") renderConnection();
-  if (reason === "records") hideSplash();
-});
-renderConnection();
-
-setTimeout(hideSplash, 1500);
-if (state.inst){
-  if (loadCache()) hideSplash();
-  connect();
-  if (state.instNegada){
-    // link de uma instância que esta pessoa não pode ver
-    if (isLogged()) toast("Você não tem acesso à instância deste link.", "warn", 4000);
-    else{
-      toast("Entre para ver a instância deste link.", "warn", 4000);
-      document.querySelector('[data-action="login"]')?.click();
+  initTheme();
+  initClock();
+  initModals();
+  initAccount();
+  initInstanceSwitcher({ onManage: () => switchView("instancias") });
+  initPainel();
+  initBoard({ onOpen: openDetail, onNew: (day) => openNewForm({ day }) });
+  initDetail();
+  if (logged){
+    initNewForm();
+    initTemplateEditor();
+    initFrases({ onUse: (template, tipo) => openNewForm({ template, tipo }) });
+    initDashboard();
+    initExport();
+    initImport();
+    if (isAdmin()){
+      initUsers();
+      initBulkDelete();
+      if (state.gerenciarInst) initInstancesAdmin();
     }
   }
-}else{
-  // nenhuma instância disponível: visitante sem painel público, ou conta sem acesso liberado
-  const txt = document.getElementById("noInstText");
-  if (txt) txt.innerHTML = isLogged()
-    ? "<b>Você ainda não tem acesso a nenhuma instância.</b> Peça a um administrador para liberar."
-    : "<b>Entre para ver os disparos.</b> Este painel só aparece para quem tem acesso.";
-  hideSplash();
-  if (!isLogged()) document.querySelector('[data-action="login"]')?.click();
-}
-if (logged){
-  fetchTemplates().catch(() => {});
-  setInterval(() => { if (!document.hidden) fetchTemplates().catch(() => {}); }, 60000);
+
+  document.querySelectorAll(".nav-item").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
+  const initial = (location.hash || "").replace("#", "");
+  switchView(["login", "criar-conta"].includes(initial) ? "painel" : initial);
+
+  subscribe((_, reason) => {
+    if (reason === "connection") renderConnection();
+    if (reason === "records") hideSplash();
+  });
+  renderConnection();
+
+  setTimeout(hideSplash, 1500);
+  if (state.inst){
+    if (loadCache()) hideSplash();
+    connect();
+    if (state.instNegada) toast("Você não tem acesso à instância deste link.", "warn", 4000);
+  }else{
+    // conta ainda sem nenhuma instância liberada
+    const txt = document.getElementById("noInstText");
+    if (txt) txt.innerHTML = "<b>Você ainda não tem acesso a nenhuma instância.</b> Peça a um administrador para liberar.";
+    hideSplash();
+  }
+  if (logged){
+    fetchTemplates().catch(() => {});
+    setInterval(() => { if (!document.hidden) fetchTemplates().catch(() => {}); }, 60000);
+  }
 }
