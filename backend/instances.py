@@ -31,8 +31,17 @@ bp = Blueprint("instances", __name__)
 
 CACHE_TTL = 30.0
 MAX_NOME = 60
-MAX_LOGO = 45000  # caracteres (uma célula da planilha aceita até 50 mil)
-LOGO_RE = re.compile(r"^data:image/png;base64,[A-Za-z0-9+/]+={0,2}$")
+# Marca d'água de cada instância: arquivo static/img/marcas/<slug>.svg (ou .png), sem fundo.
+# Sem arquivo, instâncias do modelo Safra usam o brasão Safra.
+MARCAS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static", "img", "marcas")
+MARCA_SAFRA = "/static/img/logo-safra.svg"
+
+
+def marca_url(inst) -> str:
+    for ext in ("svg", "png"):
+        if os.path.isfile(os.path.join(MARCAS_DIR, f"{inst.get('slug')}.{ext}")):
+            return f"/static/img/marcas/{inst['slug']}.{ext}"
+    return MARCA_SAFRA if inst.get("modelo") == "safra" else ""
 EDITOR_ROLES = ("admin", "operador")
 
 _get_store = None
@@ -167,7 +176,8 @@ def resolve(write=False):
 
 
 def public_instance(inst, user=None):
-    out = {k: inst.get(k) for k in ("id", "nome", "slug", "tema", "modelo", "logo")}
+    out = {k: inst.get(k) for k in ("id", "nome", "slug", "tema", "modelo")}
+    out["marca"] = marca_url(inst)
     out["podeEditar"] = can_write(user, inst)
     if user and user["papel"] == "admin":
         out.update(publico=bool(inst.get("publico")), abaDisparos=inst.get("abaDisparos"),
@@ -210,11 +220,6 @@ def _parse(b, partial):
         out["modelo"] = modelo
     if "publico" in b or not partial:
         out["publico"] = bool(b.get("publico"))
-    if "logo" in b:
-        logo = str(b.get("logo") or "").strip()
-        if logo and (len(logo) > MAX_LOGO or not LOGO_RE.match(logo)):
-            return None, _err("Logo inválida ou grande demais. Envie um PNG ou SVG menor.")
-        out["logo"] = logo
     return out, None
 
 

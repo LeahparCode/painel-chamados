@@ -56,7 +56,7 @@ export function pickInstance(){
       // só lembra a última instância de quem está logado (o que um visitante olhou não decide o login)
       if (state.user) localStorage.setItem(LAST_KEY, state.inst.slug);
       const themes = readThemes();
-      list.forEach(i => { themes[i.slug] = { tema: i.tema, modelo: i.modelo, wm: i.logo ? "logo" : (i.modelo === "safra" ? "safra" : "") }; });
+      list.forEach(i => { themes[i.slug] = { tema: i.tema, modelo: i.modelo, wm: (i.marca || "").includes("logo-safra") ? "safra" : (i.marca ? "logo" : "") }; });
       localStorage.setItem(THEMES_KEY, JSON.stringify(themes));
     }catch{}
     // pediu uma instância sem acesso: mantém o endereço (depois de entrar, ela abre)
@@ -82,13 +82,13 @@ export function applyInstance(){
   document.title = inst ? `${inst.nome} · Painel de Disparos` : "Painel de Disparos";
 }
 
-/** Marca d'água: logo enviada para a instância; sem logo, o brasão Safra nas instâncias Safra. */
+/** Marca d'água: arquivo da instância (static/img/marcas/<slug>.svg); sem ele, brasão Safra nas instâncias Safra. */
 function applyWatermark(inst){
   const root = document.documentElement;
   const wm = document.querySelector(".brand-watermark");
   if (!wm) return;
-  const logo = inst?.logo || "";
-  if (logo){
+  const logo = inst?.marca || "";
+  if (logo && !logo.includes("logo-safra")){
     const img = new Image();
     img.onload = () => {
       wm.style.setProperty("--wm-ratio", `${img.naturalWidth} / ${img.naturalHeight}`);
@@ -99,7 +99,7 @@ function applyWatermark(inst){
   }else{
     wm.style.removeProperty("--wm-image");
     wm.style.removeProperty("--wm-ratio");
-    root.classList.toggle("has-wm", !!inst && inst.modelo === "safra");
+    root.classList.toggle("has-wm", !!logo); // brasão Safra: imagem e proporção padrão do CSS
   }
 }
 
