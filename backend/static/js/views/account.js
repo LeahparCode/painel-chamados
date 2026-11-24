@@ -26,12 +26,28 @@ function setTab(tab){
 }
 
 /** Sem sessão: só a tela de login aparece (o painel não é montado nem carrega dados). */
-export function showLoginGate(){
+export function showLoginGate({ pending = false } = {}){
   const root = document.documentElement;
   root.classList.add("needs-login");
   root.classList.remove("inst-safra"); // sem marca d'água na tela de entrada
   loadLoginVideos();
-  openLogin(location.hash === "#criar-conta" ? "signup" : "login");
+  if (pending) showPending();
+  else openLogin(location.hash === "#criar-conta" ? "signup" : "login");
+}
+
+/** Conta criada e ainda não liberada: só a mensagem, com "atualizar" e "sair". */
+function showPending(){
+  document.documentElement.classList.add("auth-is-pending");
+  $("authPending").hidden = false;
+  const u = state.user;
+  $("authPendingUser").textContent = u ? `Conta: ${u.nome || u.login} (${u.login})` : "";
+  $("authPendingCheck").addEventListener("click", () => location.reload());
+  $("authPendingLogout").addEventListener("click", async () => {
+    try{ await logout(); }catch{}
+    try{ localStorage.removeItem("painel_logged"); }catch{}
+    location.reload();
+  });
+  setTimeout(() => $("authPendingCheck").focus(), 60);
 }
 
 /** Os microvídeos só são baixados aqui (quem já está logado não carrega nada disso). */
@@ -113,9 +129,14 @@ export function initAccount(){
     btn.disabled = true; btn.textContent = "Criando conta…";
     try{
       const { user: u } = await signup(nome, user, senha);
-      toast(u.papel === "pendente"
-        ? "Conta criada! Aguarde um administrador liberar o seu acesso."
-        : `Conta criada! Bem-vindo(a), ${u.nome}.`, "ok", 3000);
+      if (u.papel === "pendente"){
+        // mostra na hora a mensagem de conta criada (sem recarregar)
+        state.user = u;
+        $("signupForm").reset();
+        showPending();
+        return;
+      }
+      toast(`Conta criada! Bem-vindo(a), ${u.nome}.`, "ok", 3000);
       reloadToPanel();
     }catch(err){
       showError($("sError"), err.message || "Não foi possível criar a conta.");

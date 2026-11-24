@@ -71,7 +71,7 @@ function render(){
       <div class="inst-card-chips">
         <span class="chip">${escapeHtml(TEMA_NOMES[i.tema] || i.tema)}</span>
         <span class="chip">Modelo ${escapeHtml(MODELO_NOME[i.modelo] || i.modelo)}</span>
-        <span class="chip ${i.publico ? "chip-warn" : ""}">${i.publico ? "Visível para todas as contas" : "Só quem tem acesso"}</span>
+        <span class="chip ${i.publico ? "chip-warn" : ""}">${i.publico ? "Visível para todos os operadores" : "Só quem tem acesso"}</span>
       </div>
       <p class="inst-card-meta">${acesso} operador(es) com acesso · abas <b>${escapeHtml(i.abaDisparos || "")}</b> e <b>${escapeHtml(i.abaTemplates || "")}</b></p>
       <div class="inst-card-actions">

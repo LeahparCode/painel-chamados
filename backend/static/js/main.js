@@ -16,7 +16,7 @@ import { initImport, setIoTab } from "./views/import.js";
 import { initAccount, showLoginGate } from "./views/account.js";
 import { initUsers, setUsersVisible } from "./views/users.js";
 import { initBulkDelete } from "./views/bulk-delete.js";
-import { fetchMe, fetchConfig, canEdit, isAdmin, isLogged, applyAuthMode } from "./core/auth.js";
+import { fetchMe, fetchConfig, canEdit, isAdmin, isLogged, isPending, applyAuthMode } from "./core/auth.js";
 import { fetchInstancias, pickInstance } from "./core/instance.js";
 import { toast } from "./ui/toast.js";
 import { initInstanceSwitcher, initInstancesAdmin, setInstancesVisible } from "./views/instances.js";
@@ -82,12 +82,12 @@ try{
 /* ---------- boot ---------- */
 await fetchMe();      // logado? (o servidor confirma; o resto da tela depende disso)
 
-if (!isLogged()){
-  // sem login ninguém vê o painel: só a tela de entrar / criar conta
+if (!isLogged() || isPending()){
+  // sem login (ou com a conta aguardando liberação) ninguém vê o painel: só a tela de entrada
   initTheme();
   initModals();
   initAccount();
-  showLoginGate();
+  showLoginGate({ pending: isPending() });
   hideSplash();
 }else{
   await startApp();

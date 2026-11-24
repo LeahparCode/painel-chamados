@@ -484,8 +484,8 @@
         <p class="users-hint">
           Cada instância tem os seus disparos, templates e cores, guardados em abas próprias da planilha.
           <b>Administradores</b> veem todas. <b>Operadores</b> veem só as instâncias liberadas no cadastro de usuários.
-          Instâncias <b>visíveis para todas as contas</b> aparecem, só para leitura, para qualquer pessoa logada.
-          Sem login ninguém vê nada.
+          Instâncias <b>visíveis para todos os operadores</b> aparecem para qualquer operador, só para leitura.
+          Sem login, ou com a conta aguardando liberação, ninguém vê nada.
         </p>
       </section>
 
@@ -641,7 +641,7 @@
             <option value="safra">Safra — frases Safra e marca d'água</option>
           </select>
         </label>
-        <label class="check field-full"><input type="checkbox" id="iPublico" /> <span>Visível para todas as contas (inclusive aguardando liberação): só leitura, sem valores em R$</span></label>
+        <label class="check field-full"><input type="checkbox" id="iPublico" /> <span>Visível para todos os operadores (só leitura), mesmo sem estarem marcados nela</span></label>
         <p class="field-hint field-full" id="iAbas" hidden></p>
         <p class="form-error field-full" id="iError" role="alert" hidden></p>
         <div class="field-full form-actions">
@@ -767,20 +767,28 @@
           <span class="auth-brand-text"><strong>Disparos</strong><small>Painel operacional</small></span>
         </div>
         <div class="auth-pitch">
-          <span class="auth-kicker"><i></i>Ao vivo</span>
           <h1>Seus disparos, do planejamento ao resultado.</h1>
           <p>Programe, acompanhe status, volume e valores em tempo real, e exporte tudo em poucos cliques.</p>
         </div>
-        <ul class="auth-tiles">
-          <li><video class="auth-tile-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" data-poster="{{ url_for('static', filename='video/login-calendario.jpg') }}?v={{ asset_version }}"><source data-src="{{ url_for('static', filename='video/login-calendario.webm') }}?v={{ asset_version }}" type="video/webm" /><source data-src="{{ url_for('static', filename='video/login-calendario.mp4') }}?v={{ asset_version }}" type="video/mp4" /></video><b>Planeje</b><span>Dia, semana e mês</span></li>
-          <li><video class="auth-tile-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" data-poster="{{ url_for('static', filename='video/login-disparo.jpg') }}?v={{ asset_version }}"><source data-src="{{ url_for('static', filename='video/login-disparo.webm') }}?v={{ asset_version }}" type="video/webm" /><source data-src="{{ url_for('static', filename='video/login-disparo.mp4') }}?v={{ asset_version }}" type="video/mp4" /></video><b>Dispare</b><span>SMS, RCS, WhatsApp e e-mail</span></li>
-          <li><video class="auth-tile-video" muted loop playsinline preload="none" aria-hidden="true" tabindex="-1" data-poster="{{ url_for('static', filename='video/login-acompanhe.jpg') }}?v={{ asset_version }}"><source data-src="{{ url_for('static', filename='video/login-acompanhe.webm') }}?v={{ asset_version }}" type="video/webm" /><source data-src="{{ url_for('static', filename='video/login-acompanhe.mp4') }}?v={{ asset_version }}" type="video/mp4" /></video><b>Acompanhe</b><span>Status e custo ao vivo</span></li>
-        </ul>
       </div>
     </aside>
 
     <main class="auth-panel">
       <div class="auth-card" role="dialog" aria-labelledby="lTitle">
+        <!-- conta criada, aguardando um administrador liberar -->
+        <div class="auth-pending" id="authPending" hidden>
+          <span class="auth-pending-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+          <h2>Conta criada com sucesso!</h2>
+          <p>Aguarde um administrador liberar o seu acesso. Assim que for liberado, é só atualizar a página.</p>
+          <p class="auth-pending-user" id="authPendingUser"></p>
+          <div class="auth-pending-actions">
+            <button type="button" class="btn btn-primary" id="authPendingCheck">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+              Já fui liberado, atualizar
+            </button>
+            <button type="button" class="btn btn-ghost" id="authPendingLogout">Sair</button>
+          </div>
+        </div>
         <header class="auth-card-head">
           <span class="login-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
           <h2 id="lTitle">Entrar no painel</h2>
@@ -817,7 +825,6 @@
           </div>
         </label>
         <label class="field"><span>Confirmar senha</span><input type="password" id="sConfirma" autocomplete="new-password" /></label>
-        <p class="auth-note">Sua conta é criada na hora. Para cadastrar e editar disparos, um administrador precisa liberar o seu acesso.</p>
         <p class="form-error" id="sError" role="alert" hidden></p>
         <button type="submit" class="btn btn-primary" id="sSubmit">Criar conta</button>
         <p class="auth-switch">Já tem conta? <button type="button" class="link-btn" data-auth-tab="login">Entrar</button></p>
