@@ -4,7 +4,7 @@ import { usersApi, initials } from "../core/auth.js";
 import { escapeHtml } from "../core/format.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { toast } from "../ui/toast.js";
-import { TEMA_CORES } from "../core/instance.js";
+import { instBadge } from "../core/instance.js";
 
 const $ = (id) => document.getElementById(id);
 let users = [];
@@ -29,9 +29,8 @@ function renderInstChecks(selected = []){
   const list = state.instancias || [];
   $("uInstRow").hidden = !state.gerenciarInst || !list.length;
   $("uInst").innerHTML = list.map(i => {
-    const [a, b] = TEMA_CORES[i.tema] || TEMA_CORES.azul;
     return `<label class="check inst-check"><input type="checkbox" value="${escapeHtml(i.id)}" ${selected.includes(i.id) ? "checked" : ""} />
-      <span class="swatch" style="--a:${a};--b:${b}"></span><span>${escapeHtml(i.nome)}</span></label>`;
+      ${instBadge(i)}<span>${escapeHtml(i.nome)}</span></label>`;
   }).join("");
   syncInstRow();
 }

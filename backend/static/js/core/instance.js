@@ -18,6 +18,18 @@ export const TEMA_CORES = {
   "violeta": ["#5b4cf0", "#15132a"],
 };
 
+/**
+ * Selo da instância: a logo (marca d'água) num círculo branco, na cor principal do tema;
+ * sem logo, a bolinha com as duas cores do tema.
+ */
+export function instBadge(inst, extra = ""){
+  const [a, b] = TEMA_CORES[inst?.tema] || TEMA_CORES.azul;
+  const marca = String(inst?.marca || "").replace(/["'()\\\s]/g, "");
+  return marca
+    ? `<span class="swatch inst-logo ${extra}" style="--c:${a};--logo:url('${marca}')"><i></i></span>`
+    : `<span class="swatch ${extra}" style="--a:${a};--b:${b}"></span>`;
+}
+
 export const instId = () => state.inst?.id || "";
 export const isSafra = () => state.inst?.modelo === "safra";
 /** Cabeçalho que diz ao servidor de qual instância é a chamada */

@@ -106,3 +106,15 @@ html.is-public .inst-btn{ width: auto; max-width: 260px; }
   .tema-picker{ grid-template-columns: minmax(0, 1fr); }
 }
 
+
+/* ---------- selo com a logo da instância (no lugar da bolinha de cores) ---------- */
+.swatch.inst-logo{
+  position: relative; background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08), 0 2px 6px -2px rgba(0, 0, 0, .3);
+}
+.swatch.inst-logo i{
+  position: absolute; inset: 17%;
+  background: var(--c);
+  -webkit-mask: var(--logo) center / contain no-repeat;
+          mask: var(--logo) center / contain no-repeat;
+}

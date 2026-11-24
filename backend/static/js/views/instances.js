@@ -1,6 +1,6 @@
 // Instâncias: seletor na barra lateral (todos) e tela de gerenciamento (administradores).
 import { state } from "../core/state.js";
-import { TEMA_NOMES, TEMA_CORES, openInstance, fetchInstancias, instanciasApi } from "../core/instance.js";
+import { TEMA_NOMES, TEMA_CORES, openInstance, fetchInstancias, instanciasApi, instBadge } from "../core/instance.js";
 import { usersApi } from "../core/auth.js";
 import { escapeHtml } from "../core/format.js";
 import { openModal, closeModal } from "../ui/modal.js";
@@ -21,7 +21,7 @@ export function initInstanceSwitcher({ onManage } = {}){
   const manage = state.gerenciarInst;
   wrap.hidden = false;
   $("instName").textContent = inst.nome;
-  $("instSwatch").setAttribute("style", swatchStyle(inst.tema));
+  $("instSwatch").outerHTML = instBadge(inst).replace('<span class="swatch', '<span id="instSwatch" class="swatch');
   const btn = $("instBtn");
   btn.classList.toggle("is-static", !many && !manage);
   btn.title = many ? "Trocar de instância" : inst.nome;
@@ -30,7 +30,7 @@ export function initInstanceSwitcher({ onManage } = {}){
   const pop = $("instPop");
   pop.innerHTML = `<p class="palette-title">Instâncias</p>` + list.map(i => `
     <button type="button" role="menuitemradio" data-open="${escapeHtml(i.slug)}" aria-checked="${i.id === inst.id}">
-      <span class="swatch" style="${swatchStyle(i.tema)}"></span>
+      ${instBadge(i)}
       <span>${escapeHtml(i.nome)}<small>${i.podeEditar ? "Pode editar" : "Somente leitura"}</small></span>
     </button>`).join("")
     + (manage ? `<button type="button" class="inst-manage" data-manage>${ICON_GEAR}<span>Gerenciar instâncias</span></button>` : "");
@@ -64,7 +64,7 @@ function render(){
     return `
     <article class="inst-card ${atual ? "is-current" : ""}" style="${swatchStyle(i.tema)}">
       <div class="inst-card-top">
-        <span class="swatch"></span>
+        ${instBadge(i)}
         <div class="inst-card-title"><h3>${escapeHtml(i.nome)}</h3><small>?i=${escapeHtml(i.slug)}</small></div>
         ${atual ? '<span class="chip chip-brand">Aberta</span>' : ""}
       </div>
