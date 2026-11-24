@@ -323,7 +323,8 @@ def delete_disparo(inst, rid):
 # ---- Configuração (somente logados) ----
 @app.get("/api/config")
 @editor_required
-def api_config():
+@with_instance(write=True)  # preços só para quem edita a instância (com "só ver" não aparecem valores)
+def api_config(inst):
     return jsonify({"precos": PRECO_POR_TIPO})
 
 

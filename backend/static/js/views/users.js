@@ -19,18 +19,32 @@ const fmtDate = (iso) => {
 
 const instNome = (id) => (state.instancias || []).find(i => i.id === id)?.nome;
 
+const NIVEL_LABEL = { editar: "Editar", ver: "Só ver" };
+
+/** Acesso do usuário: { idDaInstância: "editar" | "ver" } (contas antigas: lista de ids = editar) */
+const acessoDe = (u) => u?.acesso || Object.fromEntries((u?.instancias || []).map(id => [id, "editar"]));
+
 function instCell(u){
   if (u.papel === "admin") return `<span class="chip chip-brand">Todas</span>`;
-  const nomes = (u.instancias || []).map(instNome).filter(Boolean);
-  return nomes.length ? nomes.map(n => `<span class="chip">${escapeHtml(n)}</span>`).join(" ") : `<span class="muted">Nenhuma</span>`;
+  const itens = Object.entries(acessoDe(u)).map(([id, nivel]) => [instNome(id), nivel]).filter(([n]) => n);
+  return itens.length
+    ? itens.map(([n, nivel]) => `<span class="chip ${nivel === "ver" ? "chip-ver" : ""}" title="${NIVEL_LABEL[nivel]}">${escapeHtml(n)}${nivel === "ver" ? " · só ver" : ""}</span>`).join(" ")
+    : `<span class="muted">Nenhuma</span>`;
 }
 
-function renderInstChecks(selected = []){
+function renderInstChecks(acesso = {}){
   const list = state.instancias || [];
   $("uInstRow").hidden = !state.atribuirInst || !list.length;
   $("uInst").innerHTML = list.map(i => {
-    return `<label class="check inst-check"><input type="checkbox" value="${escapeHtml(i.id)}" ${selected.includes(i.id) ? "checked" : ""} />
-      ${instBadge(i)}<span>${escapeHtml(i.nome)}</span></label>`;
+    const nivel = acesso[i.id];
+    return `<div class="inst-access ${nivel ? "is-on" : ""}" data-id="${escapeHtml(i.id)}" data-nivel="${nivel || "editar"}">
+      <label class="check inst-check"><input type="checkbox" value="${escapeHtml(i.id)}" ${nivel ? "checked" : ""} />
+        ${instBadge(i)}<span>${escapeHtml(i.nome)}</span></label>
+      <div class="nivel-seg" role="radiogroup" aria-label="Acesso a ${escapeHtml(i.nome)}">
+        <button type="button" role="radio" data-nivel="ver">Só ver</button>
+        <button type="button" role="radio" data-nivel="editar">Editar</button>
+      </div>
+    </div>`;
   }).join("");
   syncInstRow();
 }
@@ -38,10 +52,28 @@ function renderInstChecks(selected = []){
 function syncInstRow(){
   const admin = $("uPapel").value === "admin";
   $("uInst").classList.toggle("is-disabled", admin);
-  $("uInst").querySelectorAll("input").forEach(c => { c.disabled = admin; });
+  $("uInst").querySelectorAll(".inst-access").forEach(row => {
+    const box = row.querySelector("input");
+    box.disabled = admin;
+    row.classList.toggle("is-on", box.checked && !admin);
+    row.querySelectorAll("[data-nivel]").forEach(b => {
+      const on = b.dataset.nivel === row.dataset.nivel;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.disabled = admin || !box.checked;
+    });
+  });
   $("uInstHint").textContent = admin
     ? "Administradores veem e editam todas as instâncias."
-    : ($("uPapel").value === "pendente" ? "Valem quando a conta for liberada como Operador." : "A pessoa vê e edita só as instâncias marcadas.");
+    : ($("uPapel").value === "pendente"
+      ? "Valem quando a conta for liberada como Operador."
+      : "Só ver: acompanha o painel de disparos, sem editar e sem valores. Editar: cadastra, edita e exporta.");
+}
+
+function acessoDoFormulario(){
+  return [...$("uInst").querySelectorAll(".inst-access")]
+    .filter(row => row.querySelector("input").checked)
+    .map(row => ({ id: row.dataset.id, nivel: row.dataset.nivel }));
 }
 
 function render(){
@@ -99,7 +131,7 @@ function openEditor(user = null){
   $("uDelete").hidden = !user || isMe;
   $("uSave").textContent = user ? "Salvar" : "Criar usuário";
   // usuário novo já vem com a instância aberta marcada
-  renderInstChecks(user ? (user.instancias || []) : (state.inst ? [state.inst.id] : []));
+  renderInstChecks(user ? acessoDe(user) : (state.inst ? { [state.inst.id]: "editar" } : {}));
   showError("");
   openModal($("userModal"));
   setTimeout(() => $("uNome").focus(), 40);
@@ -122,6 +154,13 @@ export function setUsersVisible(v){
 export function initUsers(){
   $("btnNewUser").addEventListener("click", () => openEditor());
   $("uPapel").addEventListener("change", syncInstRow);
+  $("uInst").addEventListener("change", syncInstRow);
+  $("uInst").addEventListener("click", (e) => {
+    const b = e.target.closest(".nivel-seg [data-nivel]");
+    if (!b || b.disabled) return;
+    b.closest(".inst-access").dataset.nivel = b.dataset.nivel;
+    syncInstRow();
+  });
   $("usersTable").addEventListener("click", async (e) => {
     const approve = e.target.closest("[data-approve]");
     if (approve){
@@ -164,7 +203,7 @@ export function initUsers(){
     if (editing && !$("uAtivoRow").hidden) data.ativo = $("uAtivo").checked;
     if (editing && editing.id === state.user?.id) delete data.papel;
     if (!$("uInstRow").hidden && $("uPapel").value !== "admin"){
-      data.instancias = [...$("uInst").querySelectorAll("input:checked")].map(c => c.value);
+      data.instancias = acessoDoFormulario();
     }
 
     const btn = $("uSave"); btn.disabled = true;
