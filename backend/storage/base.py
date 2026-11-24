@@ -164,6 +164,7 @@ INSTANCE_FIELDS = [
     ("publico", "Publico"),        # visitantes (sem login) podem ver o painel
     ("abaDisparos", "AbaDisparos"),
     ("abaTemplates", "AbaTemplates"),
+    ("logo", "Logo"),              # marca d'água (PNG em data URL; só a forma é usada)
     ("criadoEm", "CriadoEm"),
     ("atualizadoEm", "AtualizadoEm"),
 ]
