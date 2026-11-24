@@ -117,6 +117,7 @@ USER_FIELDS = [
     ("ativo", "Ativo"),
     ("criadoEm", "CriadoEm"),
     ("atualizadoEm", "AtualizadoEm"),
+    ("instancias", "Instancias"),  # IDs das instâncias que a pessoa pode ver, separados por vírgula
 ]
 USER_KEYS = [k for k, _ in USER_FIELDS]
 # admin: tudo + usuários · operador: edita e exporta · pendente: conta criada pela própria pessoa,
@@ -139,4 +140,46 @@ def clean_user(rec: dict) -> dict:
     out["papel"] = papel if papel in USER_ROLES else "pendente"
     raw_ativo = rec.get("ativo", "")
     out["ativo"] = True if raw_ativo in ("", None) else to_bool(raw_ativo)
+    out["instancias"] = join_ids(split_ids(out["instancias"]))
+    return out
+
+
+def split_ids(value):
+    """"a, b,c" (ou lista) → ["a", "b", "c"] sem repetições."""
+    items = value if isinstance(value, (list, tuple)) else str(value or "").split(",")
+    return list(dict.fromkeys(str(i).strip() for i in items if str(i).strip()))
+
+
+def join_ids(ids) -> str:
+    return ",".join(split_ids(ids))
+
+
+# ---------------- Instâncias (um painel por cliente/operação) ----------------
+INSTANCE_FIELDS = [
+    ("id", "ID"),
+    ("nome", "Nome"),
+    ("slug", "Slug"),              # aparece na URL (?i=slug)
+    ("tema", "Tema"),              # paleta de cores da instância
+    ("modelo", "Modelo"),          # padrao | safra (frases Safra + marca d'água)
+    ("publico", "Publico"),        # visitantes (sem login) podem ver o painel
+    ("abaDisparos", "AbaDisparos"),
+    ("abaTemplates", "AbaTemplates"),
+    ("criadoEm", "CriadoEm"),
+    ("atualizadoEm", "AtualizadoEm"),
+]
+INSTANCE_KEYS = [k for k, _ in INSTANCE_FIELDS]
+TEMAS = ("azul", "azul-dourado", "vermelho", "violeta")
+TEMA_PADRAO = "azul"
+MODELOS = ("padrao", "safra")
+
+
+def clean_instance(rec: dict) -> dict:
+    out = {k: rec.get(k, "") for k in INSTANCE_KEYS}
+    for k in INSTANCE_KEYS:
+        if k != "publico":
+            out[k] = "" if out[k] is None else str(out[k]).strip()
+    out["slug"] = out["slug"].lower()
+    out["tema"] = out["tema"] if out["tema"] in TEMAS else TEMA_PADRAO
+    out["modelo"] = out["modelo"] if out["modelo"] in MODELOS else "padrao"
+    out["publico"] = to_bool(out["publico"])
     return out

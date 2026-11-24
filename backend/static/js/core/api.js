@@ -2,6 +2,7 @@
 import { API_BASE, OFFLINE, CACHE_KEY, CACHE_TTL_MS } from "./config.js";
 import { state, setRecords, setConnection, setTemplates } from "./state.js";
 import { toast } from "../ui/toast.js";
+import { instHeaders, instId } from "./instance.js";
 
 const url = (p) => `${API_BASE.replace(/\/+$/, "")}${p}`;
 
@@ -20,10 +21,11 @@ function applySnapshot(records, stale = false){
   if (list.length) saveCache(list);
 }
 
-/* ---------- cache ---------- */
+/* ---------- cache (um por instância, para não misturar dados) ---------- */
+const cacheKey = () => `${CACHE_KEY}_${instId()}`;
 export function loadCache(){
   try{
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(cacheKey());
     if (!raw) return false;
     const { ts, data } = JSON.parse(raw);
     if (!Array.isArray(data) || Date.now() - ts > CACHE_TTL_MS) return false;
@@ -32,7 +34,7 @@ export function loadCache(){
   }catch{ return false; }
 }
 function saveCache(records){
-  const write = () => { try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: records })); }catch{} };
+  const write = () => { try{ localStorage.setItem(cacheKey(), JSON.stringify({ ts: Date.now(), data: records })); }catch{} };
   (window.requestIdleCallback || setTimeout)(write);
 }
 
@@ -40,7 +42,7 @@ function saveCache(records){
 async function request(method, path, body){
   const resp = await fetch(url(path), {
     method,
-    headers: body ? { "Content-Type": "application/json" } : undefined,
+    headers: { ...instHeaders(), ...(body ? { "Content-Type": "application/json" } : {}) },
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
   });
@@ -73,19 +75,19 @@ export const deleteRecord = (id) => request("DELETE", `/api/disparos/${encodeURI
 export const deleteMany = (ids) => request("POST", "/api/disparos/excluir-lote", { ids }).then(r => r.data);
 
 /* ---------- templates próprios ---------- */
-const TPL_CACHE_KEY = "painel_templates_v1";
+const tplCacheKey = () => `painel_templates_v2_${instId()}`;
 
 export async function fetchTemplates(){
   if (OFFLINE) return state.templates;
   const { data } = await request("GET", "/api/templates");
   setTemplates(data || []);
-  try{ localStorage.setItem(TPL_CACHE_KEY, JSON.stringify(data || [])); }catch{}
+  try{ localStorage.setItem(tplCacheKey(), JSON.stringify(data || [])); }catch{}
   return data;
 }
 
 export function loadTemplatesCache(){
   try{
-    const raw = localStorage.getItem(TPL_CACHE_KEY);
+    const raw = localStorage.getItem(tplCacheKey());
     if (raw) setTemplates(JSON.parse(raw));
   }catch{}
 }
@@ -139,7 +141,7 @@ export function connect(){
     .catch(() => setConnection("offline"));
 
   try{
-    sse = new EventSource(url("/api/stream"));
+    sse = new EventSource(url(`/api/stream?inst=${encodeURIComponent(instId())}`));
     sse.onopen = () => { stopPolling(); };
     sse.onmessage = (evt) => {
       try{

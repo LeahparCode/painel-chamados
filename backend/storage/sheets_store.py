@@ -1,10 +1,11 @@
 """Armazenamento no Google Planilhas (Google Sheets).
 
-Duas abas na mesma planilha:
-  - "Disparos"  (GOOGLE_SHEET_TAB)            → os disparos do painel
-  - "Templates" (GOOGLE_TEMPLATES_TAB)        → templates escritos pelos usuários
-  - "Usuarios"  (GOOGLE_USERS_TAB)            → logins do painel (senha guardada só como hash)
-Ambas são criadas automaticamente, com cabeçalho, se não existirem.
+Abas na mesma planilha (criadas automaticamente, com cabeçalho, se não existirem):
+  - "Usuarios"   (GOOGLE_USERS_TAB)      → logins do painel (senha guardada só como hash)
+  - "Instancias" (GOOGLE_INSTANCES_TAB)  → cadastro das instâncias (um painel por cliente)
+  - por instância: uma aba de disparos e uma de templates. A primeira instância (Safra)
+    usa as abas originais "Disparos" (GOOGLE_SHEET_TAB) e "Templates" (GOOGLE_TEMPLATES_TAB);
+    as novas ganham "Disparos - <slug>" e "Templates - <slug>".
 
 Como a planilha não gera ID nem data de modificação sozinha, o servidor:
   - cria um ID único para cada linha (coluna "ID");
@@ -21,7 +22,8 @@ import threading
 import unicodedata
 import logging
 
-from .base import FIELDS, TEMPLATE_FIELDS, USER_FIELDS, StoreError, clean_record, clean_template, clean_user, now_iso
+from .base import (FIELDS, TEMPLATE_FIELDS, USER_FIELDS, INSTANCE_FIELDS, StoreError, clean_record,
+                   clean_template, clean_user, clean_instance, now_iso)
 
 log = logging.getLogger("storage.sheets")
 
@@ -259,38 +261,75 @@ class SheetTable:
                 raise _api_error(e)
 
 
+class ScopedStore:
+    """Disparos e templates de UMA instância (cada instância tem as suas abas)."""
+
+    def __init__(self, disparos: SheetTable, templates_table):
+        self.disparos = disparos
+        self._templates = templates_table  # função que devolve a tabela (aba criada sob demanda)
+
+    @property
+    def templates(self) -> SheetTable:
+        return self._templates()
+
+    # ---------- disparos ----------
+    def list_records(self):
+        return self.disparos.list()
+
+    def create(self, data: dict):
+        return self.disparos.create(data)
+
+    def create_many(self, items):
+        return self.disparos.create_many(items)
+
+    def update_many(self, items):
+        return self.disparos.update_many(items)
+
+    def update(self, rid: str, patch: dict):
+        return self.disparos.update(rid, patch)
+
+    def delete(self, rid: str):
+        self.disparos.delete(rid)
+
+    def delete_many(self, ids):
+        return self.disparos.delete_many(ids)
+
+    # ---------- templates ----------
+    def list_templates(self):
+        return self.templates.list()
+
+    def create_template(self, data: dict):
+        return self.templates.create(data)
+
+    def update_template(self, tid: str, patch: dict):
+        return self.templates.update(tid, patch)
+
+    def delete_template(self, tid: str):
+        self.templates.delete(tid)
+
+
 class SheetsStore:
+    """Planilha inteira: usuários, cadastro de instâncias e as abas de cada instância.
+
+    `tab(titulo, colunas)` devolve a aba com esse nome, criando-a se não existir.
+    """
     name = "sheets"
     snapshot_ttl = 10.0
+    supports_instances = True
 
-    def __init__(self, worksheet, templates_worksheet=None, users_worksheet=None):
-        """templates_worksheet / users_worksheet: a aba ou uma função que a devolve (criada sob demanda)."""
-        self.disparos = SheetTable(worksheet, FIELDS, clean_record, "rec")
-        self._providers = {"templates": templates_worksheet, "users": users_worksheet}
+    def __init__(self, tab, *, disparos_tab="Disparos", templates_tab="Templates",
+                 users_tab="Usuarios", instances_tab="Instancias"):
+        self._tab = tab
+        self.default_tabs = {"disparos": disparos_tab, "templates": templates_tab}
+        self._names = {"users": users_tab, "instances": instances_tab}
         self._tables = {}
         self._tables_lock = threading.Lock()
 
-    def _lazy_table(self, name, fields, clean, prefix):
+    def _table(self, title, fields, clean, prefix) -> SheetTable:
         with self._tables_lock:
-            if name not in self._tables:
-                provider = self._providers.get(name)
-                if provider is None:
-                    raise StoreError(f"Aba de {name} não configurada.", 503)
-                ws = provider() if callable(provider) else provider
-                self._tables[name] = SheetTable(ws, fields, clean, prefix)
-            return self._tables[name]
-
-    # compatibilidade com o código/testes existentes
-    @property
-    def ws(self):
-        return self.disparos.ws
-
-    @property
-    def cols(self):
-        return self.disparos.cols
-
-    def ensure_headers(self, header=None):
-        self.disparos.ensure_headers(header)
+            if title not in self._tables:
+                self._tables[title] = SheetTable(self._tab(title, len(fields)), fields, clean, prefix)
+            return self._tables[title]
 
     # ---------- criação ----------
     @classmethod
@@ -327,61 +366,57 @@ class SheetsStore:
                 return sh.worksheet(title)
             except gspread.exceptions.WorksheetNotFound:
                 log.info("Aba %r não existe; criando.", title)
-                return sh.add_worksheet(title=title, rows=1000, cols=cols)
+                return sh.add_worksheet(title=title, rows=1000, cols=max(cols, 1))
 
-        ws = tab(os.getenv("GOOGLE_SHEET_TAB", "Disparos"), len(FIELDS))
         store = cls(
-            ws,
-            lambda: tab(os.getenv("GOOGLE_TEMPLATES_TAB", "Templates"), len(TEMPLATE_FIELDS)),
-            lambda: tab(os.getenv("GOOGLE_USERS_TAB", "Usuarios"), len(USER_FIELDS)),
+            tab,
+            disparos_tab=os.getenv("GOOGLE_SHEET_TAB", "Disparos"),
+            templates_tab=os.getenv("GOOGLE_TEMPLATES_TAB", "Templates"),
+            users_tab=os.getenv("GOOGLE_USERS_TAB", "Usuarios"),
+            instances_tab=os.getenv("GOOGLE_INSTANCES_TAB", "Instancias"),
         )
-        store.ensure_headers()
+        store.users.ensure_headers()  # valida o acesso à planilha logo na subida
         return store
 
-    # ---------- disparos ----------
-    def list_records(self):
-        return self.disparos.list()
+    # ---------- instâncias ----------
+    def scope(self, inst: dict) -> ScopedStore:
+        """Abas da instância (as do Safra são as originais: "Disparos" e "Templates")."""
+        aba_d = inst.get("abaDisparos") or self.default_tabs["disparos"]
+        aba_t = inst.get("abaTemplates") or self.default_tabs["templates"]
+        return ScopedStore(
+            self._table(aba_d, FIELDS, clean_record, "rec"),
+            lambda: self._table(aba_t, TEMPLATE_FIELDS, clean_template, "tpl"),
+        )
 
-    def create(self, data: dict):
-        return self.disparos.create(data)
-
-    def create_many(self, items):
-        return self.disparos.create_many(items)
-
-    def update_many(self, items):
-        return self.disparos.update_many(items)
-
-    def update(self, rid: str, patch: dict):
-        return self.disparos.update(rid, patch)
-
-    def delete(self, rid: str):
-        self.disparos.delete(rid)
-
-    def delete_many(self, ids):
-        return self.disparos.delete_many(ids)
-
-    # ---------- templates ----------
-    @property
-    def templates(self) -> SheetTable:
-        return self._lazy_table("templates", TEMPLATE_FIELDS, clean_template, "tpl")
+    def prepare_instance_tabs(self, inst: dict):
+        """Cria as abas de uma instância nova, já com cabeçalho."""
+        sc = self.scope(inst)
+        sc.disparos.ensure_headers()
+        sc.templates.ensure_headers()
 
     @property
-    def users(self) -> SheetTable:
-        return self._lazy_table("users", USER_FIELDS, clean_user, "usr")
+    def instances(self) -> SheetTable:
+        return self._table(self._names["instances"], INSTANCE_FIELDS, clean_instance, "ins")
 
-    def list_templates(self):
-        return self.templates.list()
+    def list_instances(self):
+        items = self.instances.list()
+        items.sort(key=lambda i: i.get("criadoEm") or "")
+        return items
 
-    def create_template(self, data: dict):
-        return self.templates.create(data)
+    def create_instance(self, data: dict):
+        return self.instances.create(data)
 
-    def update_template(self, tid: str, patch: dict):
-        return self.templates.update(tid, patch)
+    def update_instance(self, iid: str, patch: dict):
+        return self.instances.update(iid, patch)
 
-    def delete_template(self, tid: str):
-        self.templates.delete(tid)
+    def delete_instance(self, iid: str):
+        self.instances.delete(iid)
 
     # ---------- usuários ----------
+    @property
+    def users(self) -> SheetTable:
+        return self._table(self._names["users"], USER_FIELDS, clean_user, "usr")
+
     def list_users(self):
         return self.users.list()
 

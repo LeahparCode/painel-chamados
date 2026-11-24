@@ -34,7 +34,11 @@ export function openLogin(tab = "login"){
   setTab(tab);
 }
 
-const reloadToPanel = () => setTimeout(() => { history.replaceState(null, "", location.pathname + "#painel"); location.reload(); }, 500);
+// depois de entrar: se o endereço pedia uma instância sem acesso, abre ela; senão, a padrão da pessoa
+const reloadToPanel = () => setTimeout(() => {
+  history.replaceState(null, "", location.pathname + (state.instNegada ? location.search : "") + "#painel");
+  location.reload();
+}, 500);
 
 function initPasswordToggles(){
   document.querySelectorAll("[data-pw-toggle]").forEach(btn => btn.addEventListener("click", () => {
@@ -125,7 +129,7 @@ export function initAccount(){
     toggleMenu(false);
     try{ await logout(); }catch{}
     try{ localStorage.removeItem("painel_logged"); }catch{}
-    history.replaceState(null, "", location.pathname + "#painel");
+    history.replaceState(null, "", location.pathname + location.search + "#painel");
     location.reload();
   });
 

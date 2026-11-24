@@ -1,10 +1,11 @@
 // Biblioteca de frases: fraseologia Safra + templates próprios (busca, filtros, copiar, usar, editar).
 import { state, subscribe } from "../core/state.js";
 import { fetchTemplates, removeTemplate } from "../core/api.js";
-import { FRASES, TONS, allFrases, fraseFitsTipo, fraseByKey, smsParts, chipClass } from "../core/frases.js";
+import { safraFrases, TONS, allFrases, fraseFitsTipo, fraseByKey, smsParts, chipClass } from "../core/frases.js";
 import { escapeHtml } from "../core/format.js";
 import { toast } from "../ui/toast.js";
 import { openTemplateEditor } from "./template-editor.js";
+import { isSafra } from "../core/instance.js";
 
 const $ = (id) => document.getElementById(id);
 const filters = { q: "", tipo: "", origem: "", tom: "" };
@@ -63,13 +64,15 @@ function render(){
     return norm(f.texto).includes(q) || norm(f.tom).includes(q) || norm(f.name).includes(q) || (!f.custom && String(f.num) === q.replace("#", ""));
   });
 
-  $("frasesCount").textContent = `${list.length} de ${all.length} · ${FRASES.length} frases Safra · ${proprios} template(s) próprio(s)`;
+  $("frasesCount").textContent = isSafra()
+    ? `${list.length} de ${all.length} · ${safraFrases().length} frases Safra · ${proprios} template(s) próprio(s)`
+    : `${list.length} de ${all.length} · ${proprios} template(s) próprio(s)`;
   const note = $("frasesNote");
-  note.hidden = filters.tipo !== "RCS" || filters.origem === "proprios";
+  note.hidden = !isSafra() || filters.tipo !== "RCS" || filters.origem === "proprios";
   note.textContent = "Não há frases Safra específicas de RCS: para RCS aparecem as frases de SMS e os seus templates de RCS.";
 
   if (!list.length){
-    const vazioProprios = filters.origem === "proprios" && !proprios;
+    const vazioProprios = (filters.origem === "proprios" || !isSafra()) && !proprios;
     $("frasesGrid").innerHTML = `<div class="frases-empty">
       ${vazioProprios ? "Você ainda não escreveu nenhum template." : "Nenhuma frase encontrada com esses filtros."}
       ${vazioProprios ? `<div><button type="button" class="btn btn-primary btn-sm" data-empty-new>Escrever meu primeiro template</button></div>` : ""}

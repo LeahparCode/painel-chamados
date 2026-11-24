@@ -4,6 +4,7 @@ import { chipClass } from "../core/frases.js";
 import { fmtInt, escapeHtml } from "../core/format.js";
 import { toast } from "../ui/toast.js";
 import { todayISO } from "../core/dates.js";
+import { instHeaders } from "../core/instance.js";
 
 const $ = (id) => document.getElementById(id);
 let calendario = null;
@@ -17,7 +18,7 @@ async function enviar(confirmar){
   if (confirmar) params.set("confirmar", "1");
   const resp = await fetch(`/api/import/calendario?${params}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...instHeaders() },
     body: JSON.stringify(calendario),
     credentials: "same-origin",
   });
