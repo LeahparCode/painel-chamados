@@ -4,7 +4,6 @@ disparos, templates, tema de cores e lista de quem pode ver.
 Quem vê o quê:
   - administrador: vê e edita todas as instâncias, cria/edita instâncias e define o acesso das pessoas;
   - operador: vê e edita só as instâncias liberadas para ele (coluna "Instancias" do usuário);
-  - qualquer operador vê, só para leitura, as instâncias marcadas como "visível para todos os operadores";
   - conta aguardando liberação ou sem login: nada (o painel inteiro exige um acesso liberado).
 
 O navegador informa a instância em cada chamada (cabeçalho X-Instancia ou ?inst=), e o
@@ -81,7 +80,7 @@ def _bootstrap(items):
     _bootstrap_done = True
     store = _get_store()
     inst = store.create_instance({
-        "nome": "Safra", "slug": "safra", "tema": "azul-dourado", "modelo": "safra", "publico": True,
+        "nome": "Safra", "slug": "safra", "tema": "azul-dourado", "modelo": "safra", "publico": False,
         "abaDisparos": store.default_tabs["disparos"], "abaTemplates": store.default_tabs["templates"],
         "criadoEm": now_iso(),
     })
@@ -132,13 +131,12 @@ def find(key):
 
 # ---------------------------------------------------------------- permissões
 def can_read(user, inst) -> bool:
+    """Admin vê todas; operador só as instâncias marcadas no cadastro dele. Mais ninguém vê nada."""
     if not inst or not user or user["papel"] not in EDITOR_ROLES:
         return False  # sem login ou aguardando liberação: nenhuma instância
-    if user and user["papel"] == "admin":
+    if user["papel"] == "admin":
         return True
-    if user and user["papel"] in EDITOR_ROLES and inst["id"] in split_ids(user.get("instancias")):
-        return True
-    return bool(inst.get("publico"))
+    return inst["id"] in split_ids(user.get("instancias"))
 
 
 def can_write(user, inst) -> bool:

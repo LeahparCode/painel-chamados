@@ -74,15 +74,13 @@ DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave
 
 - Cada instância tem os seus **disparos, templates e cores**, em abas próprias da mesma planilha.
   O cadastro fica na aba `Instancias` (criada automaticamente).
-- Na primeira execução é criada a instância **Safra** (Azul e dourado, modelo Safra, visível para todos os operadores)
+- Na primeira execução é criada a instância **Safra** (Azul e dourado, modelo Safra)
   usando as abas que já existiam (`Disparos` e `Templates`) — nada é migrado. Quem já usava o painel
   ganha acesso a ela.
 - Instâncias novas ganham as abas `Disparos - <slug>` e `Templates - <slug>`. O tema padrão é **Azul e branco**.
 - **Modelo Safra:** mostra a fraseologia Safra e a marca d'água. **Padrão:** só templates próprios.
-- **Visível para todos os operadores:** qualquer operador vê o painel daquela instância, só para leitura,
-  mesmo sem estar marcado nela.
 - Quem vê o quê: **administradores** veem e editam todas; **operadores** só as marcadas no cadastro
-  de usuários (as visíveis para todos os operadores aparecem para eles como somente leitura).
+  de usuários (nenhuma outra aparece para eles).
   Contas **aguardando liberação** não veem nada: só a mensagem "Conta criada com sucesso, aguarde um
   administrador liberar o acesso".
 - Endereço de cada instância: `?i=<slug>` (ex.: `?i=safra`). Trocar de instância: seletor na barra lateral.
