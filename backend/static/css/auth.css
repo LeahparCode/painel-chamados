@@ -181,3 +181,4 @@ html.no-signup .auth-tabs{ display: none; }
   .users-table .u-person small{ display: block; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
   .users-table .u-actions .btn{ padding: 0 10px; }
 }
+.dono-chip{ color: var(--run-ink); background: var(--run-soft); }

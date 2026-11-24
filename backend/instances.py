@@ -2,7 +2,8 @@
 disparos, templates, tema de cores e lista de quem pode ver.
 
 Quem vê o quê:
-  - administrador: vê e edita todas as instâncias, cria/edita instâncias e define o acesso das pessoas;
+  - dono do painel (DONO_LOGIN): o único que cria, edita e exclui instâncias;
+  - administrador: vê e edita todas as instâncias e define o acesso das pessoas a elas;
   - operador: vê e edita só as instâncias liberadas para ele (coluna "Instancias" do usuário);
   - conta aguardando liberação ou sem login: nada (o painel inteiro exige um acesso liberado).
 
@@ -23,7 +24,7 @@ from flask import Blueprint, jsonify, request, g
 
 from storage import StoreError
 from storage.base import now_iso, split_ids, join_ids, TEMAS, MODELOS, TEMA_PADRAO
-from auth import current_user, admin_required, list_users, invalidate_users
+from auth import current_user, dono_required, is_dono, list_users, invalidate_users
 
 log = logging.getLogger("instances")
 bp = Blueprint("instances", __name__)
@@ -196,7 +197,10 @@ def instancias_list():
     except Exception as e:
         return _err(str(e), getattr(e, "status", 503), "storage_error")
     return jsonify({"instancias": [public_instance(i, user) for i in items],
-                    "gerenciar": _supports() and bool(user and user["papel"] == "admin")})
+                    # gerenciar: criar/editar/excluir instâncias (só o dono)
+                    # atribuir: liberar instâncias para os usuários (qualquer administrador)
+                    "gerenciar": _supports() and is_dono(user),
+                    "atribuir": _supports() and bool(user and user["papel"] == "admin")})
 
 
 def _parse(b, partial):
@@ -228,7 +232,7 @@ def _require_support():
 
 
 @bp.post("/api/instancias")
-@admin_required
+@dono_required
 def instancias_create():
     err = _require_support()
     if err:
@@ -255,7 +259,7 @@ def instancias_create():
 
 
 @bp.patch("/api/instancias/<iid>")
-@admin_required
+@dono_required
 def instancias_update(iid):
     err = _require_support()
     if err:
@@ -277,7 +281,7 @@ def instancias_update(iid):
 
 
 @bp.delete("/api/instancias/<iid>")
-@admin_required
+@dono_required
 def instancias_delete(iid):
     """Remove a instância do cadastro. As abas com os dados continuam na planilha (nada é apagado)."""
     err = _require_support()
