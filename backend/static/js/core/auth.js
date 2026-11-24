@@ -5,7 +5,8 @@ import { setPrices } from "./config.js";
 const HINT_KEY = "painel_logged";
 
 export const isLogged = () => !!state.user;                       // tem sessão
-export const canEdit = () => ["admin", "operador"].includes(state.user?.papel); // pode editar
+// pode editar a instância aberta (admin edita todas; operador só as liberadas para ele)
+export const canEdit = () => ["admin", "operador"].includes(state.user?.papel) && !!state.inst?.podeEditar;
 export const isPending = () => state.user?.papel === "pendente";   // conta aguardando liberação
 export const isAdmin = () => state.user?.papel === "admin";
 

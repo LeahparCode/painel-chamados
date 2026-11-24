@@ -161,6 +161,15 @@ class AirtableStore:
     def delete_template(self, tid: str):
         self._request("DELETE", f"{self.templates_api}/{tid}")
 
+    # ---------- instâncias: o Airtable trabalha com uma instância só (a principal) ----------
+    supports_instances = False
+
+    def scope(self, inst):
+        return self
+
+    def list_instances(self):
+        return []
+
     # ---------- usuários (tabela "Usuarios": Nome, Login, SenhaHash, Papel, Ativo, CriadoEm) ----------
     @staticmethod
     def _normalize_user(rec):
@@ -171,7 +180,7 @@ class AirtableStore:
 
     @staticmethod
     def _user_fields(data: dict) -> dict:
-        names = {k: f for k, f in USER_FIELDS if k not in ("id", "atualizadoEm")}
+        names = {k: f for k, f in USER_FIELDS if k not in ("id", "atualizadoEm", "instancias")}
         return {names[k]: v for k, v in data.items() if k in names}
 
     def list_users(self):

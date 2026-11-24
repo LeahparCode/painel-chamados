@@ -1,5 +1,6 @@
 // Ações de escrita com atualização otimista + rollback em caso de erro.
 import { OFFLINE } from "./config.js";
+import { instHeaders } from "./instance.js";
 import { findRecord, patchLocal, addLocal, removeLocal, pendingDeletes } from "./state.js";
 import { API_BASE } from "./config.js";
 import { createRecord, updateRecord, deleteRecord, refreshSoon } from "./api.js";
@@ -126,7 +127,7 @@ window.addEventListener("pagehide", () => {
   scheduled.forEach((item, id) => {
     clearTimeout(item.timer);
     if (OFFLINE || isTemp(id)) return;
-    try{ fetch(`${API_BASE}/api/disparos/${encodeURIComponent(id)}`, { method: "DELETE", keepalive: true }); }catch{}
+    try{ fetch(`${API_BASE}/api/disparos/${encodeURIComponent(id)}`, { method: "DELETE", keepalive: true, headers: instHeaders() }); }catch{}
   });
   scheduled.clear();
 });

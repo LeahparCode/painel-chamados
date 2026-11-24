@@ -7,6 +7,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from storage import create_store, backend_name, StoreError
 from export_xlsx import build_xlsx, safe_filename, ExportError
 from auth import init_auth, editor_required, admin_required
+from instances import init_instances, resolve as resolve_instance
 from importers.calendario import parse_calendar, ajustes_existentes, ImportError_
 from automacao import transicoes
 
@@ -71,15 +72,44 @@ def get_store():
 
 
 init_auth(app, get_store)
+init_instances(app, get_store)
+
+
+def scoped(inst):
+    """Armazenamento (disparos/templates) de uma instância."""
+    return get_store().scope(inst)
+
+
+def with_instance(write=False):
+    """Descobre a instância pedida (cabeçalho X-Instancia ou ?inst=) e confere a permissão.
+    A rota recebe a instância em `inst`."""
+    def deco(fn):
+        from functools import wraps
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            inst, err = resolve_instance(write=write)
+            if err:
+                return err
+            return fn(inst, *args, **kwargs)
+        return wrapper
+    return deco
 
 
 def md5(obj) -> str:
     return hashlib.md5(json.dumps(obj, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
 
 
-_LAST_SNAPSHOT = []
-_LAST_FETCH_TS = 0.0
-_SNAPSHOT_LOCK = threading.Lock()
+# cache por instância: id → {"data": [...], "ts": float, "auto": float, "lock": Lock}
+_SNAPSHOTS = {}
+_SNAPSHOTS_LOCK = threading.Lock()
+
+
+def _slot(inst):
+    with _SNAPSHOTS_LOCK:
+        if inst["id"] not in _SNAPSHOTS:
+            _SNAPSHOTS[inst["id"]] = {"data": [], "ts": 0.0, "auto": 0.0, "lock": threading.Lock()}
+        return _SNAPSHOTS[inst["id"]]
 
 
 def _snapshot_ttl() -> float:
@@ -89,50 +119,50 @@ def _snapshot_ttl() -> float:
     return getattr(_STORE, "snapshot_ttl", 6.0)
 
 
-def get_snapshot(force: bool = False):
-    """Lê os registros com cache compartilhado entre todas as conexões."""
-    global _LAST_SNAPSHOT, _LAST_FETCH_TS
-    with _SNAPSHOT_LOCK:
-        if not force and (time.time() - _LAST_FETCH_TS) < _snapshot_ttl() and _LAST_FETCH_TS:
-            return _LAST_SNAPSHOT, False
+def get_snapshot(inst, force: bool = False):
+    """Lê os disparos da instância com cache compartilhado entre todas as conexões."""
+    slot = _slot(inst)
+    with slot["lock"]:
+        if not force and (time.time() - slot["ts"]) < _snapshot_ttl() and slot["ts"]:
+            return slot["data"], False
         try:
-            data = get_store().list_records()
-            data = _aplicar_automacoes(data)
-            _LAST_SNAPSHOT, _LAST_FETCH_TS = data, time.time()
+            data = scoped(inst).list_records()
+            data = _aplicar_automacoes(inst, slot, data)
+            slot["data"], slot["ts"] = data, time.time()
             return data, False
         except Exception as e:
-            log.warning("Falha ao ler registros: %s", e)
-            _LAST_FETCH_TS = time.time()  # evita martelar a API quando ela está fora
-            return _LAST_SNAPSHOT, True
+            log.warning("Falha ao ler registros (%s): %s", inst.get("slug"), e)
+            slot["ts"] = time.time()  # evita martelar a API quando ela está fora
+            return slot["data"], True
 
 
-_LAST_AUTO_TS = 0.0
 AUTO_INTERVAL = float(os.getenv("AUTO_INTERVAL", "30"))
 
 
-def _aplicar_automacoes(data):
+def _aplicar_automacoes(inst, slot, data):
     """Programado → Em andamento na virada do dia; Em andamento → Finalizado quando o timer acaba.
     Roda no máximo a cada AUTO_INTERVAL segundos e grava tudo numa única atualização em lote."""
-    global _LAST_AUTO_TS
-    if time.time() - _LAST_AUTO_TS < AUTO_INTERVAL:
+    if time.time() - slot["auto"] < AUTO_INTERVAL:
         return data
-    _LAST_AUTO_TS = time.time()
+    slot["auto"] = time.time()
     try:
         mudancas = transicoes(data)
         if not mudancas:
             return data
-        get_store().update_many([(rid, patch) for rid, patch, _ in mudancas])
+        sc = scoped(inst)
+        sc.update_many([(rid, patch) for rid, patch, _ in mudancas])
         inicios = sum(1 for *_, m in mudancas if m == "inicio")
-        log.info("Automação: %d programado(s) iniciado(s), %d finalizado(s) pelo timer", inicios, len(mudancas) - inicios)
-        return get_store().list_records()
+        log.info("Automação (%s): %d programado(s) iniciado(s), %d finalizado(s) pelo timer",
+                 inst.get("slug"), inicios, len(mudancas) - inicios)
+        return sc.list_records()
     except Exception as e:
         log.warning("Falha na automação de status: %s", e)
         return data
 
 
-def _refresh_quietly():
+def _refresh_quietly(inst):
     try:
-        get_snapshot(force=True)
+        get_snapshot(inst, force=True)
     except Exception:
         pass
 
@@ -217,8 +247,9 @@ def health():
 
 # ---- Data ----
 @app.get("/api/disparos")
-def api_disparos():
-    data, stale = get_snapshot(force=False)
+@with_instance()
+def api_disparos(inst):
+    data, stale = get_snapshot(inst, force=False)
     resp = jsonify(data)
     resp.headers["X-Data-Stale"] = "1" if stale else "0"
     return resp
@@ -226,37 +257,40 @@ def api_disparos():
 
 @app.post("/api/disparos")
 @editor_required
-def create_disparo():
+@with_instance(write=True)
+def create_disparo(inst):
     fields, err = _parse_fields(request.json or {}, partial=False)
     if err:
         return err
     try:
-        rec = get_store().create(fields)
+        rec = scoped(inst).create(fields)
     except StoreError as e:
         return _store_error_response(e)
-    _refresh_quietly()
+    _refresh_quietly(inst)
     return jsonify(rec), 201
 
 
 @app.patch("/api/disparos/<rid>")
 @editor_required
-def update_disparo(rid):
+@with_instance(write=True)
+def update_disparo(inst, rid):
     fields, err = _parse_fields(request.json or {}, partial=True)
     if err:
         return err
     if not fields:
         return jsonify({"error": "empty_update"}), 400
     try:
-        rec = get_store().update(rid, fields)
+        rec = scoped(inst).update(rid, fields)
     except StoreError as e:
         return _store_error_response(e)
-    _refresh_quietly()
+    _refresh_quietly(inst)
     return jsonify(rec)
 
 
 @app.post("/api/disparos/excluir-lote")
 @admin_required
-def delete_disparos_lote():
+@with_instance(write=True)
+def delete_disparos_lote(inst):
     """Exclusão em massa (somente administradores). Recebe exatamente os IDs mostrados na prévia."""
     b = request.get_json(silent=True) or {}
     ids = b.get("ids")
@@ -266,22 +300,23 @@ def delete_disparos_lote():
         return jsonify({"error": "too_many", "message": "No máximo 5000 disparos por vez."}), 400
     ids = list(dict.fromkeys(str(i).strip() for i in ids if str(i).strip()))
     try:
-        excluidos = get_store().delete_many(ids)
+        excluidos = scoped(inst).delete_many(ids)
     except StoreError as e:
         return _store_error_response(e)
-    _refresh_quietly()
-    log.info("Exclusão em massa: %d disparo(s) excluído(s) de %d pedido(s)", excluidos, len(ids))
+    _refresh_quietly(inst)
+    log.info("Exclusão em massa (%s): %d disparo(s) excluído(s) de %d pedido(s)", inst["slug"], excluidos, len(ids))
     return jsonify({"excluidos": excluidos, "pedidos": len(ids)})
 
 
 @app.delete("/api/disparos/<rid>")
 @editor_required
-def delete_disparo(rid):
+@with_instance(write=True)
+def delete_disparo(inst, rid):
     try:
-        get_store().delete(rid)
+        scoped(inst).delete(rid)
     except StoreError as e:
         return _store_error_response(e)
-    _refresh_quietly()
+    _refresh_quietly(inst)
     return jsonify({"deleted": True, "id": rid})
 
 
@@ -293,7 +328,7 @@ def api_config():
 
 
 # ---- Templates personalizados ----
-_TPL_CACHE = {"data": None, "ts": 0.0}
+_TPL_CACHE = {}  # id da instância → {"data": [...], "ts": float}
 _TPL_TTL = 10.0
 TEMPLATE_MAX_NOME, TEMPLATE_MAX_TEXTO = 80, 4000
 
@@ -320,62 +355,68 @@ def _parse_template(b: dict, partial: bool):
 
 @app.get("/api/templates")
 @editor_required
-def list_templates():
-    if _TPL_CACHE["data"] is not None and time.time() - _TPL_CACHE["ts"] < _TPL_TTL:
-        return jsonify(_TPL_CACHE["data"])
+@with_instance()
+def list_templates(inst):
+    c = _TPL_CACHE.get(inst["id"])
+    if c and time.time() - c["ts"] < _TPL_TTL:
+        return jsonify(c["data"])
     try:
-        data = get_store().list_templates()
+        data = scoped(inst).list_templates()
     except StoreError as e:
         return _store_error_response(e)
-    _TPL_CACHE.update(data=data, ts=time.time())
+    _TPL_CACHE[inst["id"]] = {"data": data, "ts": time.time()}
     return jsonify(data)
 
 
 @app.post("/api/templates")
 @editor_required
-def create_template():
+@with_instance(write=True)
+def create_template(inst):
     data, err = _parse_template(request.json or {}, partial=False)
     if err:
         return err
     try:
-        rec = get_store().create_template(data)
+        rec = scoped(inst).create_template(data)
     except StoreError as e:
         return _store_error_response(e)
-    _TPL_CACHE["data"] = None
+    _TPL_CACHE.pop(inst["id"], None)
     return jsonify(rec), 201
 
 
 @app.patch("/api/templates/<tid>")
 @editor_required
-def update_template(tid):
+@with_instance(write=True)
+def update_template(inst, tid):
     data, err = _parse_template(request.json or {}, partial=True)
     if err:
         return err
     if not data:
         return jsonify({"error": "empty_update"}), 400
     try:
-        rec = get_store().update_template(tid, data)
+        rec = scoped(inst).update_template(tid, data)
     except StoreError as e:
         return _store_error_response(e)
-    _TPL_CACHE["data"] = None
+    _TPL_CACHE.pop(inst["id"], None)
     return jsonify(rec)
 
 
 @app.delete("/api/templates/<tid>")
 @editor_required
-def delete_template(tid):
+@with_instance(write=True)
+def delete_template(inst, tid):
     try:
-        get_store().delete_template(tid)
+        scoped(inst).delete_template(tid)
     except StoreError as e:
         return _store_error_response(e)
-    _TPL_CACHE["data"] = None
+    _TPL_CACHE.pop(inst["id"], None)
     return jsonify({"deleted": True, "id": tid})
 
 
 # ---- Importação do calendário de ações ----
 @app.post("/api/import/calendario")
 @editor_required
-def import_calendario():
+@with_instance(write=True)
+def import_calendario(inst):
     """?confirmar=1 grava; sem isso, só devolve a prévia (nada é gravado).
     ?hoje=AAAA-MM-DD: data de hoje no navegador de quem importa (define passado / hoje / futuro)."""
     data = request.get_json(silent=True)
@@ -385,7 +426,7 @@ def import_calendario():
     except ImportError_ as e:
         return jsonify({"error": "invalid_calendar", "message": str(e)}), 400
 
-    existentes, stale = get_snapshot(force=True)
+    existentes, stale = get_snapshot(inst, force=True)
     if stale:
         return jsonify({"error": "storage_unavailable", "message": "Não consegui ler os disparos atuais para evitar duplicados. Tente de novo."}), 503
     refs = {r.get("ref") for r in existentes if r.get("ref")}
@@ -412,12 +453,13 @@ def import_calendario():
     if request.args.get("confirmar") != "1":
         return jsonify({**resumo, "confirmado": False})
     try:
-        criados = get_store().create_many(novos) if novos else []
-        atualizados = get_store().update_many([(a["id"], a["patch"]) for a in ajustes]) if ajustes else 0
+        sc = scoped(inst)
+        criados = sc.create_many(novos) if novos else []
+        atualizados = sc.update_many([(a["id"], a["patch"]) for a in ajustes]) if ajustes else 0
     except StoreError as e:
         return _store_error_response(e)
-    _refresh_quietly()
-    log.info("Calendário importado: %d novos, %d atualizados, %d já existiam", len(criados), atualizados, duplicados)
+    _refresh_quietly(inst)
+    log.info("Calendário importado em %s: %d novos, %d atualizados, %d já existiam", inst["slug"], len(criados), atualizados, duplicados)
     return jsonify({**resumo, "confirmado": True, "criados": len(criados), "atualizados": atualizados})
 
 
@@ -440,13 +482,14 @@ def export_xlsx():
 
 # ---- SSE ----
 @app.get("/api/stream")
-def stream():
+@with_instance()
+def stream(inst):
     def gen():
         last_hash = None
         yield "retry: 3000\n\n"
         while True:
             # usa o cache compartilhado: várias abas abertas não multiplicam as chamadas à API
-            data, stale = get_snapshot(force=False)
+            data, stale = get_snapshot(inst, force=False)
             h = md5([data, stale])
             if h != last_hash:
                 last_hash = h

@@ -27,7 +27,7 @@ from flask import Blueprint, jsonify, request, session, g
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from storage import StoreError
-from storage.base import now_iso, USER_ROLES
+from storage.base import now_iso, USER_ROLES, split_ids, join_ids
 
 log = logging.getLogger("auth")
 bp = Blueprint("auth", __name__)
@@ -92,6 +92,9 @@ def _invalidate():
         _cache["users"] = None
 
 
+invalidate_users = _invalidate
+
+
 def _bootstrap(users):
     """Cria o administrador inicial a partir de ADMIN_LOGIN / ADMIN_PASSWORD, se ainda não existir."""
     global _bootstrap_done
@@ -139,7 +142,9 @@ def list_users(force=False):
 
 
 def public_user(u):
-    return {k: u.get(k) for k in ("id", "nome", "login", "papel", "ativo", "criadoEm")}
+    out = {k: u.get(k) for k in ("id", "nome", "login", "papel", "ativo", "criadoEm")}
+    out["instancias"] = split_ids(u.get("instancias"))
+    return out
 
 
 def _fingerprint(u):
@@ -358,6 +363,16 @@ def _parse_user(b, partial, users, editing_id=None):
         out["papel"] = papel
     if "ativo" in b:
         out["ativo"] = bool(b.get("ativo"))
+    if "instancias" in b:
+        from instances import list_instances  # import tardio: instances depende deste módulo
+        pedidas = split_ids(b.get("instancias") or [])
+        try:
+            existentes = {i["id"] for i in list_instances()}
+        except Exception as e:
+            return None, _err(f"Não consegui ler as instâncias: {e}", 503, "storage_error")
+        if any(i not in existentes for i in pedidas):
+            return None, _err("Instância inválida na lista de acesso.")
+        out["instancias"] = join_ids(pedidas)
     senha = b.get("senha")
     if senha or not partial:
         if not _valid_password(senha):

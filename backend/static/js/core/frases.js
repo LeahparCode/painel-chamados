@@ -1,4 +1,5 @@
-// Frases disponíveis para os disparos: fraseologia Safra (fixa) + templates próprios (salvos na planilha).
+// Frases disponíveis para os disparos: templates próprios da instância (salvos na planilha)
+// + fraseologia Safra (fixa), que só aparece nas instâncias do modelo "Safra".
 //
 // Todas as frases são representadas no mesmo formato:
 //   { key, custom, code, name, tom, tipo, texto }
@@ -7,6 +8,7 @@
 import { FRASES_SAFRA } from "../data/frases-safra.js";
 import { TIPOS } from "./config.js";
 import { state } from "./state.js";
+import { isSafra } from "./instance.js";
 
 const pad2 = (n) => String(n).padStart(2, "0");
 export const keyOf = (f) => `safra_${pad2(f.id)}`;
@@ -31,7 +33,8 @@ const SAFRA = FRASES_SAFRA.map(f => ({
 }));
 const SAFRA_BY_KEY = new Map(SAFRA.map(f => [f.key, f]));
 
-export const FRASES = SAFRA;
+/** Frases Safra da instância aberta (vazio fora das instâncias Safra) */
+export const safraFrases = () => (isSafra() ? SAFRA : []);
 
 function fromTemplate(t){
   return {
@@ -51,12 +54,12 @@ function fromTemplate(t){
 export const customFrases = () => (state.templates || []).map(fromTemplate);
 
 /** Todas as frases (próprias + Safra) */
-export const allFrases = () => [...customFrases(), ...SAFRA];
+export const allFrases = () => [...customFrases(), ...safraFrases()];
 
 export function fraseByKey(key){
   const k = (key || "").trim();
   if (!k) return null;
-  if (SAFRA_BY_KEY.has(k)) return SAFRA_BY_KEY.get(k);
+  if (isSafra() && SAFRA_BY_KEY.has(k)) return SAFRA_BY_KEY.get(k);
   const t = (state.templates || []).find(x => x.id === k);
   return t ? fromTemplate(t) : null;
 }
@@ -65,6 +68,7 @@ export function fraseByKey(key){
 export function fraseFitsTipo(f, tipo){
   if (!f || !tipo) return true;
   if (f.custom) return f.tipo === tipo;
+  if (!isSafra()) return false;
   return (SAFRA_CANAIS_POR_TIPO[tipo] || []).includes(f.canal);
 }
 
@@ -123,7 +127,7 @@ export function fillFraseSelect(select, { tipo = "", current = "", emptyLabel = 
     proprios.forEach(f => g.append(new Option(`${f.name} — ${preview(f.texto)}…`, f.key)));
     select.append(g);
   }
-  const canais = SAFRA_CANAIS_POR_TIPO[tipo] || [];
+  const canais = isSafra() ? (SAFRA_CANAIS_POR_TIPO[tipo] || []) : [];
   canais.forEach(canal => {
     const g = document.createElement("optgroup");
     g.label = `Frases Safra · ${canal}${tipo !== canal ? ` (para ${tipo})` : ""}`;

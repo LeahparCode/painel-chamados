@@ -17,8 +17,14 @@
         var t = localStorage.getItem("painel_theme");
         if (!t) t = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         if (t === "dark") document.documentElement.classList.add("dark");
-        var p = localStorage.getItem("painel_palette") || "azul-dourado";
+        /* tema da instância (?i=slug ou a última aberta); padrão do app: Azul e branco */
+        var temas = JSON.parse(localStorage.getItem("painel_inst_temas") || "{}") || {};
+        var m = /[?&]i=([^&#]+)/.exec(location.search);
+        var slug = m ? decodeURIComponent(m[1]).toLowerCase() : (localStorage.getItem("painel_inst") || "");
+        var info = temas[slug] || {};
+        var p = info.tema || "azul";
         if (p !== "violeta") document.documentElement.setAttribute("data-palette", p);
+        if (info.modelo === "safra") document.documentElement.classList.add("inst-safra");
         /* palpite de login (confirmado pelo servidor ao carregar) para evitar "piscar" a tela */
         if (localStorage.getItem("painel_logged") !== "1") document.documentElement.classList.add("is-public");
       }catch(e){}
@@ -37,11 +43,12 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/export.css') }}?v={{ asset_version }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}?v={{ asset_version }}" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/bulk.css') }}?v={{ asset_version }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/instances.css') }}?v={{ asset_version }}" />
 </head>
 <body>
   <div id="splash" class="splash" aria-hidden="true"><div class="splash-mark"><span></span><span></span><span></span></div></div>
   <div id="toasts" class="toasts" aria-live="polite" aria-atomic="true"></div>
-  <!-- marca d'água do cliente: aparece só no tema Azul e dourado (ver layout.css) -->
+  <!-- marca d'água do cliente: aparece só nas instâncias do modelo Safra (ver layout.css) -->
   <div class="brand-watermark" aria-hidden="true"></div>
 
   <div class="app">
@@ -55,6 +62,16 @@
           <strong>Disparos</strong>
           <small>Painel operacional</small>
         </div>
+      </div>
+
+      <!-- instância aberta (cliente). Com mais de uma, vira um seletor. -->
+      <div class="inst-wrap" id="instWrap" hidden>
+        <button type="button" class="inst-btn" id="instBtn" aria-haspopup="menu" aria-expanded="false" title="Instância">
+          <span class="swatch" id="instSwatch"></span>
+          <span class="inst-label"><small>Instância</small><strong id="instName">—</strong></span>
+          <svg class="inst-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5 5 5-5"/></svg>
+        </button>
+        <div class="palette-pop inst-pop" id="instPop" role="menu" aria-label="Trocar de instância" hidden></div>
       </div>
 
       <nav class="nav" aria-label="Navegação principal">
@@ -105,19 +122,6 @@
         <div class="sidebar-row">
           <span class="live" id="liveStatus" data-state="connecting" role="status"><i></i><svg class="live-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg><span>Conectando</span></span>
           <div class="sidebar-actions">
-            <div class="palette-wrap">
-              <button class="icon-btn" id="paletteBtn" type="button" title="Cores do tema" aria-label="Cores do tema" aria-haspopup="menu" aria-expanded="false">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.9 1.8-1.9 0-.5-.2-.9-.5-1.3-.3-.3-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11.5" r="1.2" fill="currentColor"/><circle cx="10.5" cy="7.5" r="1.2" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1.2" fill="currentColor"/></svg>
-              </button>
-              <div class="palette-pop" id="palettePop" role="menu" aria-label="Cores do tema" hidden>
-                <p class="palette-title">Cores do tema</p>
-                <button type="button" role="menuitemradio" data-palette="violeta"><span class="swatch" style="--a:#5b4cf0;--b:#15132a"></span><span>Violeta<small>Violeta e grafite</small></span></button>
-                <button type="button" role="menuitemradio" data-palette="vermelho"><span class="swatch" style="--a:#e00012;--b:#ffffff"></span><span>Vermelho<small>Vermelho e branco</small></span></button>
-                <button type="button" role="menuitemradio" data-palette="azul-dourado"><span class="swatch" style="--a:#0b1f45;--b:#c19a45"></span><span>Azul e dourado<small>Padrão</small></span></button>
-                <button type="button" role="menuitemradio" data-palette="azul"><span class="swatch" style="--a:#1468e0;--b:#ffffff"></span><span>Azul<small>Azul e branco</small></span></button>
-                <p class="palette-hint">O modo claro/escuro funciona em todas as cores.</p>
-              </div>
-            </div>
             <button class="icon-btn" id="themeToggle" type="button" title="Alternar claro/escuro" aria-label="Alternar claro/escuro"></button>
             <button class="btn btn-primary btn-sm public-only login-btn" type="button" data-action="login">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Entrar
@@ -148,6 +152,11 @@
             </button>
           </div>
         </header>
+
+        <div class="pending-note no-inst-note" role="status">
+          <span class="pending-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+          <span id="noInstText"><b>Entre para ver os disparos.</b> Este painel só aparece para quem tem acesso.</span>
+        </div>
 
         <div class="pending-note pending-only" role="status">
           <span class="pending-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
@@ -273,7 +282,7 @@
         <header class="page-head">
           <div class="page-title">
             <h1>Frases e templates</h1>
-            <p id="frasesCount">Fraseologia Safra e templates próprios</p>
+            <p id="frasesCount">Templates próprios</p>
           </div>
           <div class="page-actions">
             <button class="btn btn-primary" type="button" id="btnNewTemplate">
@@ -294,12 +303,12 @@
             <button type="button" data-tipo="RCS">RCS</button>
             <button type="button" data-tipo="WhatsApp">WhatsApp</button>
           </div>
-          <div class="segmented" id="frasesOrigem" aria-label="Origem">
+          <div class="segmented safra-only" id="frasesOrigem" aria-label="Origem">
             <button type="button" data-origem="" class="is-active">Todas</button>
             <button type="button" data-origem="proprios">Meus templates</button>
             <button type="button" data-origem="safra">Safra</button>
           </div>
-          <label class="select-pill">
+          <label class="select-pill safra-only">
             <span>Tom</span>
             <select id="frasesTom"><option value="">Todos</option></select>
           </label>
@@ -455,6 +464,28 @@
         </p>
       </section>
 
+      <!-- ========== INSTÂNCIAS (admin) ========== -->
+      <section class="view" id="view-instancias" data-view-panel="instancias" hidden>
+        <header class="page-head">
+          <div class="page-title">
+            <h1>Instâncias</h1>
+            <p id="instCount">Um painel separado para cada cliente</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-primary" type="button" id="btnNewInst">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              Nova instância
+            </button>
+          </div>
+        </header>
+        <div class="inst-grid" id="instGrid"></div>
+        <p class="users-hint">
+          Cada instância tem os seus disparos, templates e cores, guardados em abas próprias da planilha.
+          <b>Administradores</b> veem todas. <b>Operadores</b> veem só as instâncias liberadas no cadastro de usuários.
+          Instâncias <b>visíveis sem login</b> podem ser vistas por qualquer pessoa (sem valores em R$).
+        </p>
+      </section>
+
       <footer class="footer">Desenvolvido por <a class="dev-link" href="https://leahparcode.onrender.com" target="_blank" rel="noopener noreferrer" title="Conheça o portfólio da Leahpar Code">Leahpar Code</a> &copy; 2025</footer>
     </main>
   </div>
@@ -540,7 +571,7 @@
         <div>
           <span class="eyebrow">Cadastro</span>
           <h2 id="nTitle">Novo disparo</h2>
-          <p>Preencha os dados e escolha a frase Safra.</p>
+          <p>Preencha os dados e escolha a frase.</p>
         </div>
         <button class="icon-btn" type="button" data-close aria-label="Fechar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
@@ -577,6 +608,44 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             Adicionar disparo
           </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: INSTÂNCIA (admin) ===================== -->
+  <div class="modal" id="instModal" aria-hidden="true">
+    <div class="modal-card modal-narrow" role="dialog" aria-modal="true" aria-labelledby="iTitle">
+      <header class="modal-head">
+        <div>
+          <span class="eyebrow">Instâncias</span>
+          <h2 id="iTitle">Nova instância</h2>
+          <p id="iSub">Um painel separado, com disparos, templates e cores próprios.</p>
+        </div>
+        <button class="icon-btn" type="button" data-close aria-label="Fechar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <form class="modal-body form-grid" id="instForm" novalidate>
+        <label class="field field-full"><span>Nome</span><input type="text" id="iNome" maxlength="60" placeholder="Ex.: Banco Exemplo" /></label>
+        <div class="field field-full">
+          <span>Cores</span>
+          <div class="tema-picker" id="iTema" role="radiogroup" aria-label="Cores da instância"></div>
+        </div>
+        <label class="field field-full"><span>Modelo</span>
+          <select id="iModelo">
+            <option value="padrao">Padrão — só templates próprios</option>
+            <option value="safra">Safra — frases Safra e marca d'água</option>
+          </select>
+        </label>
+        <label class="check field-full"><input type="checkbox" id="iPublico" /> <span>Visível sem login (qualquer pessoa vê o painel, sem valores em R$)</span></label>
+        <p class="field-hint field-full" id="iAbas" hidden></p>
+        <p class="form-error field-full" id="iError" role="alert" hidden></p>
+        <div class="field-full form-actions">
+          <button type="button" class="btn btn-danger-ghost" id="iDelete" hidden>Excluir</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="iSave">Criar instância</button>
         </div>
       </form>
     </div>
@@ -762,6 +831,11 @@
             </button>
           </div>
         </label>
+        <div class="field field-full" id="uInstRow">
+          <span>Instâncias que pode ver e editar</span>
+          <div class="inst-checks" id="uInst"></div>
+          <small class="field-hint" id="uInstHint">Administradores veem todas as instâncias.</small>
+        </div>
         <label class="check field-full" id="uAtivoRow" hidden><input type="checkbox" id="uAtivo" checked /> <span>Usuário ativo (pode entrar no painel)</span></label>
         <p class="form-error field-full" id="uError" role="alert" hidden></p>
         <div class="field-full form-actions">

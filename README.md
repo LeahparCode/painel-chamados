@@ -70,6 +70,22 @@ DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave
   aparecem no cadastro de disparos conforme o tipo escolhido.
 - Datas: `AAAA-MM-DD` ou `dd/mm/aaaa`. O painel atualiza a cada ~10 s (`SNAPSHOT_TTL`).
 
+## Instâncias (um painel por cliente)
+
+- Cada instância tem os seus **disparos, templates e cores**, em abas próprias da mesma planilha.
+  O cadastro fica na aba `Instancias` (criada automaticamente).
+- Na primeira execução é criada a instância **Safra** (Azul e dourado, modelo Safra, visível sem login)
+  usando as abas que já existiam (`Disparos` e `Templates`) — nada é migrado. Quem já usava o painel
+  ganha acesso a ela.
+- Instâncias novas ganham as abas `Disparos - <slug>` e `Templates - <slug>`. O tema padrão é **Azul e branco**.
+- **Modelo Safra:** mostra a fraseologia Safra e a marca d'água. **Padrão:** só templates próprios.
+- **Visível sem login:** qualquer pessoa vê o painel daquela instância (sem valores em R$).
+- Quem vê o quê: **administradores** veem e editam todas; **operadores** só as marcadas no cadastro
+  de usuários (as visíveis sem login aparecem para eles como somente leitura).
+- Endereço de cada instância: `?i=<slug>` (ex.: `?i=safra`). Trocar de instância: seletor na barra lateral.
+- Excluir uma instância só a tira do cadastro: as abas com os dados continuam na planilha.
+- `GOOGLE_INSTANCES_TAB` muda o nome da aba de cadastro (padrão `Instancias`). Instâncias exigem Google Planilhas.
+
 ## Importar calendário de ações
 
 Na tela **Importar/Exportar**, aba **Importar** (atalho: `#importar`), envie o `.json` exportado da ferramenta de
@@ -99,8 +115,8 @@ O servidor ajusta os status sozinho (sem depender de alguém com o painel aberto
 
 ## Login
 
-- Sem login, o painel abre em **modo visualização**: só o quadro de disparos, sem editar,
-  sem Frases, Dashboard, Exportar ou Usuários.
+- Sem login, o painel abre em **modo visualização** (só nas instâncias visíveis sem login): só o
+  quadro de disparos, sem editar, sem Frases, Dashboard, Exportar ou Usuários.
 - Com login, tudo fica liberado. **Administradores** também gerenciam os usuários (tela **Usuários**);
   **operadores** cadastram, editam e exportam.
 - **Criar conta:** qualquer pessoa cria a própria conta (usuário e senha à escolha) na tela de login.

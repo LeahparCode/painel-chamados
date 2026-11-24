@@ -223,7 +223,7 @@ html.palette-switching *, html.palette-switching *::before, html.palette-switchi
   .palette-pop{ left: auto; right: 0; bottom: auto; top: calc(100% + 10px); }
 }
 
-/* ---------- Marca d'água do cliente (só no tema Azul e dourado) ----------
+/* ---------- Marca d'água do cliente (só nas instâncias do modelo Safra) ----------
    O arquivo da logo é usado como "máscara": a forma vem do arquivo e a cor vem daqui,
    então o mesmo arquivo fica azul-marinho no tema claro e branco no tema escuro.
    Arquivo: backend/static/img/logo-safra.svg (vetorizado a partir da logo enviada, sem fundo). */
@@ -239,12 +239,12 @@ html.palette-switching *, html.palette-switching *::before, html.palette-switchi
   opacity: 0; visibility: hidden;
   transition: opacity .5s var(--ease), visibility 0s linear .5s, background-color .35s var(--ease);
 }
-html[data-palette="azul-dourado"] .brand-watermark{ opacity: .05; visibility: visible; transition-delay: 0s; }
-html.dark[data-palette="azul-dourado"] .brand-watermark{ --wm-color: #ffffff; opacity: .045; }
+html.inst-safra .brand-watermark{ opacity: .05; visibility: visible; transition-delay: 0s; }
+html.dark.inst-safra .brand-watermark{ --wm-color: #ffffff; opacity: .045; }
 @media (max-width: 900px){
   .brand-watermark{ top: 70px; right: -24vw; width: 66vw; }
-  html[data-palette="azul-dourado"] .brand-watermark{ opacity: .035; }
-  html.dark[data-palette="azul-dourado"] .brand-watermark{ opacity: .035; }
+  html.inst-safra .brand-watermark{ opacity: .035; }
+  html.dark.inst-safra .brand-watermark{ opacity: .035; }
 }
 @media print{
   .brand-watermark{ display: none; }

@@ -6,7 +6,10 @@ export const state = {
   user: null,         // usuário logado (null = visitante, só visualiza o painel)
   setupNeeded: false, // nenhum usuário cadastrado ainda
   allowSignup: true,  // a própria pessoa pode criar conta
-  templates: [],      // templates próprios (aba "Templates" da planilha)
+  templates: [],      // templates próprios (aba "Templates" da instância)
+  instancias: [],     // instâncias que a pessoa pode ver
+  inst: null,         // instância aberta
+  gerenciarInst: false,
   stale: false,
   connection: "connecting", // connecting | online | stale | offline
   activeView: "painel",

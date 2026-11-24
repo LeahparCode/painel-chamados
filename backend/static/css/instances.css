@@ -1,0 +1,107 @@
+/* ================================================================
+   Instâncias — seletor na barra lateral e tela de gerenciamento
+   ================================================================ */
+
+/* sem instância disponível: só o aviso aparece no painel */
+.no-inst-note{ display: none; }
+html.no-inst .no-inst-note{ display: flex; margin-bottom: 18px; }
+html.no-inst #view-painel > :not(.page-head):not(.no-inst-note){ display: none !important; }
+html.no-inst #view-painel .page-actions{ display: none; }
+
+/* frases Safra e filtros só nas instâncias Safra */
+html:not(.inst-safra) .safra-only{ display: none !important; }
+
+/* ---------- seletor (barra lateral) ---------- */
+.inst-wrap{ position: relative; margin-top: -14px; }
+.inst-wrap[hidden]{ display: none; }
+.inst-btn{
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px 10px; border-radius: 13px;
+  border: 1px solid rgba(255, 255, 255, .1); background: rgba(255, 255, 255, .06);
+  color: var(--side-strong); text-align: left;
+  transition: background .2s var(--ease), border-color .2s var(--ease);
+}
+.inst-btn:hover{ background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .18); }
+.inst-btn .swatch{ width: 22px; height: 22px; box-shadow: 0 0 0 2px rgba(255, 255, 255, .25); }
+.inst-label{ display: flex; flex-direction: column; min-width: 0; line-height: 1.15; flex: 1; }
+.inst-label small{ font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--side-muted); }
+.inst-label strong{ font-size: 14px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inst-caret{ width: 16px; height: 16px; flex-shrink: 0; color: var(--side-muted); transition: transform .2s var(--ease); }
+.inst-btn[aria-expanded="true"] .inst-caret{ transform: rotate(180deg); }
+.inst-btn.is-static{ cursor: default; }
+.inst-btn.is-static:hover{ background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .1); }
+.inst-btn.is-static .inst-caret{ display: none; }
+
+.inst-pop{ top: calc(100% + 8px); bottom: auto; left: 0; width: max(100%, 250px); max-height: 70vh; overflow-y: auto; }
+.inst-pop .inst-manage{ border-top: 1px solid var(--border); border-radius: 0 0 11px 11px; margin-top: 4px; color: var(--brand-text); }
+.inst-pop .inst-manage svg{ width: 18px; height: 18px; margin: 0 5px; }
+
+/* modo vitrine (visitante / somente leitura): barra no topo */
+html.is-public .inst-wrap{ margin: 0; width: auto; min-width: 0; }
+html.is-public .inst-btn{ width: auto; max-width: 260px; }
+
+@media (max-width: 900px){
+  .inst-wrap{ margin: 0; min-width: 0; flex: 0 1 auto; }
+  .inst-btn{ padding: 5px 8px; gap: 8px; max-width: 46vw; }
+  .inst-btn .swatch{ width: 18px; height: 18px; }
+  .inst-label small{ display: none; }
+  .inst-label strong{ font-size: 13px; }
+  .inst-pop{ position: fixed; left: 12px; right: 12px; top: 64px; width: auto; }
+}
+
+/* ---------- tela de gerenciamento ---------- */
+.inst-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+.inst-card{
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 18px; border-radius: var(--r-lg);
+  background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+}
+.inst-card::before{
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 4px;
+  background: linear-gradient(90deg, var(--a), color-mix(in srgb, var(--b) 70%, var(--a)));
+}
+.inst-card.is-current{ border-color: color-mix(in srgb, var(--brand) 45%, var(--border)); }
+.inst-card-top{ display: flex; align-items: center; gap: 12px; }
+.inst-card-top .swatch{ width: 34px; height: 34px; }
+.inst-card-title{ flex: 1; min-width: 0; }
+.inst-card-title h3{ font-size: 16px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inst-card-title small{ font-size: 12px; color: var(--muted); font-weight: 600; }
+.inst-card-chips{ display: flex; flex-wrap: wrap; gap: 6px; }
+.inst-card-meta{ font-size: 12px; color: var(--muted); line-height: 1.5; }
+.inst-card-meta b{ color: var(--text-2); font-weight: 700; }
+.inst-card-actions{ display: flex; gap: 8px; justify-content: flex-end; margin-top: auto; }
+
+/* escolha de cores no formulário */
+.tema-picker{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.tema-picker button{
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+  color: var(--text); font-size: 13px; font-weight: 700; text-align: left;
+  transition: border-color .15s var(--ease), background .15s var(--ease), box-shadow .15s var(--ease);
+}
+.tema-picker button > span:last-child{ display: flex; flex-direction: column; line-height: 1.2; }
+.tema-picker small{ font-size: 11px; font-weight: 500; color: var(--muted); }
+.tema-picker button:hover{ background: var(--surface-2); }
+.tema-picker button[aria-checked="true"]{ border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 0 0 3px var(--brand-ring); }
+.tema-picker .swatch{ width: 24px; height: 24px; }
+
+.field-hint{ font-size: 12px; color: var(--muted); }
+.field-hint b{ color: var(--text-2); }
+
+/* acesso por instância no cadastro de usuários */
+.inst-checks{ display: flex; flex-wrap: wrap; gap: 8px; }
+.inst-check{
+  padding: 8px 12px 8px 10px; border: 1px solid var(--border); border-radius: 12px;
+  background: var(--surface-2); color: var(--text); font-weight: 700;
+}
+.inst-check:has(input:checked){ border-color: var(--brand); background: var(--brand-soft); }
+.inst-check .swatch{ width: 18px; height: 18px; }
+.inst-checks.is-disabled{ opacity: .5; pointer-events: none; }
+.users-table .u-insts{ max-width: 260px; }
+.users-table .u-insts .chip{ margin: 2px 2px 2px 0; }
+.users-table .muted{ color: var(--muted); font-size: 12px; }
+
+@media (max-width: 560px){
+  .tema-picker{ grid-template-columns: minmax(0, 1fr); }
+}

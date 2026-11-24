@@ -16,14 +16,18 @@ import { initImport, setIoTab } from "./views/import.js";
 import { initAccount } from "./views/account.js";
 import { initUsers, setUsersVisible } from "./views/users.js";
 import { initBulkDelete } from "./views/bulk-delete.js";
-import { fetchMe, fetchConfig, canEdit, isAdmin } from "./core/auth.js";
+import { fetchMe, fetchConfig, canEdit, isAdmin, isLogged, applyAuthMode } from "./core/auth.js";
+import { fetchInstancias, pickInstance } from "./core/instance.js";
+import { toast } from "./ui/toast.js";
+import { initInstanceSwitcher, initInstancesAdmin, setInstancesVisible } from "./views/instances.js";
 
 /* ---------- navegação entre telas ---------- */
 const LOGGED_VIEWS = ["painel", "dashboard", "frases", "exportar"];
 
 function allowedViews(){
   if (!canEdit()) return ["painel"];                 // visitante: só o painel
-  return isAdmin() ? [...LOGGED_VIEWS, "usuarios"] : LOGGED_VIEWS;
+  if (!isAdmin()) return LOGGED_VIEWS;
+  return state.gerenciarInst ? [...LOGGED_VIEWS, "usuarios", "instancias"] : [...LOGGED_VIEWS, "usuarios"];
 }
 
 function switchView(name){
@@ -40,6 +44,7 @@ function switchView(name){
     if (name === "exportar") setIoTab(ioTab || "exportar");
     if (name === "frases") refreshFrasesView();
     if (name === "usuarios") setUsersVisible(true);
+    if (name === "instancias") setInstancesVisible(true);
   }
   if (name !== "exportar"){ try{ history.replaceState(null, "", `#${name}`); }catch{} }
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -76,7 +81,10 @@ try{
 
 /* ---------- boot ---------- */
 await fetchMe();      // visitante ou logado? (o servidor confirma; o resto da tela depende disso)
-const logged = canEdit();   // admin ou operador (conta pendente vê como visitante)
+await fetchInstancias();  // instâncias que esta pessoa pode ver
+pickInstance();       // ?i= na URL → última aberta → primeira; aplica cores e recursos da instância
+applyAuthMode();      // editar depende da instância aberta
+const logged = canEdit();   // admin, ou operador com acesso a esta instância (os demais só visualizam)
 if (logged) await fetchConfig().catch(err => console.error("Não consegui carregar os preços", err));
 if (logged) loadTemplatesCache(); // templates próprios já aparecem antes da resposta do servidor
 else{ try{ localStorage.removeItem("painel_templates_v1"); }catch{} }
@@ -85,6 +93,7 @@ initTheme();
 initClock();
 initModals();
 initAccount();
+initInstanceSwitcher({ onManage: () => switchView("instancias") });
 initPainel();
 initBoard({ onOpen: openDetail, onNew: (day) => openNewForm({ day }) });
 initDetail();
@@ -95,7 +104,11 @@ if (logged){
   initDashboard();
   initExport();
   initImport();
-  if (isAdmin()){ initUsers(); initBulkDelete(); }
+  if (isAdmin()){
+    initUsers();
+    initBulkDelete();
+    if (state.gerenciarInst) initInstancesAdmin();
+  }
 }
 
 document.querySelectorAll(".nav-item").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
@@ -108,9 +121,27 @@ subscribe((_, reason) => {
 });
 renderConnection();
 
-if (loadCache()) hideSplash();
 setTimeout(hideSplash, 1500);
-connect();
+if (state.inst){
+  if (loadCache()) hideSplash();
+  connect();
+  if (state.instNegada){
+    // link de uma instância que esta pessoa não pode ver
+    if (isLogged()) toast("Você não tem acesso à instância deste link.", "warn", 4000);
+    else{
+      toast("Entre para ver a instância deste link.", "warn", 4000);
+      document.querySelector('[data-action="login"]')?.click();
+    }
+  }
+}else{
+  // nenhuma instância disponível: visitante sem painel público, ou conta sem acesso liberado
+  const txt = document.getElementById("noInstText");
+  if (txt) txt.innerHTML = isLogged()
+    ? "<b>Você ainda não tem acesso a nenhuma instância.</b> Peça a um administrador para liberar."
+    : "<b>Entre para ver os disparos.</b> Este painel só aparece para quem tem acesso.";
+  hideSplash();
+  if (!isLogged()) document.querySelector('[data-action="login"]')?.click();
+}
 if (logged){
   fetchTemplates().catch(() => {});
   setInterval(() => { if (!document.hidden) fetchTemplates().catch(() => {}); }, 60000);

@@ -4,6 +4,7 @@ import { usersApi, initials } from "../core/auth.js";
 import { escapeHtml } from "../core/format.js";
 import { openModal, closeModal } from "../ui/modal.js";
 import { toast } from "../ui/toast.js";
+import { TEMA_CORES } from "../core/instance.js";
 
 const $ = (id) => document.getElementById(id);
 let users = [];
@@ -16,6 +17,34 @@ const fmtDate = (iso) => {
   return Number.isNaN(ts) ? "—" : new Date(ts).toLocaleDateString("pt-BR");
 };
 
+const instNome = (id) => (state.instancias || []).find(i => i.id === id)?.nome;
+
+function instCell(u){
+  if (u.papel === "admin") return `<span class="chip chip-brand">Todas</span>`;
+  const nomes = (u.instancias || []).map(instNome).filter(Boolean);
+  return nomes.length ? nomes.map(n => `<span class="chip">${escapeHtml(n)}</span>`).join(" ") : `<span class="muted">Nenhuma</span>`;
+}
+
+function renderInstChecks(selected = []){
+  const list = state.instancias || [];
+  $("uInstRow").hidden = !state.gerenciarInst || !list.length;
+  $("uInst").innerHTML = list.map(i => {
+    const [a, b] = TEMA_CORES[i.tema] || TEMA_CORES.azul;
+    return `<label class="check inst-check"><input type="checkbox" value="${escapeHtml(i.id)}" ${selected.includes(i.id) ? "checked" : ""} />
+      <span class="swatch" style="--a:${a};--b:${b}"></span><span>${escapeHtml(i.nome)}</span></label>`;
+  }).join("");
+  syncInstRow();
+}
+
+function syncInstRow(){
+  const admin = $("uPapel").value === "admin";
+  $("uInst").classList.toggle("is-disabled", admin);
+  $("uInst").querySelectorAll("input").forEach(c => { c.disabled = admin; });
+  $("uInstHint").textContent = admin
+    ? "Administradores veem e editam todas as instâncias."
+    : ($("uPapel").value === "pendente" ? "Valem quando a conta for liberada como Operador." : "A pessoa vê e edita só as instâncias marcadas.");
+}
+
 function render(){
   const me = state.user?.id;
   const pend = users.filter(u => u.papel === "pendente").length;
@@ -25,16 +54,17 @@ function render(){
   // contas aguardando liberação primeiro
   const list = users.slice().sort((a, b) => (ORDER[a.papel] - ORDER[b.papel]) || (a.nome || a.login).localeCompare(b.nome || b.login, "pt-BR"));
   $("usersTable").innerHTML = `
-    <thead><tr><th>Pessoa</th><th>Papel</th><th>Criado em</th><th>Situação</th><th></th></tr></thead>
+    <thead><tr><th>Pessoa</th><th>Papel</th>${state.gerenciarInst ? "<th>Instâncias</th>" : ""}<th>Criado em</th><th>Situação</th><th></th></tr></thead>
     <tbody>${list.map(u => `
       <tr class="${u.papel === "pendente" ? "is-pending" : ""}">
         <td><div class="u-person"><span class="user-avatar">${escapeHtml(initials(u.nome || u.login))}</span>
           <span><b>${escapeHtml(u.nome || "—")}${u.id === me ? '<span class="you-chip">você</span>' : ""}</b><small>${escapeHtml(u.login)}</small></span></div></td>
         <td><span class="role-chip ${u.papel}">${ROLE_LABEL[u.papel] || u.papel}</span></td>
+        ${state.gerenciarInst ? `<td class="u-insts">${instCell(u)}</td>` : ""}
         <td>${fmtDate(u.criadoEm)}</td>
         <td><span class="state-chip ${u.ativo ? "" : "off"}">${u.ativo ? "Ativo" : "Desativado"}</span></td>
         <td class="u-actions">${u.papel === "pendente" ? `<button type="button" class="btn btn-primary btn-sm" data-approve="${escapeHtml(u.id)}">Liberar</button>` : ""}<button type="button" class="btn btn-ghost btn-sm" data-edit="${escapeHtml(u.id)}">Editar</button></td>
-      </tr>`).join("") || `<tr><td class="empty" colspan="5">Nenhum usuário.</td></tr>`}
+      </tr>`).join("") || `<tr><td class="empty" colspan="6">Nenhum usuário.</td></tr>`}
     </tbody>`;
 }
 
@@ -69,6 +99,8 @@ function openEditor(user = null){
   $("uAtivo").checked = user ? !!user.ativo : true;
   $("uDelete").hidden = !user || isMe;
   $("uSave").textContent = user ? "Salvar" : "Criar usuário";
+  // usuário novo já vem com a instância aberta marcada
+  renderInstChecks(user ? (user.instancias || []) : (state.inst ? [state.inst.id] : []));
   showError("");
   openModal($("userModal"));
   setTimeout(() => $("uNome").focus(), 40);
@@ -90,14 +122,18 @@ export function setUsersVisible(v){
 
 export function initUsers(){
   $("btnNewUser").addEventListener("click", () => openEditor());
+  $("uPapel").addEventListener("change", syncInstRow);
   $("usersTable").addEventListener("click", async (e) => {
     const approve = e.target.closest("[data-approve]");
     if (approve){
       const u = users.find(x => x.id === approve.dataset.approve);
       approve.disabled = true;
       try{
-        await usersApi.update(u.id, { papel: "operador" });
-        toast(`${u.nome || u.login} liberado(a) como Operador.`, "ok");
+        // libera como Operador já com acesso à instância aberta (se ainda não tiver nenhuma)
+        const patch = { papel: "operador" };
+        if (state.gerenciarInst && state.inst && !(u.instancias || []).length) patch.instancias = [state.inst.id];
+        await usersApi.update(u.id, patch);
+        toast(`${u.nome || u.login} liberado(a) como Operador${patch.instancias ? ` em ${state.inst.nome}` : ""}.`, "ok", 3500);
         load();
       }catch(err){
         approve.disabled = false;
@@ -128,6 +164,9 @@ export function initUsers(){
     if (senha) data.senha = senha;
     if (editing && !$("uAtivoRow").hidden) data.ativo = $("uAtivo").checked;
     if (editing && editing.id === state.user?.id) delete data.papel;
+    if (!$("uInstRow").hidden && $("uPapel").value !== "admin"){
+      data.instancias = [...$("uInst").querySelectorAll("input:checked")].map(c => c.value);
+    }
 
     const btn = $("uSave"); btn.disabled = true;
     try{
