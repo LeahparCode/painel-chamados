@@ -118,6 +118,7 @@ USER_FIELDS = [
     ("criadoEm", "CriadoEm"),
     ("atualizadoEm", "AtualizadoEm"),
     ("instancias", "Instancias"),  # IDs das instâncias que a pessoa pode ver, separados por vírgula
+    ("ultimoAcesso", "UltimoAcesso"),  # login ou uso do painel (atualizado no máximo a cada 10 min)
 ]
 USER_KEYS = [k for k, _ in USER_FIELDS]
 # admin: tudo + usuários · operador: edita e exporta · pendente: conta criada pela própria pessoa,
@@ -133,7 +134,7 @@ def to_bool(value) -> bool:
 
 def clean_user(rec: dict) -> dict:
     out = {k: rec.get(k, "") for k in USER_KEYS}
-    for k in ("id", "nome", "senhaHash", "criadoEm", "atualizadoEm"):
+    for k in ("id", "nome", "senhaHash", "criadoEm", "atualizadoEm", "ultimoAcesso"):
         out[k] = "" if out[k] is None else str(out[k]).strip()
     out["login"] = str(out["login"] or "").strip().lower()
     papel = str(out["papel"] or "").strip().lower()
