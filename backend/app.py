@@ -5,6 +5,7 @@ from flask import Flask, jsonify, request, Response, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from storage import create_store, backend_name, StoreError
+from storage.base import now_iso
 from export_xlsx import build_xlsx, safe_filename, ExportError
 from auth import init_auth, editor_required, admin_required
 from instances import init_instances, resolve as resolve_instance
@@ -160,6 +161,28 @@ def _aplicar_automacoes(inst, slot, data):
         return data
 
 
+RUN = "Em andamento"
+
+
+def _marca_inicio(inst, fields, rid=None):
+    """O timer de "Em andamento" conta a partir de Inicio. Grava Inicio quando o disparo PASSA a
+    estar em andamento; editar outro campo não reinicia o timer. Disparos antigos (sem Inicio)
+    ganham Inicio = AtualizadoEm atual antes de serem editados, para o timer não recomeçar."""
+    atual = None
+    if rid:
+        data, _ = get_snapshot(inst, force=False)
+        atual = next((r for r in data if r.get("id") == rid), None)
+    status_antes = (atual or {}).get("status") or ""
+    status_depois = fields.get("status", status_antes)
+    if status_depois != RUN:
+        return fields
+    if status_antes != RUN:
+        fields["inicio"] = now_iso()
+    elif atual and not atual.get("inicio") and atual.get("atualizadoEm"):
+        fields["inicio"] = atual["atualizadoEm"]
+    return fields
+
+
 def _refresh_quietly(inst):
     try:
         get_snapshot(inst, force=True)
@@ -262,6 +285,7 @@ def create_disparo(inst):
     fields, err = _parse_fields(request.json or {}, partial=False)
     if err:
         return err
+    _marca_inicio(inst, fields)
     try:
         rec = scoped(inst).create(fields)
     except StoreError as e:
@@ -280,6 +304,7 @@ def update_disparo(inst, rid):
     if not fields:
         return jsonify({"error": "empty_update"}), 400
     try:
+        _marca_inicio(inst, fields, rid)
         rec = scoped(inst).update(rid, fields)
     except StoreError as e:
         return _store_error_response(e)
@@ -490,6 +515,13 @@ def import_calendario(inst):
     }
     if request.args.get("confirmar") != "1":
         return jsonify({**resumo, "confirmado": False})
+    agora = now_iso()
+    for r in novos:  # disparos de hoje entram "Em andamento": o timer começa agora
+        if r.get("status") == RUN:
+            r["inicio"] = agora
+    for a in ajustes:
+        if "tempo" in a["patch"] and a["patch"].get("status", RUN) == RUN:
+            a["patch"]["inicio"] = agora
     try:
         sc = scoped(inst)
         criados = sc.create_many(novos) if novos else []
@@ -519,13 +551,19 @@ def export_xlsx():
 
 
 # ---- SSE ----
+STREAM_MAX_SECONDS = float(os.getenv("STREAM_MAX_SECONDS", "300"))
+
+
 @app.get("/api/stream")
 @with_instance()
 def stream(inst):
     def gen():
         last_hash = None
+        fim = time.time() + STREAM_MAX_SECONDS
         yield "retry: 3000\n\n"
-        while True:
+        # a conexão é renovada de tempos em tempos: libera a thread do servidor e confere de novo
+        # o login/permissão na reconexão (o navegador reconecta na hora ao receber "bye")
+        while time.time() < fim:
             # usa o cache compartilhado: várias abas abertas não multiplicam as chamadas à API
             data, stale = get_snapshot(inst, force=False)
             h = md5([data, stale])
@@ -536,6 +574,7 @@ def stream(inst):
             else:
                 yield "event: ping\ndata: {}\n\n"
             time.sleep(3)
+        yield "event: bye\ndata: {}\n\n"
 
     headers = {
         "Cache-Control": "no-cache, no-transform",

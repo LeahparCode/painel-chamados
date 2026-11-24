@@ -2,7 +2,8 @@
 
 1. Virada do dia: disparo "Programado" cuja data chegou (horário de Brasília) vira "Em andamento"
    com timer de AUTO_START_MINUTES minutos (padrão 15). Se o disparo já tiver um tempo próprio, ele é mantido.
-2. Fim do timer: disparo "Em andamento" com tempo > 0 cujo prazo (AtualizadoEm + tempo) passou vira "Finalizado".
+2. Fim do timer: disparo "Em andamento" com tempo > 0 cujo prazo (Inicio + tempo) passou vira "Finalizado".
+   Disparos antigos, sem Inicio, usam AtualizadoEm.
 
 Como o painel é servido sob demanda (o plano gratuito do Render "dorme"), a verificação acontece a cada
 leitura dos disparos: se ninguém acessar à meia-noite, a troca é feita no primeiro acesso seguinte
@@ -12,6 +13,7 @@ import os
 from datetime import datetime, timedelta, timezone
 
 from importers.calendario import hoje_brasil
+from storage.base import now_iso
 
 AUTO_START_MINUTES = int(os.getenv("AUTO_START_MINUTES", "15"))
 
@@ -37,9 +39,9 @@ def transicoes(records, hoje=None, agora=None, minutos_padrao=None):
         tempo = int(r.get("tempo") or 0)
         data = (r.get("data") or "")[:10]
         if status == "Programado" and data and data <= hoje:
-            out.append((r["id"], {"status": "Em andamento", "tempo": tempo or minutos_padrao}, "inicio"))
+            out.append((r["id"], {"status": "Em andamento", "tempo": tempo or minutos_padrao, "inicio": now_iso()}, "inicio"))
         elif status == "Em andamento" and tempo > 0:
-            inicio = _parse_ts(r.get("atualizadoEm"))
+            inicio = _parse_ts(r.get("inicio") or r.get("atualizadoEm"))
             if inicio and inicio + timedelta(minutes=tempo) <= agora:
                 out.append((r["id"], {"status": "Finalizado"}, "fim"))
     return out

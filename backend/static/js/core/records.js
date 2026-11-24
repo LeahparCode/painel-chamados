@@ -28,7 +28,9 @@ export function dayOf(r){
 
 export function remainingMs(r){
   const mins = Number(r?.tempo || 0);
-  const ts = r?.atualizadoEm ? Date.parse(r.atualizadoEm) : NaN;
+  // conta de quando ficou "Em andamento" (Inicio); disparos antigos usam a última alteração
+  const ref = r?.inicio || r?.atualizadoEm;
+  const ts = ref ? Date.parse(ref) : NaN;
   if (!mins || Number.isNaN(ts)) return null;
   return ts + mins * 60000 - Date.now();
 }
