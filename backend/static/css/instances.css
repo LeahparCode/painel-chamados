@@ -106,20 +106,3 @@ html.is-public .inst-btn{ width: auto; max-width: 260px; }
   .tema-picker{ grid-template-columns: minmax(0, 1fr); }
 }
 
-/* ---------- marca d'água (logo) no formulário da instância ---------- */
-.logo-field{ display: flex; align-items: center; gap: 14px; }
-.logo-preview{
-  width: 84px; height: 84px; flex-shrink: 0; border-radius: 16px;
-  display: grid; place-items: center; padding: 10px;
-  background: var(--surface-2); border: 1px dashed var(--border-strong);
-}
-.logo-preview em{ font-style: normal; font-size: 11px; font-weight: 700; color: var(--muted); text-align: center; }
-.logo-preview.has-logo{ border-style: solid; }
-.logo-preview i{
-  display: block; width: 100%; height: 100%;
-  background: var(--brand);
-  -webkit-mask: var(--logo) center / contain no-repeat;
-          mask: var(--logo) center / contain no-repeat;
-}
-.logo-actions{ display: flex; flex-wrap: wrap; gap: 8px; }
-.logo-upload{ cursor: pointer; }

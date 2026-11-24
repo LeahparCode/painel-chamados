@@ -1,0 +1,8 @@
+Marca d'água de cada instância (aparece no canto superior direito, como o brasão do Safra).
+
+Nome do arquivo = slug da instância (o que aparece em ?i=...), por exemplo:
+  santander.svg   → instância com endereço ?i=santander
+
+Formato: SVG (preferível) ou PNG, SEM fundo (transparente). Só a forma é usada:
+a cor vem do tema da instância (e fica branca no modo escuro).
+Sem arquivo aqui, instâncias do modelo Safra usam ../logo-safra.svg.
