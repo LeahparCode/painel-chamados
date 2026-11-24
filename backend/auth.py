@@ -96,7 +96,9 @@ invalidate_users = _invalidate
 
 
 def _bootstrap(users):
-    """Cria o administrador inicial a partir de ADMIN_LOGIN / ADMIN_PASSWORD, se ainda não existir."""
+    """Cria o administrador inicial a partir de ADMIN_LOGIN / ADMIN_PASSWORD — só no PRIMEIRO acesso,
+    quando ainda não existe nenhum administrador ativo. Depois disso as variáveis são ignoradas:
+    excluir essa conta pelo painel não faz ela voltar a cada reinício do servidor."""
     global _bootstrap_done
     if _bootstrap_done:
         return False
@@ -105,6 +107,8 @@ def _bootstrap(users):
     senha = os.getenv("ADMIN_PASSWORD") or ""
     if not login or not senha:
         return False
+    if any(u["papel"] == "admin" and u["ativo"] for u in users):
+        return False  # já há administrador: nada a fazer
     if any(u["login"] == login for u in users):
         return False
     if not LOGIN_RE.match(login) or len(senha) < MIN_PASSWORD:
