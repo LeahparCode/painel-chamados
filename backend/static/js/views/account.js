@@ -29,7 +29,9 @@ function setTab(tab){
 export function showLoginGate({ pending = false } = {}){
   const root = document.documentElement;
   root.classList.add("needs-login");
-  root.classList.remove("inst-safra"); // sem marca d'água na tela de entrada
+  // tela de entrada: sempre Azul e branco, sem marca d'água (as cores da instância vêm depois do login)
+  root.classList.remove("inst-safra", "has-wm");
+  root.setAttribute("data-palette", "azul");
   loadLoginVideos();
   if (pending) showPending();
   else openLogin(location.hash === "#criar-conta" ? "signup" : "login");

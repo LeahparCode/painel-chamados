@@ -56,7 +56,7 @@ export function pickInstance(){
       // só lembra a última instância de quem está logado (o que um visitante olhou não decide o login)
       if (state.user) localStorage.setItem(LAST_KEY, state.inst.slug);
       const themes = readThemes();
-      list.forEach(i => { themes[i.slug] = { tema: i.tema, modelo: i.modelo }; });
+      list.forEach(i => { themes[i.slug] = { tema: i.tema, modelo: i.modelo, wm: i.logo ? "logo" : (i.modelo === "safra" ? "safra" : "") }; });
       localStorage.setItem(THEMES_KEY, JSON.stringify(themes));
     }catch{}
     // pediu uma instância sem acesso: mantém o endereço (depois de entrar, ela abre)
@@ -76,9 +76,31 @@ export function applyInstance(){
   if (tema === "violeta") root.removeAttribute("data-palette");
   else root.setAttribute("data-palette", tema);
   root.classList.toggle("inst-safra", isSafra());
+  applyWatermark(inst);
   root.classList.toggle("no-inst", !inst);
   root.classList.toggle("multi-inst", (state.instancias || []).length > 1);
   document.title = inst ? `${inst.nome} · Painel de Disparos` : "Painel de Disparos";
+}
+
+/** Marca d'água: logo enviada para a instância; sem logo, o brasão Safra nas instâncias Safra. */
+function applyWatermark(inst){
+  const root = document.documentElement;
+  const wm = document.querySelector(".brand-watermark");
+  if (!wm) return;
+  const logo = inst?.logo || "";
+  if (logo){
+    const img = new Image();
+    img.onload = () => {
+      wm.style.setProperty("--wm-ratio", `${img.naturalWidth} / ${img.naturalHeight}`);
+      wm.style.setProperty("--wm-image", `url("${logo}")`);
+      root.classList.add("has-wm");
+    };
+    img.src = logo;
+  }else{
+    wm.style.removeProperty("--wm-image");
+    wm.style.removeProperty("--wm-ratio");
+    root.classList.toggle("has-wm", !!inst && inst.modelo === "safra");
+  }
 }
 
 /** Abre outra instância (recarrega a página para começar limpa, sem misturar dados). */
