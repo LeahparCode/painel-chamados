@@ -148,6 +148,7 @@ def list_users(force=False):
 def public_user(u):
     out = {k: u.get(k) for k in ("id", "nome", "login", "papel", "ativo", "criadoEm")}
     out["instancias"] = split_ids(u.get("instancias"))
+    out["dono"] = _is_dono_account(u)
     return out
 
 
@@ -192,6 +193,38 @@ def editor_required(fn):
             return jsonify({"error": "unauthorized", "message": "Faça login para continuar."}), 401
         if user["papel"] not in EDITOR_ROLES:
             return jsonify({"error": "pending", "message": "Sua conta aguarda liberação de um administrador."}), 403
+        return fn(*args, **kwargs)
+    return wrapper
+
+
+# ---------------------------------------------------------------- dono
+def dono_logins():
+    """Logins do dono do painel (variável DONO_LOGIN, separados por vírgula).
+    Só o dono cria, edita e exclui instâncias; os demais administradores cuidam do resto."""
+    return {x.strip().lower() for x in (os.getenv("DONO_LOGIN") or "").split(",") if x.strip()}
+
+
+def is_dono(user) -> bool:
+    """Sem DONO_LOGIN configurado, qualquer administrador é tratado como dono (comportamento antigo)."""
+    if not user or user.get("papel") != "admin" or not user.get("ativo", True):
+        return False
+    donos = dono_logins()
+    return not donos or user.get("login") in donos
+
+
+def _is_dono_account(u) -> bool:
+    """A conta é a do dono (só quando DONO_LOGIN está configurado)."""
+    return bool(u) and u.get("login") in dono_logins()
+
+
+def dono_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        user = current_user()
+        if not user:
+            return jsonify({"error": "unauthorized", "message": "Faça login para continuar."}), 401
+        if not is_dono(user):
+            return jsonify({"error": "forbidden", "message": "Só o dono do painel gerencia instâncias."}), 403
         return fn(*args, **kwargs)
     return wrapper
 
@@ -421,6 +454,8 @@ def users_update(uid):
     if not data:
         return _err("Nada para alterar.")
     me_ = current_user()
+    if _is_dono_account(target) and uid != me_["id"]:
+        return _err("A conta do dono do painel só pode ser alterada por ele mesmo.", 403, "forbidden")
     if uid == me_["id"] and (data.get("ativo") is False or data.get("papel", "admin") != "admin"):
         return _err("Você não pode desativar nem rebaixar o seu próprio usuário.")
     loses_admin = target["papel"] == "admin" and (data.get("papel", "admin") != "admin" or data.get("ativo") is False)
@@ -446,6 +481,8 @@ def users_delete(uid):
     target = next((u for u in users if u["id"] == uid), None)
     if not target:
         return _err("Usuário não encontrado.", 404, "not_found")
+    if _is_dono_account(target):
+        return _err("A conta do dono do painel não pode ser excluída.", 403, "forbidden")
     if target["papel"] == "admin" and target["ativo"] and not _active_admins(users, exclude_id=uid):
         return _err("É preciso manter pelo menos um administrador ativo.")
     try:

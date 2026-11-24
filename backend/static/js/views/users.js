@@ -27,7 +27,7 @@ function instCell(u){
 
 function renderInstChecks(selected = []){
   const list = state.instancias || [];
-  $("uInstRow").hidden = !state.gerenciarInst || !list.length;
+  $("uInstRow").hidden = !state.atribuirInst || !list.length;
   $("uInst").innerHTML = list.map(i => {
     return `<label class="check inst-check"><input type="checkbox" value="${escapeHtml(i.id)}" ${selected.includes(i.id) ? "checked" : ""} />
       ${instBadge(i)}<span>${escapeHtml(i.nome)}</span></label>`;
@@ -53,16 +53,16 @@ function render(){
   // contas aguardando liberação primeiro
   const list = users.slice().sort((a, b) => (ORDER[a.papel] - ORDER[b.papel]) || (a.nome || a.login).localeCompare(b.nome || b.login, "pt-BR"));
   $("usersTable").innerHTML = `
-    <thead><tr><th>Pessoa</th><th>Papel</th>${state.gerenciarInst ? "<th>Instâncias</th>" : ""}<th>Criado em</th><th>Situação</th><th></th></tr></thead>
+    <thead><tr><th>Pessoa</th><th>Papel</th>${state.atribuirInst ? "<th>Instâncias</th>" : ""}<th>Criado em</th><th>Situação</th><th></th></tr></thead>
     <tbody>${list.map(u => `
       <tr class="${u.papel === "pendente" ? "is-pending" : ""}">
         <td><div class="u-person"><span class="user-avatar">${escapeHtml(initials(u.nome || u.login))}</span>
-          <span><b>${escapeHtml(u.nome || "—")}${u.id === me ? '<span class="you-chip">você</span>' : ""}</b><small>${escapeHtml(u.login)}</small></span></div></td>
+          <span><b>${escapeHtml(u.nome || "—")}${u.id === me ? '<span class="you-chip">você</span>' : ""}${u.dono ? '<span class="you-chip dono-chip">dono</span>' : ""}</b><small>${escapeHtml(u.login)}</small></span></div></td>
         <td><span class="role-chip ${u.papel}">${ROLE_LABEL[u.papel] || u.papel}</span></td>
-        ${state.gerenciarInst ? `<td class="u-insts">${instCell(u)}</td>` : ""}
+        ${state.atribuirInst ? `<td class="u-insts">${instCell(u)}</td>` : ""}
         <td>${fmtDate(u.criadoEm)}</td>
         <td><span class="state-chip ${u.ativo ? "" : "off"}">${u.ativo ? "Ativo" : "Desativado"}</span></td>
-        <td class="u-actions">${u.papel === "pendente" ? `<button type="button" class="btn btn-primary btn-sm" data-approve="${escapeHtml(u.id)}">Liberar</button>` : ""}<button type="button" class="btn btn-ghost btn-sm" data-edit="${escapeHtml(u.id)}">Editar</button></td>
+        <td class="u-actions">${u.papel === "pendente" ? `<button type="button" class="btn btn-primary btn-sm" data-approve="${escapeHtml(u.id)}">Liberar</button>` : ""}${u.dono && u.id !== me ? "" : `<button type="button" class="btn btn-ghost btn-sm" data-edit="${escapeHtml(u.id)}">Editar</button>`}</td>
       </tr>`).join("") || `<tr><td class="empty" colspan="6">Nenhum usuário.</td></tr>`}
     </tbody>`;
 }
@@ -130,7 +130,7 @@ export function initUsers(){
       try{
         // libera como Operador já com acesso à instância aberta (se ainda não tiver nenhuma)
         const patch = { papel: "operador" };
-        if (state.gerenciarInst && state.inst && !(u.instancias || []).length) patch.instancias = [state.inst.id];
+        if (state.atribuirInst && state.inst && !(u.instancias || []).length) patch.instancias = [state.inst.id];
         await usersApi.update(u.id, patch);
         toast(`${u.nome || u.login} liberado(a) como Operador${patch.instancias ? ` em ${state.inst.nome}` : ""}.`, "ok", 3500);
         load();

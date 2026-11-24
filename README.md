@@ -126,6 +126,9 @@ O servidor ajusta os status sozinho (sem depender de alguém com o painel aberto
   - `ALLOW_SIGNUP=0` desliga o "Criar conta".
   - `SIGNUP_ROLE=operador` faz as contas novas já poderem editar (não recomendado).
 - Os logins ficam na aba `Usuarios` da planilha (senha guardada só como hash).
+- **Dono do painel:** `DONO_LOGIN` (login, ou vários separados por vírgula) define quem cria, edita e
+  exclui instâncias. Os demais administradores gerenciam usuários e liberam instâncias para eles, mas não
+  mexem nas instâncias nem na conta do dono. Sem `DONO_LOGIN`, qualquer administrador gerencia instâncias.
 - Variáveis de ambiente:
   - `APP_SECRET`: chave que assina a sessão (qualquer texto longo e aleatório). Sem ela, todos
     são deslogados a cada reinício/deploy.

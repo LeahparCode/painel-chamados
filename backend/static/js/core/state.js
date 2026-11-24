@@ -9,7 +9,8 @@ export const state = {
   templates: [],      // templates próprios (aba "Templates" da instância)
   instancias: [],     // instâncias que a pessoa pode ver
   inst: null,         // instância aberta
-  gerenciarInst: false,
+  gerenciarInst: false, // pode criar/editar/excluir instâncias (dono)
+  atribuirInst: false,  // pode liberar instâncias para os usuários (administradores)
   stale: false,
   connection: "connecting", // connecting | online | stale | offline
   activeView: "painel",

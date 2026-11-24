@@ -41,6 +41,7 @@ export async function fetchInstancias(){
     const data = await resp.json();
     state.instancias = Array.isArray(data.instancias) ? data.instancias : [];
     state.gerenciarInst = !!data.gerenciar;
+    state.atribuirInst = !!data.atribuir;
   }catch{
     state.instancias = [];
   }
