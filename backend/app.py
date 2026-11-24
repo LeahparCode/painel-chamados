@@ -1,4 +1,4 @@
-import os, time, json, hashlib, logging, threading
+import os, re, time, json, hashlib, logging, threading, unicodedata
 from datetime import datetime
 
 from flask import Flask, jsonify, request, Response, render_template
@@ -334,6 +334,29 @@ _TPL_TTL = 10.0
 TEMPLATE_MAX_NOME, TEMPLATE_MAX_TEXTO = 80, 4000
 
 
+# SMS: acento, cedilha, emoji e símbolos "tipográficos" mudam a codificação da mensagem e derrubam o
+# limite de 160 para 70 caracteres. Templates de SMS são limpos automaticamente ao salvar.
+_SMS_TROCAS = {
+    "\u201c": '"', "\u201d": '"', "\u201e": '"', "\u00ab": '"', "\u00bb": '"',   # aspas curvas / «»
+    "\u2018": "'", "\u2019": "'", "\u00b4": "'", "`": "'",                        # apóstrofos
+    "\u2013": "-", "\u2014": "-", "\u2212": "-", "\u2022": "-",                   # travessões, marcador
+    "\u2026": "...", "\u00ba": "o", "\u00aa": "a", "\u00b0": "o",                 # reticências, º ª °
+    "\u00a0": " ", "\u20ac": "EUR",
+}
+
+
+def texto_sms(texto: str) -> str:
+    """Deixa só caracteres simples: ç→c, ã→a, aspas/travessões comuns, sem emojis."""
+    t = str(texto or "")
+    for de, para in _SMS_TROCAS.items():
+        t = t.replace(de, para)
+    t = unicodedata.normalize("NFD", t)
+    t = "".join(ch for ch in t if not unicodedata.combining(ch))   # tira acentos e cedilha
+    t = "".join(ch for ch in t if ch == "\n" or 32 <= ord(ch) < 127)  # emojis e demais símbolos
+    t = re.sub(r"[ \t]{2,}", " ", t)
+    return "\n".join(l.strip() for l in t.split("\n")).strip()
+
+
 def _parse_template(b: dict, partial: bool):
     out = {}
     if "nome" in b or not partial:
@@ -376,6 +399,10 @@ def create_template(inst):
     data, err = _parse_template(request.json or {}, partial=False)
     if err:
         return err
+    if data["tipo"] == "SMS":
+        data["texto"] = texto_sms(data["texto"])
+        if not data["texto"]:
+            return jsonify({"error": "invalid_texto", "message": "O texto ficou vazio depois de remover os caracteres especiais."}), 400
     try:
         rec = scoped(inst).create_template(data)
     except StoreError as e:
@@ -394,6 +421,16 @@ def update_template(inst, tid):
     if not data:
         return jsonify({"error": "empty_update"}), 400
     try:
+        tipo, texto = data.get("tipo"), data.get("texto")
+        if tipo is None or (tipo == "SMS" and texto is None):  # alteração parcial: usa o que já está salvo
+            atual = next((t for t in scoped(inst).list_templates() if t["id"] == tid), None)
+            if atual:
+                tipo = tipo or atual["tipo"]
+                texto = texto if texto is not None else atual["texto"]
+        if tipo == "SMS" and texto is not None:
+            data["texto"] = texto_sms(texto)
+            if not data["texto"]:
+                return jsonify({"error": "invalid_texto", "message": "O texto ficou vazio depois de remover os caracteres especiais."}), 400
         rec = scoped(inst).update_template(tid, data)
     except StoreError as e:
         return _store_error_response(e)

@@ -20,6 +20,7 @@ function updateCount(){
   el.textContent = `${len} caracteres${sms && len ? ` · ${parts} SMS` : ""}`;
   el.classList.toggle("is-over", sms && parts > 1);
   el.title = sms && parts > 1 ? "Acima de 160 caracteres: será cobrado como mais de 1 SMS" : "";
+  $("tSmsHint").hidden = tipo !== "SMS";
 }
 
 /** Abre o editor. Opções: { template, tipo, onSaved } */
@@ -65,7 +66,9 @@ export function initTemplateEditor(){
     btn.disabled = true;
     try{
       const saved = await saveTemplate(editing?.id || null, payload);
-      toast(editing ? "Template atualizado." : "Template salvo! Já aparece para esse tipo.", "ok", 2600);
+      const limpo = payload.tipo === "SMS" && saved?.texto && saved.texto !== payload.texto;
+      toast((editing ? "Template atualizado." : "Template salvo! Já aparece para esse tipo.")
+        + (limpo ? " Acentos e caracteres especiais foram removidos (SMS)." : ""), "ok", limpo ? 4200 : 2600);
       const cb = onSaved;
       closeModal($("tplModal"));
       cb && cb(saved);
