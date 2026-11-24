@@ -72,7 +72,6 @@ function render(){
         <span class="chip">${escapeHtml(TEMA_NOMES[i.tema] || i.tema)}</span>
         <span class="chip">Modelo ${escapeHtml(MODELO_NOME[i.modelo] || i.modelo)}</span>
         ${i.marca ? '<span class="chip">Com marca d\'água</span>' : ""}
-        <span class="chip ${i.publico ? "chip-warn" : ""}">${i.publico ? "Visível para todos os operadores" : "Só quem tem acesso"}</span>
       </div>
       <p class="inst-card-meta">${acesso} operador(es) com acesso · abas <b>${escapeHtml(i.abaDisparos || "")}</b> e <b>${escapeHtml(i.abaTemplates || "")}</b></p>
       <div class="inst-card-actions">
@@ -106,7 +105,6 @@ function openEditor(inst = null){
   $("iSub").textContent = inst ? `Endereço: ?i=${inst.slug}` : "Um painel separado, com disparos, templates e cores próprios.";
   $("iNome").value = inst?.nome || "";
   $("iModelo").value = inst?.modelo || "padrao";
-  $("iPublico").checked = !!inst?.publico;
   $("iAbas").hidden = !inst;
   $("iAbas").innerHTML = inst ? `Dados nas abas <b>${escapeHtml(inst.abaDisparos)}</b> e <b>${escapeHtml(inst.abaTemplates)}</b> da planilha.` : "";
   $("iDelete").hidden = !inst || (state.instancias || []).length <= 1;
@@ -140,7 +138,7 @@ export function initInstancesAdmin(){
 
   $("instForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const data = { nome: $("iNome").value.trim(), tema: temaEscolhido, modelo: $("iModelo").value, publico: $("iPublico").checked };
+    const data = { nome: $("iNome").value.trim(), tema: temaEscolhido, modelo: $("iModelo").value };
     if (!data.nome){ showError("Dê um nome à instância."); return; }
     const btn = $("iSave"); btn.disabled = true;
     try{
