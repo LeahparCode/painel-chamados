@@ -129,8 +129,9 @@ O servidor ajusta os status sozinho (sem depender de alguém com o painel aberto
 - Variáveis de ambiente:
   - `APP_SECRET`: chave que assina a sessão (qualquer texto longo e aleatório). Sem ela, todos
     são deslogados a cada reinício/deploy.
-  - `ADMIN_LOGIN` / `ADMIN_PASSWORD` (e opcional `ADMIN_NOME`): criam o primeiro administrador
-    se esse login ainda não existir. Depois, a senha é trocada pelo próprio painel.
+  - `ADMIN_LOGIN` / `ADMIN_PASSWORD` (e opcional `ADMIN_NOME`): criam o primeiro administrador,
+    **só quando ainda não existe nenhum administrador ativo**. Depois disso são ignoradas (excluir essa
+    conta pelo painel não a recria) e podem ser apagadas do servidor. A senha é trocada pelo próprio painel.
 
 ## Deploy (Render)
 
