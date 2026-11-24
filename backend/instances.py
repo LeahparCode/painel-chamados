@@ -4,7 +4,8 @@ disparos, templates, tema de cores e lista de quem pode ver.
 Quem vê o quê:
   - dono do painel (DONO_LOGIN): o único que cria, edita e exclui instâncias;
   - administrador: vê e edita todas as instâncias e define o acesso das pessoas a elas;
-  - operador: vê e edita só as instâncias liberadas para ele (coluna "Instancias" do usuário);
+  - operador: só as instâncias liberadas para ele (coluna "Instancias" do usuário), em cada uma com
+    "editar" (cadastra, edita, exporta) ou "só ver" (acompanha o painel, sem editar e sem valores em R$);
   - conta aguardando liberação ou sem login: nada (o painel inteiro exige um acesso liberado).
 
 O navegador informa a instância em cada chamada (cabeçalho X-Instancia ou ?inst=), e o
@@ -23,7 +24,7 @@ import unicodedata
 from flask import Blueprint, jsonify, request, g
 
 from storage import StoreError
-from storage.base import now_iso, split_ids, join_ids, TEMAS, MODELOS, TEMA_PADRAO
+from storage.base import now_iso, parse_access, join_access, TEMAS, MODELOS, TEMA_PADRAO
 from auth import current_user, dono_required, is_dono, list_users, invalidate_users
 
 log = logging.getLogger("instances")
@@ -88,7 +89,7 @@ def _bootstrap(items):
     log.info("Instância inicial criada: Safra (abas %s / %s)", inst["abaDisparos"], inst["abaTemplates"])
     try:
         for u in store.list_users():
-            if u["papel"] != "admin" and not split_ids(u.get("instancias")):
+            if u["papel"] != "admin" and not parse_access(u.get("instancias")):
                 store.update_user(u["id"], {"instancias": inst["id"]})
         invalidate_users()
     except Exception as e:  # não impede o painel de subir
@@ -137,7 +138,7 @@ def can_read(user, inst) -> bool:
         return False  # sem login ou aguardando liberação: nenhuma instância
     if user["papel"] == "admin":
         return True
-    return inst["id"] in split_ids(user.get("instancias"))
+    return inst["id"] in parse_access(user.get("instancias"))
 
 
 def can_write(user, inst) -> bool:
@@ -145,7 +146,8 @@ def can_write(user, inst) -> bool:
         return False
     if user["papel"] == "admin":
         return True
-    return user["papel"] == "operador" and inst["id"] in split_ids(user.get("instancias"))
+    # operador: só onde o acesso é "editar" (com "só ver" ele acompanha o painel, sem editar)
+    return user["papel"] == "operador" and parse_access(user.get("instancias")).get(inst["id"]) == "editar"
 
 
 def readable(user):
@@ -297,9 +299,10 @@ def instancias_delete(iid):
         _get_store().delete_instance(iid)
         # tira a instância da lista de acesso de quem a tinha
         for u in list_users(force=True):
-            ids = split_ids(u.get("instancias"))
-            if iid in ids:
-                _get_store().update_user(u["id"], {"instancias": join_ids(i for i in ids if i != iid)})
+            acc = parse_access(u.get("instancias"))
+            if iid in acc:
+                acc.pop(iid)
+                _get_store().update_user(u["id"], {"instancias": join_access(acc)})
         invalidate_users()
     except StoreError as e:
         return _err(str(e), e.status, "storage_error")

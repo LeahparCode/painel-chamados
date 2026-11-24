@@ -27,7 +27,7 @@ from flask import Blueprint, jsonify, request, session, g
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from storage import StoreError
-from storage.base import now_iso, USER_ROLES, split_ids, join_ids
+from storage.base import now_iso, USER_ROLES, parse_access, join_access, NIVEIS
 
 log = logging.getLogger("auth")
 bp = Blueprint("auth", __name__)
@@ -147,7 +147,9 @@ def list_users(force=False):
 
 def public_user(u):
     out = {k: u.get(k) for k in ("id", "nome", "login", "papel", "ativo", "criadoEm")}
-    out["instancias"] = split_ids(u.get("instancias"))
+    acc = parse_access(u.get("instancias"))
+    out["instancias"] = list(acc)
+    out["acesso"] = acc  # id da instância → "editar" | "ver"
     out["dono"] = _is_dono_account(u)
     return out
 
@@ -402,14 +404,23 @@ def _parse_user(b, partial, users, editing_id=None):
         out["ativo"] = bool(b.get("ativo"))
     if "instancias" in b:
         from instances import list_instances  # import tardio: instances depende deste módulo
-        pedidas = split_ids(b.get("instancias") or [])
+        # aceita ["id", ...] (editar) ou [{"id": ..., "nivel": "editar"|"ver"}, ...]
+        pedidas = {}
+        for item in (b.get("instancias") or []):
+            if isinstance(item, dict):
+                iid, nivel = str(item.get("id") or "").strip(), str(item.get("nivel") or "editar").strip()
+            else:
+                iid, nivel = str(item).strip(), "editar"
+            if not iid or ":" in iid or "," in iid or nivel not in NIVEIS:
+                return None, _err("Lista de acesso às instâncias inválida.")
+            pedidas[iid] = nivel
         try:
             existentes = {i["id"] for i in list_instances()}
         except Exception as e:
             return None, _err(f"Não consegui ler as instâncias: {e}", 503, "storage_error")
         if any(i not in existentes for i in pedidas):
             return None, _err("Instância inválida na lista de acesso.")
-        out["instancias"] = join_ids(pedidas)
+        out["instancias"] = join_access(pedidas)
     senha = b.get("senha")
     if senha or not partial:
         if not _valid_password(senha):

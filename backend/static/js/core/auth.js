@@ -1,6 +1,7 @@
 // Sessão do usuário no front-end (o controle de acesso de verdade fica no servidor).
 import { state } from "./state.js";
 import { setPrices } from "./config.js";
+import { instHeaders } from "./instance.js";
 
 const HINT_KEY = "painel_logged";
 
@@ -10,10 +11,10 @@ export const canEdit = () => ["admin", "operador"].includes(state.user?.papel) &
 export const isPending = () => state.user?.papel === "pendente";   // conta aguardando liberação
 export const isAdmin = () => state.user?.papel === "admin";
 
-async function call(method, path, body){
+async function call(method, path, body, extraHeaders = {}){
   const resp = await fetch(path, {
     method,
-    headers: body ? { "Content-Type": "application/json" } : undefined,
+    headers: { ...extraHeaders, ...(body ? { "Content-Type": "application/json" } : {}) },
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
     credentials: "same-origin",
@@ -56,7 +57,7 @@ export function applyAuthMode(){
 
 /** Preços por tipo (só para quem está logado). */
 export async function fetchConfig(){
-  const data = await call("GET", "/api/config");
+  const data = await call("GET", "/api/config", null, instHeaders()); // preços da instância aberta (só quem edita)
   setPrices(data.precos);
   return data;
 }

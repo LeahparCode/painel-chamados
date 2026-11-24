@@ -89,8 +89,29 @@ html.is-public .inst-btn{ width: auto; max-width: 260px; }
 .field-hint{ font-size: 12px; color: var(--muted); }
 .field-hint b{ color: var(--text-2); }
 
-/* acesso por instância no cadastro de usuários */
-.inst-checks{ display: flex; flex-wrap: wrap; gap: 8px; }
+/* acesso por instância no cadastro de usuários: marcar + escolher "Só ver" ou "Editar" */
+.inst-checks{ display: flex; flex-direction: column; gap: 8px; }
+.inst-access{ display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.inst-access .inst-check{ flex: 1; min-width: 0; }
+.nivel-seg{
+  display: inline-flex; padding: 3px; gap: 2px; flex-shrink: 0;
+  border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border);
+  transition: opacity .2s var(--ease);
+}
+.inst-access:not(.is-on) .nivel-seg{ opacity: .45; }
+.nivel-seg button{
+  height: 30px; padding: 0 12px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--muted); font-size: 12px; font-weight: 700;
+}
+.nivel-seg button:disabled{ cursor: not-allowed; }
+.nivel-seg button.is-active{ background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm); }
+.inst-access.is-on .nivel-seg button.is-active[data-nivel="editar"]{ background: var(--brand); color: var(--on-brand); }
+.users-table .chip-ver{ background: var(--sched-soft); color: var(--sched-ink); }
+@media (max-width: 480px){
+  .inst-access{ flex-wrap: wrap; }
+  .nivel-seg{ width: 100%; }
+  .nivel-seg button{ flex: 1; }
+}
 .inst-check{
   padding: 8px 12px 8px 10px; border: 1px solid var(--border); border-radius: 12px;
   background: var(--surface-2); color: var(--text); font-weight: 700;

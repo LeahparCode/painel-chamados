@@ -140,7 +140,7 @@ def clean_user(rec: dict) -> dict:
     out["papel"] = papel if papel in USER_ROLES else "pendente"
     raw_ativo = rec.get("ativo", "")
     out["ativo"] = True if raw_ativo in ("", None) else to_bool(raw_ativo)
-    out["instancias"] = join_ids(split_ids(out["instancias"]))
+    out["instancias"] = join_access(parse_access(out["instancias"]))
     return out
 
 
@@ -152,6 +152,26 @@ def split_ids(value):
 
 def join_ids(ids) -> str:
     return ",".join(split_ids(ids))
+
+
+# Acesso de um usuário às instâncias, gravado na coluna "Instancias":
+#   "<id>"      → vê e edita        "<id>:ver" → só vê (sem editar e sem valores em R$)
+NIVEIS = ("editar", "ver")
+
+
+def parse_access(value) -> dict:
+    """"a,b:ver" → {"a": "editar", "b": "ver"}"""
+    out = {}
+    for item in split_ids(value):
+        iid, _, nivel = item.partition(":")
+        iid = iid.strip()
+        if iid:
+            out[iid] = "ver" if nivel.strip().lower() == "ver" else "editar"
+    return out
+
+
+def join_access(acc: dict) -> str:
+    return ",".join(f"{i}:ver" if n == "ver" else i for i, n in acc.items())
 
 
 # ---------------- Instâncias (um painel por cliente/operação) ----------------
