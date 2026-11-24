@@ -5,115 +5,115 @@ export const FRASES_SAFRA = [
     "id": 1,
     "tom": "Importante",
     "canal": "SMS",
-    "texto": "Banco Safra: Regularize seu débito e evite restrições. Fale conosco: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Regularize seu debito e evite restricoes. Fale conosco: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 2,
     "tom": "Amigável",
     "canal": "SMS",
-    "texto": "Banco Safra: Temos uma proposta especial para quitar seu débito. Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Temos uma proposta especial para quitar seu debito. Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 3,
     "tom": "Urgente",
     "canal": "SMS",
-    "texto": "Banco Safra: Evite juros e negativação. Negocie agora pelo 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Evite juros e negativacao. Negocie agora pelo 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 4,
     "tom": "Amigável",
     "canal": "SMS",
-    "texto": "Banco Safra: Condições exclusivas para você quitar sua dívida. Contato: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Condicoes exclusivas para voce quitar sua divida. Contato: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 5,
     "tom": "Amigável",
     "canal": "SMS",
-    "texto": "Banco Safra: Seu débito pode ser resolvido com facilidade. Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Seu debito pode ser resolvido com facilidade. Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 6,
     "tom": "Urgente",
     "canal": "SMS",
-    "texto": "Banco Safra: Últimos dias para negociar com desconto. Fale com a gente: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Ultimos dias para negociar com desconto. Fale com a gente: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 7,
     "tom": "Importante",
     "canal": "SMS",
-    "texto": "Banco Safra: Evite bloqueios e restrições. Regularize sua pendência: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Evite bloqueios e restricoes. Regularize sua pendencia: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 8,
     "tom": "Motivacional",
     "canal": "SMS",
-    "texto": "Banco Safra: Seu nome limpo está a um passo. Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Seu nome limpo esta a um passo. Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 9,
     "tom": "Amigável",
     "canal": "SMS",
-    "texto": "Banco Safra: Temos uma oferta personalizada para você. Contato: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Temos uma oferta personalizada para voce. Contato: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 10,
     "tom": "Importante",
     "canal": "SMS",
-    "texto": "Banco Safra: Negocie sua dívida com condições especiais. Fale conosco: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Negocie sua divida com condicoes especiais. Fale conosco: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 11,
     "tom": "Urgente",
     "canal": "SMS",
-    "texto": "Banco Safra: Evite protestos e ações judiciais. Negocie: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Evite protestos e acoes judiciais. Negocie: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 12,
     "tom": "Amigável",
     "canal": "SMS",
-    "texto": "Banco Safra: Facilite sua vida financeira. Renegocie sua dívida: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Facilite sua vida financeira. Renegocie sua divida: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 13,
     "tom": "Urgente",
     "canal": "SMS",
-    "texto": "Banco Safra: Oportunidade única para quitar seu débito . Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Oportunidade unica para quitar seu debito . Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 14,
     "tom": "Urgente",
     "canal": "SMS",
-    "texto": "Banco Safra: Sua dívida pode ser resolvida hoje. Entre em contato: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Sua divida pode ser resolvida hoje. Entre em contato: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 15,
     "tom": "Importante",
     "canal": "SMS",
-    "texto": "Banco Safra: Evite negativação e aproveite condições especiais. Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Evite negativacao e aproveite condicoes especiais. Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 16,
     "tom": "Cartão",
     "canal": "SMS",
-    "texto": "Banco Safra: Faça o pagamento em parcelas ou à vista com seu cartão de crédito e regularize seu contrato. Ligue no 0800 604 4500 ou Wpp(31) 99457-0744"
+    "texto": "Banco Safra: Faca o pagamento em parcelas ou a vista com seu cartao de credito e regularize seu contrato. Ligue no 0800 604 4500 ou Wpp(31) 99457-0744"
   },
   {
     "id": 17,
     "tom": "Reneg",
     "canal": "SMS",
-    "texto": "Banco Safra: Negocie seu contrato hoje com facilidades exclusivas. Sujeito à análise e aprovação, Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744"
+    "texto": "Banco Safra: Negocie seu contrato hoje com facilidades exclusivas. Sujeito a analise e aprovacao, Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744"
   },
   {
     "id": 18,
     "tom": "Reneg",
     "canal": "SMS",
-    "texto": "Banco Safra: Renegocie seu contrato e evite a apreensao do veículo.Sujeito à análise e aprovação, Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744"
+    "texto": "Banco Safra: Renegocie seu contrato e evite a apreensao do veiculo.Sujeito a analise e aprovacao, Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744"
   },
   {
     "id": 19,
     "tom": "Carnaval",
     "canal": "SMS",
-    "texto": "Banco Safra: Regularize seu débito com o Banco Safra antes do Carnaval e evite preocupações.Fale conosco pelo 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Regularize seu debito com o Banco Safra antes do Carnaval e evite preocupacoes.Fale conosco pelo 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 20,
@@ -125,7 +125,7 @@ export const FRASES_SAFRA = [
     "id": 21,
     "tom": "Carnaval",
     "canal": "SMS",
-    "texto": "Banco Safra: Não deixe pendências financeiras atrapalharem seu Carnaval. Regularize seu débito hoje mesmo. Chame pelo 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Nao deixe pendencias financeiras atrapalharem seu Carnaval. Regularize seu debito hoje mesmo. Chame pelo 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 22,
@@ -137,13 +137,13 @@ export const FRASES_SAFRA = [
     "id": 23,
     "tom": "Carnaval",
     "canal": "SMS",
-    "texto": "Banco Safra: Antes da folia, organize suas pendências. Regularize seu débito e fique tranquilo.Entre em contato pelo 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Antes da folia, organize suas pendencias. Regularize seu debito e fique tranquilo.Entre em contato pelo 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 24,
     "tom": "Carnaval",
     "canal": "SMS",
-    "texto": "Banco Safra: Aproveite o período pré-Carnaval para regularizar sua situação. Fale agora pelo 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Aproveite o periodo pre-Carnaval para regularizar sua situacao. Fale agora pelo 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 25,
@@ -155,61 +155,61 @@ export const FRASES_SAFRA = [
     "id": 26,
     "tom": "Carnaval",
     "canal": "SMS",
-    "texto": "Banco Safra: Antes de colocar o bloco na rua, coloque seu débito em dia com o Banco Safra.Negocie agora: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Antes de colocar o bloco na rua, coloque seu debito em dia com o Banco Safra.Negocie agora: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 27,
     "tom": "Carnaval",
     "canal": "SMS",
-    "texto": "Banco Safra: Seu Carnaval merece mais alegria e menos cobranças.Fale com o Banco Safra e regularize hoje mesmo: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Seu Carnaval merece mais alegria e menos cobrancas.Fale com o Banco Safra e regularize hoje mesmo: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 28,
     "tom": "Carnaval",
     "canal": "SMS",
-    "texto": "Banco Safra: Caia na folia, não na inadimplência.Negocie seu contrato com o Banco Safra agora: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Caia na folia, nao na inadimplencia.Negocie seu contrato com o Banco Safra agora: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 29,
     "tom": "Boletagem",
     "canal": "SMS",
-    "texto": "Banco Safra: Sua linha digitavel para pagamento está disponível, peça agora através do 0800 604 4500 ou WhatsApp (31) 99457-0744"
+    "texto": "Banco Safra: Sua linha digitavel para pagamento esta disponivel, peca agora atraves do 0800 604 4500 ou WhatsApp (31) 99457-0744"
   },
   {
     "id": 30,
     "tom": "Campanha",
     "canal": "SMS",
-    "texto": "Banco Safra: Seu contrato está em campanha, aproveite e evite a apreensao do veículo. Sujeito à análise e aprovação, Ligue 08006044500 ou WPP 31994570744"
+    "texto": "Banco Safra: Seu contrato esta em campanha, aproveite e evite a apreensao do veiculo. Sujeito a analise e aprovacao, Ligue 08006044500 ou WPP 31994570744"
   },
   {
     "id": 31,
     "tom": "Importante",
     "canal": "SMS",
-    "texto": "Banco Safra informa: existe alternativa de entrega amigável do veículo, evitando despesas e transtornos. Entre em contato hoje e saiba mais 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra informa: existe alternativa de entrega amigavel do veiculo, evitando despesas e transtornos. Entre em contato hoje e saiba mais 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 32,
     "tom": "Importante",
     "canal": "SMS",
-    "texto": "Banco Safra: Esta agendado vistoria para localização do veiculo. Para cancelar o agendamento e regularizar entre em contato imediatamente 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Esta agendado vistoria para localizacao do veiculo. Para cancelar o agendamento e regularizar entre em contato imediatamente 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 33,
     "tom": "Importante",
     "canal": "SMS",
-    "texto": "Barcelos Advogados: seu contrato Safra foi encaminhado para nossa atuação. Ainda dá tempo de regularizar de forma amigável. Fale conosco agora no whats: XX XXXX-XXXX."
+    "texto": "Barcelos Advogados: seu contrato Safra foi encaminhado para nossa atuacao. Ainda da tempo de regularizar de forma amigavel. Fale conosco agora no whats: XX XXXX-XXXX."
   },
   {
     "id": 34,
     "tom": "Importante",
     "canal": "SMS",
-    "texto": "Ainda dá tempo! Regularize seu financiamento Safra e evite que o atraso avance. Fale com a Barcelos Advogados: XXXXXXXXX."
+    "texto": "Ainda da tempo! Regularize seu financiamento Safra e evite que o atraso avance. Fale com a Barcelos Advogados: XXXXXXXXX."
   },
   {
     "id": 35,
     "tom": "Importante",
     "canal": "SMS",
-    "texto": "Barcelos Advogados: seu contrato Safra foi encaminhado para nossa atuação. Ainda dá tempo de regularizar de forma amigável. Fale conosco agora pelo WhatsApp: (31) 99457-0744 ou 0800 604 4500."
+    "texto": "Barcelos Advogados: seu contrato Safra foi encaminhado para nossa atuacao. Ainda da tempo de regularizar de forma amigavel. Fale conosco agora pelo WhatsApp: (31) 99457-0744 ou 0800 604 4500."
   },
   {
     "id": 36,
@@ -377,36 +377,36 @@ export const FRASES_SAFRA = [
     "id": 63,
     "tom": "Quitação",
     "canal": "SMS",
-    "texto": "Banco Safra: Seu contrato está em campanha, aproveite essa oportunidade e evite a apreensao do veículo. Sujeito à análise e aprovação, Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744"
+    "texto": "Banco Safra: Seu contrato esta em campanha, aproveite essa oportunidade e evite a apreensao do veiculo. Sujeito a analise e aprovacao, Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744"
   },
   {
     "id": 64,
     "tom": "Atualização",
     "canal": "SMS",
-    "texto": "Banco Safra: Seu contrato está em campanha, aproveite essa oportunidade e evite a apreensao do veículo. Sujeito à análise e aprovação, Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744"
+    "texto": "Banco Safra: Seu contrato esta em campanha, aproveite essa oportunidade e evite a apreensao do veiculo. Sujeito a analise e aprovacao, Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744"
   },
   {
     "id": 65,
     "tom": "Reneg",
     "canal": "SMS",
-    "texto": "Banco Safra: Renegocie seu contrato e evite a apreensao do veículo.Sujeito à análise e aprovação, Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744"
+    "texto": "Banco Safra: Renegocie seu contrato e evite a apreensao do veiculo.Sujeito a analise e aprovacao, Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744"
   },
   {
     "id": 66,
     "tom": "Quebra",
     "canal": "SMS",
-    "texto": "Banco Safra: Sua parcela está em atraso! Regularize o quanto antes para evitar possíveis consequências para seu contrato. Consulte as condições de pagamento: 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Sua parcela esta em atraso! Regularize o quanto antes para evitar possiveis consequencias para seu contrato. Consulte as condicoes de pagamento: 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 67,
     "tom": "Preventivo",
     "canal": "SMS",
-    "texto": "Banco Safra: [NOME], fique atento! Sua parcela vence hoje ou nos próximos dias. Não deixe para a última hora, programe seu pagamento e mantenha seu contrato em dia! Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: [NOME], fique atento! Sua parcela vence hoje ou nos proximos dias. Nao deixe para a ultima hora, programe seu pagamento e mantenha seu contrato em dia! Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
   },
   {
     "id": 68,
     "tom": "Motivacional",
     "canal": "SMS",
-    "texto": "Banco Safra: Olá, que tal começar o próximo mês com uma parcela a menos? Antecipe sua parcela do Banco Safra de forma rápida e prática! Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
+    "texto": "Banco Safra: Ola, que tal comecar o proximo mes com uma parcela a menos? Antecipe sua parcela do Banco Safra de forma rapida e pratica! Ligue 0800 604 4500 ou WhatsApp (31) 99457-0744."
   }
 ];
