@@ -20,7 +20,7 @@ import secrets
 import logging
 import threading
 from functools import wraps
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 from urllib.parse import urlparse
 
 from flask import Blueprint, jsonify, request, session, g
@@ -151,12 +151,47 @@ def public_user(u):
     out["instancias"] = list(acc)
     out["acesso"] = acc  # id da instância → "editar" | "ver"
     out["dono"] = _is_dono_account(u)
+    out["ultimoAcesso"] = u.get("ultimoAcesso") or ""
     return out
 
 
 def _fingerprint(u):
     """Muda quando a senha muda: derruba as outras sessões daquele usuário."""
     return hashlib.sha256((u.get("senhaHash") or "").encode()).hexdigest()[:16]
+
+
+# ---------------------------------------------------------------- último acesso
+ACESSO_INTERVALO = 600  # grava no máximo a cada 10 min por pessoa (poupa a planilha)
+_touched = {}           # id → horário (epoch) da última gravação feita por este servidor
+_touch_lock = threading.Lock()
+
+
+def _epoch(iso):
+    try:
+        return datetime.strptime(str(iso)[:19], "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc).timestamp()
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def touch_access(user, force=False):
+    """Registra o último acesso (login ou uso do painel) sem atrasar a resposta: grava em segundo plano."""
+    if not user or not user.get("id"):
+        return
+    now = time.time()
+    with _touch_lock:
+        last = max(_touched.get(user["id"], 0.0), _epoch(user.get("ultimoAcesso")))
+        if not force and now - last < ACESSO_INTERVALO:
+            return
+        _touched[user["id"]] = now
+    stamp = now_iso()
+    user["ultimoAcesso"] = stamp  # atualiza a cópia em cache (a lista de usuários já mostra)
+
+    def gravar():
+        try:
+            _get_store().update_user(user["id"], {"ultimoAcesso": stamp})
+        except Exception as e:
+            log.warning("Não consegui gravar o último acesso de %s: %s", user.get("login"), e)
+    threading.Thread(target=gravar, daemon=True).start()
 
 
 def current_user():
@@ -174,6 +209,8 @@ def current_user():
         if not user:
             session.clear()
     g.user = user
+    if user:
+        touch_access(user)
     return user
 
 
@@ -314,6 +351,7 @@ def signup():
     session.clear()
     session["uid"] = user["id"]
     session["fp"] = _fingerprint(user)
+    touch_access(user, force=True)
     session.permanent = True
     log.info("Conta criada pelo próprio usuário: %s (%s)", user["login"], user["papel"])
     return jsonify({"user": public_user(user)}), 201
@@ -339,6 +377,7 @@ def login():
     session.clear()
     session["uid"] = user["id"]
     session["fp"] = _fingerprint(user)
+    touch_access(user, force=True)
     session.permanent = bool(b.get("lembrar", True))
     log.info("Login: %s", user["login"])
     return jsonify({"user": public_user(user)})

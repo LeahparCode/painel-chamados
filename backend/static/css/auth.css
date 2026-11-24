@@ -182,3 +182,7 @@ html.no-signup .auth-tabs{ display: none; }
   .users-table .u-actions .btn{ padding: 0 10px; }
 }
 .dono-chip{ color: var(--run-ink); background: var(--run-soft); }
+.last-access{ white-space: nowrap; font-size: 13px; color: var(--text-2); }
+.last-access.online{ color: var(--ok-ink); font-weight: 700; }
+.last-access.online::before{ content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--ok); vertical-align: 1px; }
+.last-access.never, .last-access.old{ color: var(--muted); }

@@ -17,6 +17,25 @@ const fmtDate = (iso) => {
   return Number.isNaN(ts) ? "—" : new Date(ts).toLocaleDateString("pt-BR");
 };
 
+/** "agora", "há 5 min", "hoje às 14:32", "ontem às 09:10", "12/11/2026 às 08:00" ou "Nunca" */
+function fmtAcesso(iso){
+  const ts = Date.parse(iso || "");
+  if (Number.isNaN(ts)) return { txt: "Nunca", title: "Ainda não entrou no painel", cls: "never" };
+  const d = new Date(ts), now = new Date();
+  const min = Math.floor((now - d) / 60000);
+  const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const dia = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const dias = Math.round((dia(now) - dia(d)) / 86400000);
+  const title = d.toLocaleString("pt-BR", { dateStyle: "full", timeStyle: "short" });
+  let txt;
+  if (min < 1) txt = "agora";
+  else if (min < 60) txt = `há ${min} min`;
+  else if (dias === 0) txt = `hoje às ${hora}`;
+  else if (dias === 1) txt = `ontem às ${hora}`;
+  else txt = `${d.toLocaleDateString("pt-BR")} às ${hora}`;
+  return { txt, title, cls: min < 15 ? "online" : (dias > 30 ? "old" : "") };
+}
+
 const instNome = (id) => (state.instancias || []).find(i => i.id === id)?.nome;
 
 const NIVEL_LABEL = { editar: "Editar", ver: "Só ver" };
@@ -85,7 +104,7 @@ function render(){
   // contas aguardando liberação primeiro
   const list = users.slice().sort((a, b) => (ORDER[a.papel] - ORDER[b.papel]) || (a.nome || a.login).localeCompare(b.nome || b.login, "pt-BR"));
   $("usersTable").innerHTML = `
-    <thead><tr><th>Pessoa</th><th>Papel</th>${state.atribuirInst ? "<th>Instâncias</th>" : ""}<th>Criado em</th><th>Situação</th><th></th></tr></thead>
+    <thead><tr><th>Pessoa</th><th>Papel</th>${state.atribuirInst ? "<th>Instâncias</th>" : ""}<th>Criado em</th><th>Último acesso</th><th>Situação</th><th></th></tr></thead>
     <tbody>${list.map(u => `
       <tr class="${u.papel === "pendente" ? "is-pending" : ""}">
         <td><div class="u-person"><span class="user-avatar">${escapeHtml(initials(u.nome || u.login))}</span>
@@ -93,9 +112,10 @@ function render(){
         <td><span class="role-chip ${u.papel}">${ROLE_LABEL[u.papel] || u.papel}</span></td>
         ${state.atribuirInst ? `<td class="u-insts">${instCell(u)}</td>` : ""}
         <td>${fmtDate(u.criadoEm)}</td>
+        <td>${(() => { const a = fmtAcesso(u.ultimoAcesso); return `<span class="last-access ${a.cls}" title="${escapeHtml(a.title)}">${escapeHtml(a.txt)}</span>`; })()}</td>
         <td><span class="state-chip ${u.ativo ? "" : "off"}">${u.ativo ? "Ativo" : "Desativado"}</span></td>
         <td class="u-actions">${u.papel === "pendente" ? `<button type="button" class="btn btn-primary btn-sm" data-approve="${escapeHtml(u.id)}">Liberar</button>` : ""}${u.dono && u.id !== me ? "" : `<button type="button" class="btn btn-ghost btn-sm" data-edit="${escapeHtml(u.id)}">Editar</button>`}</td>
-      </tr>`).join("") || `<tr><td class="empty" colspan="6">Nenhum usuário.</td></tr>`}
+      </tr>`).join("") || `<tr><td class="empty" colspan="7">Nenhum usuário.</td></tr>`}
     </tbody>`;
 }
 
