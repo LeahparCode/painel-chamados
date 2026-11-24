@@ -4,9 +4,8 @@ disparos, templates, tema de cores e lista de quem pode ver.
 Quem vê o quê:
   - administrador: vê e edita todas as instâncias, cria/edita instâncias e define o acesso das pessoas;
   - operador: vê e edita só as instâncias liberadas para ele (coluna "Instancias" do usuário);
-  - qualquer conta logada (inclusive aguardando liberação) vê, só para leitura, as instâncias
-    marcadas como "visível para todas as contas";
-  - sem login, nada: o painel inteiro exige entrar (ou criar conta) antes.
+  - qualquer operador vê, só para leitura, as instâncias marcadas como "visível para todos os operadores";
+  - conta aguardando liberação ou sem login: nada (o painel inteiro exige um acesso liberado).
 
 O navegador informa a instância em cada chamada (cabeçalho X-Instancia ou ?inst=), e o
 servidor confere a permissão sempre — nada depende só da tela.
@@ -122,8 +121,8 @@ def find(key):
 
 # ---------------------------------------------------------------- permissões
 def can_read(user, inst) -> bool:
-    if not inst or not user:  # sem login não se vê nenhuma instância
-        return False
+    if not inst or not user or user["papel"] not in EDITOR_ROLES:
+        return False  # sem login ou aguardando liberação: nenhuma instância
     if user and user["papel"] == "admin":
         return True
     if user and user["papel"] in EDITOR_ROLES and inst["id"] in split_ids(user.get("instancias")):

@@ -49,7 +49,7 @@ export function applyAuthMode(){
   root.classList.toggle("is-pending", isPending());
   root.classList.toggle("is-admin", isAdmin());
   try{
-    if (state.user) localStorage.setItem(HINT_KEY, "1");
+    if (state.user && !isPending()) localStorage.setItem(HINT_KEY, "1");
     else localStorage.removeItem(HINT_KEY);
   }catch{}
 }
