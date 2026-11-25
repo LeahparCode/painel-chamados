@@ -4,7 +4,7 @@
 .eyebrow-danger{ color: var(--err-ink); }
 html.dark .eyebrow-danger{ color: var(--err); }
 
-.bulk-form{ gap: 16px; }
+.bulk-form{ display: flex; flex-direction: column; gap: 18px; }
 .bulk-row{ display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .bulk-nav{ display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .bulk-nav [hidden]{ display: none !important; }
@@ -39,7 +39,6 @@ html.dark .bk-count{ color: var(--err); }
 #bkConfirm{ text-transform: uppercase; letter-spacing: .12em; font-weight: 700; }
 
 @media (max-width: 720px){
-  #bulkOpen{ padding: 0 12px; }
   .bk-list li{ grid-template-columns: 1fr auto; }
   .bk-list .bk-when{ grid-column: 1 / -1; }
   .bulk-row .segmented{ width: 100%; }
@@ -48,3 +47,8 @@ html.dark .bk-count{ color: var(--err); }
   .bulk-nav .date-pill{ flex: 1; }
   .bulk-row .select-pill select{ flex: 1; }
 }
+
+/* tela "Exclusão" (antes era uma janela) */
+.bulk-page{ max-width: 860px; padding: 22px; }
+.bulk-page .form-actions{ justify-content: flex-start; }
+@media (max-width: 720px){ .bulk-page{ padding: 16px; } }

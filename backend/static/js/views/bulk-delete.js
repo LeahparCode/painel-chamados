@@ -6,7 +6,6 @@ import { dayOf, statusKey, inRange, summarize, byHorario } from "../core/records
 import { todayISO, addDays, addMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, fmtDate } from "../core/dates.js";
 import { fmtInt, fmtMoney, escapeHtml, capitalize } from "../core/format.js";
 import { deleteMany, fetchRecords } from "../core/api.js";
-import { openModal, closeModal } from "../ui/modal.js";
 import { toast } from "../ui/toast.js";
 import { downloadCsv } from "./export.js";
 
@@ -117,8 +116,10 @@ function step(dir){
   render();
 }
 
-export function openBulkDelete(){
-  // começa no mesmo dia/semana/mês/período que está aberto no painel
+/** Ao abrir a tela "Exclusão": começa no mesmo dia/semana/mês/período que está aberto no painel. */
+export function setBulkVisible(visivel){
+  open = !!visivel;
+  if (!open) return;
   const v = state.view;
   sel.scope = ["dia", "semana", "mes", "periodo"].includes(v.mode) ? v.mode : "dia";
   sel.ref = v.ref || todayISO();
@@ -128,10 +129,8 @@ export function openBulkDelete(){
   $("bkTipo").value = $("bkStatus").value = "";
   $("bkConfirm").value = "";
   $("bkError").hidden = true;
-  open = true;
   syncInputs();
   render();
-  openModal($("bulkModal"), { onClose: () => { open = false; } });
 }
 
 async function submit(e){
@@ -154,7 +153,7 @@ async function submit(e){
   try{
     const res = await deleteMany(ids);
     removeManyLocal(ids);
-    closeModal($("bulkModal"));
+    $("bkConfirm").value = ""; // continua na tela, pronta para outra exclusão
     const n = res?.excluidos ?? ids.length;
     toast(`${fmtInt(n)} disparo${n === 1 ? "" : "s"} excluído${n === 1 ? "" : "s"}.`, "ok", 3500);
     fetchRecords().catch(() => {});
@@ -171,7 +170,6 @@ export function initBulkDelete(){
   TIPOS.forEach(t => $("bkTipo").append(new Option(t, t)));
   STATUS.forEach(s => $("bkStatus").append(new Option(s, s)));
 
-  $("bulkOpen").addEventListener("click", openBulkDelete);
   $("bkScope").addEventListener("click", (e) => {
     const b = e.target.closest("[data-scope]");
     if (!b) return;
