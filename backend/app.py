@@ -10,6 +10,8 @@ from export_xlsx import build_xlsx, safe_filename, ExportError
 from auth import init_auth, editor_required, admin_required
 from instances import init_instances, resolve as resolve_instance
 from importers.calendario import parse_calendar, ajustes_existentes, ImportError_
+from importers.frases import parse_frases, ImportFrasesError, modelo_xlsx
+from textos import texto_sms
 from automacao import transicoes
 
 logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO"))
@@ -397,29 +399,6 @@ _TPL_TTL = 10.0
 TEMPLATE_MAX_NOME, TEMPLATE_MAX_TEXTO = 80, 4000
 
 
-# SMS: acento, cedilha, emoji e símbolos "tipográficos" mudam a codificação da mensagem e derrubam o
-# limite de 160 para 70 caracteres. Templates de SMS são limpos automaticamente ao salvar.
-_SMS_TROCAS = {
-    "\u201c": '"', "\u201d": '"', "\u201e": '"', "\u00ab": '"', "\u00bb": '"',   # aspas curvas / «»
-    "\u2018": "'", "\u2019": "'", "\u00b4": "'", "`": "'",                        # apóstrofos
-    "\u2013": "-", "\u2014": "-", "\u2212": "-", "\u2022": "-",                   # travessões, marcador
-    "\u2026": "...", "\u00ba": "o", "\u00aa": "a", "\u00b0": "o",                 # reticências, º ª °
-    "\u00a0": " ", "\u20ac": "EUR",
-}
-
-
-def texto_sms(texto: str) -> str:
-    """Deixa só caracteres simples: ç→c, ã→a, aspas/travessões comuns, sem emojis."""
-    t = str(texto or "")
-    for de, para in _SMS_TROCAS.items():
-        t = t.replace(de, para)
-    t = unicodedata.normalize("NFD", t)
-    t = "".join(ch for ch in t if not unicodedata.combining(ch))   # tira acentos e cedilha
-    t = "".join(ch for ch in t if ch == "\n" or 32 <= ord(ch) < 127)  # emojis e demais símbolos
-    t = re.sub(r"[ \t]{2,}", " ", t)
-    return "\n".join(l.strip() for l in t.split("\n")).strip()
-
-
 def _parse_template(b: dict, partial: bool):
     out = {}
     if "nome" in b or not partial:
@@ -569,6 +548,78 @@ def import_calendario(inst):
     _refresh_quietly(inst)
     log.info("Calendário importado em %s: %d novos, %d atualizados, %d já existiam", inst["slug"], len(criados), atualizados, duplicados)
     return jsonify({**resumo, "confirmado": True, "criados": len(criados), "atualizados": atualizados})
+
+
+# ---- Importação de frases (templates) ----
+MAX_ARQUIVO_FRASES = 5 * 1024 * 1024
+
+
+@app.get("/api/import/frases/modelo")
+@editor_required
+def import_frases_modelo():
+    return Response(modelo_xlsx(), mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": 'attachment; filename="modelo_importar_frases.xlsx"'})
+
+
+@app.post("/api/import/frases")
+@editor_required
+@with_instance(write=True)  # só em instâncias que a pessoa pode EDITAR (o servidor confere)
+def import_frases(inst):
+    """Planilha (.xlsx/.csv) com as colunas Tipo, Frase e Caracteres → templates da instância.
+    Sem ?confirmar=1 só devolve a prévia. Frases que já existem (mesmo tipo e texto) são ignoradas."""
+    arquivo = request.files.get("arquivo")
+    if not arquivo or not arquivo.filename:
+        return jsonify({"error": "no_file", "message": "Escolha a planilha (.xlsx ou .csv)."}), 400
+    nome = arquivo.filename
+    if not nome.lower().endswith((".xlsx", ".csv")):
+        return jsonify({"error": "bad_file", "message": "Envie um arquivo .xlsx (Excel) ou .csv."}), 400
+    data = arquivo.read(MAX_ARQUIVO_FRASES + 1)
+    if len(data) > MAX_ARQUIVO_FRASES:
+        return jsonify({"error": "too_big", "message": "Arquivo grande demais (máx. 5 MB)."}), 400
+    try:
+        frases, avisos = parse_frases(data, nome)
+    except ImportFrasesError as e:
+        return jsonify({"error": "invalid_file", "message": str(e)}), 400
+
+    sc = scoped(inst)
+    try:
+        existentes = sc.list_templates()
+    except StoreError as e:
+        return _store_error_response(e)
+    vistos = {(t["tipo"], " ".join(t["texto"].split())) for t in existentes}
+    novas, repetidas = [], 0
+    for f in frases:
+        chave = (f["tipo"], " ".join(f["texto"].split()))
+        if chave in vistos:
+            repetidas += 1
+            continue
+        vistos.add(chave)
+        novas.append(f)
+
+    por_tipo = {}
+    for f in novas:
+        por_tipo[f["tipo"]] = por_tipo.get(f["tipo"], 0) + 1
+    resumo = {
+        "instancia": inst["nome"], "total": len(frases) + len(avisos),
+        "validas": len(frases), "novas": len(novas), "repetidas": repetidas, "invalidas": len(avisos),
+        "smsLimpas": sum(1 for f in novas if f["limpa"]), "porTipo": por_tipo,
+        "avisos": avisos[:30], "amostra": [{k: f[k] for k in ("linha", "tipo", "nome", "texto", "limpa")} for f in novas[:8]],
+    }
+    if request.args.get("confirmar") != "1":
+        return jsonify({**resumo, "confirmado": False})
+    itens = [{"nome": f["nome"][:TEMPLATE_MAX_NOME], "tipo": f["tipo"], "texto": f["texto"]} for f in novas]
+    try:
+        if not itens:
+            criados = []
+        elif hasattr(sc, "create_templates"):
+            criados = sc.create_templates(itens)
+        else:  # Airtable: um por vez
+            criados = [sc.create_template(i) for i in itens]
+    except StoreError as e:
+        return _store_error_response(e)
+    _TPL_CACHE.pop(inst["id"], None)
+    log.info("Frases importadas em %s: %d novas, %d repetidas, %d inválidas", inst["slug"], len(criados), repetidas, len(avisos))
+    return jsonify({**resumo, "confirmado": True, "criados": len(criados)})
 
 
 # ---- Exportação ----

@@ -90,3 +90,13 @@
   .io-tabs{ align-self: stretch; }
   .io-tabs button{ flex: 1; justify-content: center; }
 }
+
+/* importação de frases */
+#ioImport{ display: flex; flex-direction: column; gap: 16px; }
+#ioImport[hidden]{ display: none; }
+.if-row{ display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.if-row .select-pill select{ min-width: 160px; }
+.if-table td.wrap{ white-space: normal; min-width: 260px; line-height: 1.45; }
+.if-clean{ display: inline-block; margin-left: 6px; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; background: var(--sched-soft); color: var(--sched-ink); white-space: nowrap; }
+.if-avisos{ margin: 0; padding: 10px 12px 10px 28px; border-radius: 10px; background: var(--run-soft); color: var(--run-ink); font-size: 12px; line-height: 1.6; }
+@media (max-width: 720px){ .if-row > *{ width: 100%; } .if-row .select-pill select{ flex: 1; } }
