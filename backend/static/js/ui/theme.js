@@ -15,20 +15,42 @@ const notify = () => listeners.forEach(fn => fn());
 
 const save = (key, value) => { try{ localStorage.setItem(key, value); }catch{} };
 
-/** Liga transições de cor só durante a troca (evita animar tudo o tempo todo). */
-function smoothSwitch(change){
+const calmo = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * Troca de tema com uma única animação feita pelo navegador (View Transitions): o tema novo se
+ * espalha num círculo a partir do botão. Antes, cada elemento da página animava a própria cor ao
+ * mesmo tempo, o que travava com muitos cards. Sem suporte (ou com "reduzir movimento"): troca na hora.
+ */
+function switchWithReveal(change, origin){
+  if (!document.startViewTransition || calmo()){ change(); return; }
+  const r = origin?.getBoundingClientRect();
+  const x = r ? r.left + r.width / 2 : innerWidth / 2;
+  const y = r ? r.top + r.height / 2 : innerHeight / 2;
+  const raio = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  // durante a troca, os elementos não animam a própria cor (só o círculo anima): bem mais leve
   const root = document.documentElement;
-  root.classList.add("palette-switching");
-  change();
-  clearTimeout(smoothSwitch.t);
-  smoothSwitch.t = setTimeout(() => root.classList.remove("palette-switching"), 450);
+  root.classList.add("theme-switching");
+  const t = document.startViewTransition(change);
+  t.finished.finally(() => root.classList.remove("theme-switching"));
+  t.ready.then(() => {
+    document.documentElement.animate(
+      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${raio}px at ${x}px ${y}px)`] },
+      { duration: 560, easing: "cubic-bezier(.22, .8, .28, 1)", pseudoElement: "::view-transition-new(root)" }
+    );
+  }).catch(() => {});
 }
+const smoothSwitch = (change) => change(); // paletas: troca direta (sem animar a página inteira)
 
 /* ---------- claro / escuro ---------- */
-function applyMode(mode){
+function applyMode(mode, animarIcone = false){
   document.documentElement.classList.toggle("dark", mode === "dark");
   const btn = document.getElementById("themeToggle");
-  if (btn) btn.innerHTML = mode === "dark" ? SUN : MOON;
+  if (!btn) return;
+  btn.innerHTML = mode === "dark" ? SUN : MOON;
+  if (animarIcone && !calmo()){ // sol/lua entram girando
+    btn.classList.remove("is-flip"); void btn.offsetWidth; btn.classList.add("is-flip");
+  }
 }
 
 /* ---------- paletas ---------- */
@@ -68,10 +90,10 @@ export function initTheme(){
   applyMode(isDark() ? "dark" : "light");
   applyPalette(currentPalette());
   initPalettePicker();
-  document.getElementById("themeToggle")?.addEventListener("click", () => {
+  const btn = document.getElementById("themeToggle");
+  btn?.addEventListener("click", () => {
     const next = isDark() ? "light" : "dark";
     save(THEME_KEY, next);
-    smoothSwitch(() => applyMode(next));
-    notify();
+    switchWithReveal(() => { applyMode(next, true); notify(); }, btn);
   });
 }
