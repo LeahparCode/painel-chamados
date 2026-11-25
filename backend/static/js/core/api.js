@@ -49,6 +49,7 @@ async function request(method, path, body){
   const text = await resp.text().catch(() => "");
   let data = null;
   try{ data = text ? JSON.parse(text) : null; }catch{}
+  if (resp.status === 403 && data?.error === "forbidden_instance") acessoRemovido();
   if (resp.status === 401 && state.user){
     // sessão expirou (ou o usuário foi desativado): volta para o modo visitante
     toast("Sua sessão expirou. Entre novamente.", "warn", 3000, "session-expired");
@@ -134,6 +135,21 @@ function stopPolling(){
   if (pollTimer){ clearTimeout(pollTimer); pollTimer = null; }
 }
 
+/** O acesso a esta instância foi retirado enquanto o painel estava aberto: avisa e abre outra. */
+let removido = false;
+function acessoRemovido(){
+  if (removido) return;
+  removido = true;
+  closeStream();
+  stopPolling();
+  toast("Seu acesso a esta instância foi removido.", "warn", 4000, "acesso-removido");
+  setTimeout(() => {
+    try{ localStorage.removeItem("painel_inst"); }catch{}
+    history.replaceState(null, "", location.pathname + "#painel"); // abre uma instância que ainda tem acesso
+    location.reload();
+  }, 2200);
+}
+
 function openStream(){
   closeStream();
   try{
@@ -153,6 +169,7 @@ function openStream(){
     sse.addEventListener("ping", () => setConnection(state.stale ? "stale" : "online"));
     // o servidor renova a conexão de tempos em tempos: reconecta na hora, sem mostrar "Conectando"
     sse.addEventListener("bye", () => openStream());
+    sse.addEventListener("revoked", () => acessoRemovido());
     sse.onerror = () => { setConnection("connecting"); startPolling(); };
   }catch{
     startPolling();

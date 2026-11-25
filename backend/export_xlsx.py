@@ -137,6 +137,8 @@ def build_xlsx(spec: dict) -> bytes:
         # cabeçalho
         for ci, col in enumerate(columns, start=1):
             cell = ws.cell(row=1, column=ci, value=str((col or {}).get("title") or ""))
+            if cell.value.startswith("="):
+                cell.data_type = "s"  # título também nunca vira fórmula
             cell.font, cell.fill = HEADER_FONT, HEADER_FILL
             cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
         ws.row_dimensions[1].height = 24

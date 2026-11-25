@@ -24,6 +24,7 @@ CANAL_PARA_TIPO = {"sms": "SMS", "rcs": "RCS", "whatsapp": "WhatsApp", "email": 
 HORARIO_PADRAO = "08:00"
 TEMPO_HOJE_MIN = 10   # disparos do dia atual entram "Em andamento" com 10 minutos para finalizar
 MAX_ACOES = 5000
+MAX_VOLUME = 100_000_000  # mesmo limite do cadastro de disparos
 
 _AGENDAR = re.compile(r"^agend\w*\s+pa\w*\s+o\s+dia\s+\d+", re.I)   # aceita "Papar" (erro de digitação no calendário)
 _QTD = re.compile(r"\bqtd\.?\s*:?\s*([\d.]+)", re.I)
@@ -60,6 +61,14 @@ def hoje_brasil():
     return (datetime.now(timezone.utc) - timedelta(hours=3)).date()
 
 
+def _data_valida(dia) -> bool:
+    try:
+        date.fromisoformat(str(dia))
+        return True
+    except ValueError:
+        return False
+
+
 def status_para(dia, hoje):
     """Regra de status/tempo de uma ação pela data: passado, hoje ou futuro."""
     if dia < hoje:
@@ -92,7 +101,7 @@ def parse_calendar(data, hoje=None, seg=None):
         if not isinstance(acoes_por_dia, dict):
             continue
         for dia, acoes in sorted(acoes_por_dia.items()):
-            if not _DATA.match(str(dia)) or not isinstance(acoes, list):
+            if not _DATA.match(str(dia)) or not isinstance(acoes, list) or not _data_valida(dia):
                 avisos.append(f"Data ignorada: {dia!r}")
                 continue
             for a in acoes:
@@ -100,6 +109,12 @@ def parse_calendar(data, hoje=None, seg=None):
                 if total > MAX_ACOES:
                     raise ImportError_(f"Arquivo grande demais (mais de {MAX_ACOES} ações).")
                 if not isinstance(a, dict):
+                    avisos.append(f"{dia}: ação em formato inválido ignorada")
+                    continue
+                aid = str(a.get("id") if a.get("id") is not None else "").strip()
+                if not aid:
+                    # sem id não dá para saber se já foi importada (e ações sem id se confundiriam)
+                    avisos.append(f"{dia}: ação sem número (id) ignorada")
                     continue
                 canal = str(a.get("channel") or "").strip().lower()
                 tipo = CANAL_PARA_TIPO.get(canal)
@@ -107,6 +122,10 @@ def parse_calendar(data, hoje=None, seg=None):
                     avisos.append(f"{dia}: canal desconhecido {canal!r} (ação {a.get('id')}) ignorado")
                     continue
                 texto = "\n".join(_linhas(a.get("text")))
+                volume = _volume(texto)
+                if volume > MAX_VOLUME:
+                    avisos.append(f"{dia}: ação {aid} com quantidade fora do normal ({volume}); volume ficou 0")
+                    volume = 0
                 status, tempo = status_para(dia, hoje)
                 registros.append({
                     "data": dia,
@@ -114,12 +133,12 @@ def parse_calendar(data, hoje=None, seg=None):
                     "tipoDisparo": tipo,
                     "tipo": _nome(texto, tipo),
                     "obs": texto[:1000],
-                    "volume": _volume(texto),
+                    "volume": volume,
                     "potes": 0,
                     "tempo": tempo,
                     "template": "",
                     "status": status,
-                    "ref": f"cal-{sid}-{a.get('id')}",
+                    "ref": f"cal-{sid}-{aid}",
                 })
     return registros, avisos
 

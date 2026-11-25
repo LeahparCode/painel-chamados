@@ -1,14 +1,14 @@
 import os, re, time, json, hashlib, logging, threading, unicodedata
 from datetime import datetime
 
-from flask import Flask, jsonify, request, Response, render_template
+from flask import Flask, jsonify, request, Response, render_template, g
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from storage import create_store, backend_name, StoreError
 from storage.base import now_iso, normalize_date
 from export_xlsx import build_xlsx, safe_filename, ExportError
-from auth import init_auth, editor_required, admin_required
-from instances import init_instances, resolve as resolve_instance
+from auth import init_auth, editor_required, admin_required, list_users
+from instances import init_instances, resolve as resolve_instance, find as find_instance, can_read
 from importers.calendario import parse_calendar, ajustes_existentes, ImportError_
 from importers.frases import parse_frases, ImportFrasesError, modelo_xlsx
 from textos import texto_sms
@@ -641,18 +641,38 @@ def export_xlsx():
 
 # ---- SSE ----
 STREAM_MAX_SECONDS = float(os.getenv("STREAM_MAX_SECONDS", "300"))
+STREAM_RECHECK_SECONDS = float(os.getenv("STREAM_RECHECK_SECONDS", "30"))  # reconfere o acesso
 
 
 @app.get("/api/stream")
 @with_instance()
 def stream(inst):
+    uid = (g.get("user") or {}).get("id")  # quem abriu a conexão (já conferido pelo with_instance)
+
+    def ainda_pode_ler():
+        """Acesso retirado, conta desativada/excluída ou instância removida: para de enviar dados."""
+        try:
+            user = next((u for u in list_users() if u["id"] == uid), None)
+            if not user or not user["ativo"]:
+                return False
+            alvo = find_instance(inst["id"])
+            return bool(alvo) and can_read(user, alvo)
+        except Exception:
+            return True  # falha momentânea ao ler a planilha: não derruba quem tem acesso
+
     def gen():
         last_hash = None
         fim = time.time() + STREAM_MAX_SECONDS
+        proxima_conferencia = time.time() + STREAM_RECHECK_SECONDS
         yield "retry: 3000\n\n"
         # a conexão é renovada de tempos em tempos: libera a thread do servidor e confere de novo
         # o login/permissão na reconexão (o navegador reconecta na hora ao receber "bye")
         while time.time() < fim:
+            if time.time() >= proxima_conferencia:
+                proxima_conferencia = time.time() + STREAM_RECHECK_SECONDS
+                if not ainda_pode_ler():
+                    yield "event: revoked\ndata: {}\n\n"
+                    return
             # usa o cache compartilhado: várias abas abertas não multiplicam as chamadas à API
             data, stale = get_snapshot(inst, force=False)
             h = md5([data, stale])
