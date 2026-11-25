@@ -437,6 +437,30 @@
           </div>
           <div class="import-result" id="importResult" hidden></div>
         </article>
+
+        <!-- importação de frases (templates) a partir de planilha -->
+        <article class="panel import-panel" id="ifPanel">
+          <div class="import-head">
+            <span class="export-ico ico-import" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 8h8M8 12h5"/></svg></span>
+            <div class="import-text">
+              <h3>Importar frases</h3>
+              <p>Planilha Excel (<b>.xlsx</b>) ou <b>.csv</b> com as colunas <b>Tipo</b>, <b>Frase</b> e <b>Caracteres</b> — encontradas pelo nome do cabeçalho, em qualquer ordem. Cada frase vira um template da instância escolhida; as de SMS ficam sem acentos e caracteres especiais.</p>
+            </div>
+          </div>
+          <div class="if-row">
+            <label class="select-pill"><span>Instância</span><select id="ifInst"></select></label>
+            <button type="button" class="btn btn-ghost" id="ifModelo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+              Baixar modelo
+            </button>
+            <label class="btn btn-soft import-pick">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
+              Escolher planilha
+              <input type="file" id="ifFile" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden />
+            </label>
+          </div>
+          <div class="import-result" id="ifResult" hidden></div>
+        </article>
         </div>
       </section>
 

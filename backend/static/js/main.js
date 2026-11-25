@@ -12,6 +12,7 @@ import { initTemplateEditor } from "./views/template-editor.js";
 import { initDashboard, setDashboardVisible } from "./views/dashboard.js";
 import { initExport, setExportVisible } from "./views/export.js";
 import { initImport, setIoTab } from "./views/import.js";
+import { initImportFrases } from "./views/import-frases.js";
 import { initAccount, showLoginGate } from "./views/account.js";
 import { initUsers, setUsersVisible } from "./views/users.js";
 import { initBulkDelete, setBulkVisible } from "./views/bulk-delete.js";
@@ -116,6 +117,7 @@ async function startApp(){
     initDashboard();
     initExport();
     initImport();
+    initImportFrases();
     if (isAdmin()){
       initUsers();
       initBulkDelete();

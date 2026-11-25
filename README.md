@@ -87,6 +87,15 @@ DATA_BACKEND=sheets GOOGLE_SHEET_ID=... GOOGLE_SERVICE_ACCOUNT_JSON="$(cat chave
 - Excluir uma instância só a tira do cadastro: as abas com os dados continuam na planilha.
 - `GOOGLE_INSTANCES_TAB` muda o nome da aba de cadastro (padrão `Instancias`). Instâncias exigem Google Planilhas.
 
+## Importar frases (templates)
+
+Em **Importar/Exportar → Importar → Importar frases**: escolha a instância (aparecem só as que a pessoa pode
+editar) e envie uma planilha **.xlsx** ou **.csv** com as colunas **Tipo**, **Frase** e **Caracteres**
+(encontradas pelo nome do cabeçalho, em qualquer ordem; outras colunas são ignoradas). Há um botão
+**Baixar modelo**. Cada frase vira um template da instância; as de **SMS** passam pela mesma limpeza do
+cadastro (sem acentos, cedilha e emojis). Frases que já existem (mesmo tipo e texto) não são duplicadas.
+Antes de gravar aparece uma prévia com as novas, as repetidas e as linhas com problema.
+
 ## Importar calendário de ações
 
 Na tela **Importar/Exportar**, aba **Importar** (atalho: `#importar`), envie o `.json` exportado da ferramenta de

@@ -301,6 +301,10 @@ class ScopedStore:
     def create_template(self, data: dict):
         return self.templates.create(data)
 
+    def create_templates(self, items):
+        """Vários templates numa única gravação (importação de frases)."""
+        return self.templates.create_many(items)
+
     def update_template(self, tid: str, patch: dict):
         return self.templates.update(tid, patch)
 
