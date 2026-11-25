@@ -36,14 +36,17 @@ export const isSafra = () => state.inst?.modelo === "safra";
 export const instHeaders = () => (state.inst ? { "X-Instancia": state.inst.id } : {});
 
 export async function fetchInstancias(){
+  state.instErro = false;
   try{
     const resp = await fetch("/api/instancias", { cache: "no-store", credentials: "same-origin" });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`); // ex.: planilha fora do ar por um instante
     const data = await resp.json();
     state.instancias = Array.isArray(data.instancias) ? data.instancias : [];
     state.gerenciarInst = !!data.gerenciar;
     state.atribuirInst = !!data.atribuir;
   }catch{
     state.instancias = [];
+    state.instErro = true; // falha ao carregar (não é falta de acesso)
   }
   return state.instancias;
 }

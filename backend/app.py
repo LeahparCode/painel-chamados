@@ -5,7 +5,7 @@ from flask import Flask, jsonify, request, Response, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from storage import create_store, backend_name, StoreError
-from storage.base import now_iso
+from storage.base import now_iso, normalize_date
 from export_xlsx import build_xlsx, safe_filename, ExportError
 from auth import init_auth, editor_required, admin_required
 from instances import init_instances, resolve as resolve_instance
@@ -196,16 +196,30 @@ def _store_error_response(e: Exception):
     return jsonify({"error": "storage_error", "message": str(e)}), status
 
 
+# limites dos campos numéricos (evita valores negativos ou absurdos gravados por engano)
+LIMITES = {"tempo": 7 * 24 * 60, "potes": 100_000, "volume": 100_000_000}
+MAX_NOME, MAX_TEMPLATE_KEY = 200, 100
+HORA_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+
+
+def _bad(code, message):
+    return None, (jsonify({"error": code, "message": message}), 400)
+
+
 def _parse_fields(b: dict, partial: bool):
     """Valida o corpo da requisição e devolve (campos, erro)."""
+    if not isinstance(b, dict):
+        return _bad("invalid_body", "Formato de dados inválido.")
     fields = {}
     try:
         for key in ("tempo", "potes", "volume"):
             if key in b or not partial:
                 fields[key] = int(b.get(key) or 0)
     except (ValueError, TypeError):
-        return None, (jsonify({"error": "invalid_data_type",
-                               "message": "Os campos de tempo, potes e volume devem ser números inteiros."}), 400)
+        return _bad("invalid_data_type", "Os campos de tempo, potes e volume devem ser números inteiros.")
+    for key, maximo in LIMITES.items():
+        if key in fields and not 0 <= fields[key] <= maximo:
+            return _bad("invalid_number", f"{key.capitalize()}: use um número entre 0 e {maximo:,}.".replace(",", "."))
 
     if "status" in b or not partial:
         status = b.get("status") or "Em andamento"
@@ -220,9 +234,12 @@ def _parse_fields(b: dict, partial: bool):
                                    "message": "Escolha o tipo do disparo: " + ", ".join(sorted(VALID_TIPO_DISPARO))}), 400)
         fields["tipoDisparo"] = tipo
 
-    for key in ("tipo", "template"):
+    for key, maximo in (("tipo", MAX_NOME), ("template", MAX_TEMPLATE_KEY)):
         if key in b or not partial:
-            fields[key] = (b.get(key) or "").strip()
+            valor = str(b.get(key) or "").strip()
+            if len(valor) > maximo:
+                return _bad("invalid_" + key, f"{'Nome' if key == 'tipo' else 'Frase'}: no máximo {maximo} caracteres.")
+            fields[key] = valor
 
     if "obs" in b:
         obs = str(b.get("obs") or "").replace("\r\n", "\n").strip()
@@ -231,13 +248,34 @@ def _parse_fields(b: dict, partial: bool):
         fields["obs"] = obs
 
     if "horario" in b or not partial:
-        fields["horario"] = b.get("horario") or "08:00"
+        horario = str(b.get("horario") or "08:00").strip()
+        if len(horario) == 4 and horario[1] == ":":
+            horario = "0" + horario  # "8:00" → "08:00"
+        if not HORA_RE.match(horario):
+            return _bad("invalid_horario", "Horário inválido: use HH:MM (ex.: 08:00).")
+        fields["horario"] = horario
     if "data" in b or not partial:
-        fields["data"] = b.get("data") or datetime.now().strftime("%Y-%m-%d")
+        data = normalize_date(b.get("data")) if b.get("data") else datetime.now().strftime("%Y-%m-%d")
+        try:
+            datetime.strptime(data, "%Y-%m-%d")
+        except (ValueError, TypeError):
+            return _bad("invalid_data", "Data inválida: use AAAA-MM-DD ou DD/MM/AAAA.")
+        fields["data"] = data
     return fields, None
 
 
 # ===== Views =====
+@app.before_request
+def _corpo_objeto():
+    """Todas as rotas de escrita recebem um objeto JSON; outro formato (lista, número…) vira 400,
+    em vez de derrubar a rota com erro 500."""
+    if request.method in ("POST", "PUT", "PATCH") and request.path.startswith("/api/") and request.is_json:
+        corpo = request.get_json(silent=True)
+        if corpo is not None and not isinstance(corpo, dict):
+            return jsonify({"error": "invalid_body", "message": "Formato de dados inválido."}), 400
+    return None
+
+
 @app.after_request
 def add_headers(resp):
     if request.path.startswith("/api/"):
