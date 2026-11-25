@@ -14,7 +14,7 @@ import { initExport, setExportVisible } from "./views/export.js";
 import { initImport, setIoTab } from "./views/import.js";
 import { initAccount, showLoginGate } from "./views/account.js";
 import { initUsers, setUsersVisible } from "./views/users.js";
-import { initBulkDelete } from "./views/bulk-delete.js";
+import { initBulkDelete, setBulkVisible } from "./views/bulk-delete.js";
 import { fetchMe, fetchConfig, canEdit, isAdmin, isLogged, isPending, applyAuthMode } from "./core/auth.js";
 import { fetchInstancias, pickInstance } from "./core/instance.js";
 import { toast } from "./ui/toast.js";
@@ -26,7 +26,7 @@ const LOGGED_VIEWS = ["painel", "dashboard", "frases", "exportar"];
 function allowedViews(){
   if (!canEdit()) return ["painel"];                 // visitante: só o painel
   if (!isAdmin()) return LOGGED_VIEWS;
-  return state.gerenciarInst ? [...LOGGED_VIEWS, "usuarios", "instancias"] : [...LOGGED_VIEWS, "usuarios"];
+  return state.gerenciarInst ? [...LOGGED_VIEWS, "usuarios", "exclusao", "instancias"] : [...LOGGED_VIEWS, "usuarios", "exclusao"];
 }
 
 function switchView(name){
@@ -44,6 +44,7 @@ function switchView(name){
     if (name === "frases") refreshFrasesView();
     if (name === "usuarios") setUsersVisible(true);
     if (name === "instancias") setInstancesVisible(true);
+    if (isAdmin()) setBulkVisible(name === "exclusao");
   }
   if (name !== "exportar"){ try{ history.replaceState(null, "", `#${name}`); }catch{} }
   window.scrollTo({ top: 0, behavior: "smooth" });

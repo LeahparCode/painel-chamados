@@ -101,10 +101,9 @@
           <span>Usuários</span>
           <span class="nav-badge" id="pendingBadge" hidden>0</span>
         </button>
-        <!-- ação (não é tela): abre a exclusão em massa — só administradores -->
-        <button class="nav-item nav-action nav-danger admin-only" type="button" id="bulkOpen" title="Excluir todos os disparos de um dia, semana, mês ou período">
+        <button class="nav-item admin-only" type="button" data-view="exclusao" title="Excluir disparos de um dia, semana, mês ou período">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
-          <span class="lbl-full">Excluir em massa</span><span class="lbl-short">Excluir</span>
+          <span>Exclusão</span>
         </button>
       </nav>
 
@@ -489,6 +488,58 @@
         </p>
       </section>
 
+      <!-- ========== EXCLUSÃO EM MASSA (admin) ========== -->
+      <section class="view" id="view-exclusao" data-view-panel="exclusao" hidden>
+        <header class="page-head">
+          <div class="page-title">
+            <h1>Exclusão em massa</h1>
+            <p>Apaga de uma vez todos os disparos do período escolhido. Não dá para desfazer.</p>
+          </div>
+        </header>
+        <article class="panel bulk-page">
+          <form class="bulk-form" id="bulkForm" novalidate>
+            <div class="bulk-row">
+              <div class="segmented" id="bkScope" role="tablist" aria-label="Período">
+                <button type="button" data-scope="dia" class="is-active">Dia</button>
+                <button type="button" data-scope="semana">Semana</button>
+                <button type="button" data-scope="mes">Mês</button>
+                <button type="button" data-scope="periodo">Período</button>
+              </div>
+              <div class="bulk-nav">
+                <button class="icon-btn" type="button" data-bk-step="-1" aria-label="Anterior">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                </button>
+                <label class="date-pill" id="bkRefWrap"><span id="bkRefLabel">Dia</span><input type="date" id="bkRef" /></label>
+                <label class="date-pill" id="bkMonthWrap" hidden><span>Mês</span><input type="month" id="bkMonth" /></label>
+                <label class="date-pill" id="bkFromWrap" hidden><span>De</span><input type="date" id="bkFrom" /></label>
+                <label class="date-pill" id="bkToWrap" hidden><span>Até</span><input type="date" id="bkTo" /></label>
+                <button class="icon-btn" type="button" data-bk-step="1" aria-label="Próximo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="bulk-row">
+              <label class="select-pill"><span>Tipo</span><select id="bkTipo"><option value="">Todos</option></select></label>
+              <label class="select-pill"><span>Status</span><select id="bkStatus"><option value="">Todos</option></select></label>
+            </div>
+
+            <section class="bulk-preview" id="bkPreview" aria-live="polite"></section>
+
+            <label class="check"><input type="checkbox" id="bkBackup" checked /> <span>Baixar uma cópia (CSV) antes de excluir</span></label>
+            <label class="field"><span>Para confirmar, digite <b>EXCLUIR</b></span>
+              <input type="text" id="bkConfirm" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="EXCLUIR" />
+            </label>
+            <p class="form-error" id="bkError" role="alert" hidden></p>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-danger" id="bkSubmit" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+                <span id="bkSubmitText">Excluir</span>
+              </button>
+            </div>
+          </form>
+        </article>
+      </section>
+
       <footer class="footer">Desenvolvido por <a class="dev-link" href="https://leahparcode.onrender.com" target="_blank" rel="noopener noreferrer" title="Conheça o portfólio da Leahpar Code">Leahpar Code</a> &copy; 2026</footer>
     </main>
   </div>
@@ -648,63 +699,6 @@
           <span class="spacer"></span>
           <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
           <button type="submit" class="btn btn-primary" id="iSave">Criar instância</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- ===================== MODAL: EXCLUSÃO EM MASSA (admin) ===================== -->
-  <div class="modal" id="bulkModal" aria-hidden="true">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bkTitle">
-      <header class="modal-head">
-        <div>
-          <span class="eyebrow eyebrow-danger">Administração</span>
-          <h2 id="bkTitle">Excluir em massa</h2>
-          <p>Apaga de uma vez todos os disparos do período escolhido. Não dá para desfazer.</p>
-        </div>
-        <button class="icon-btn" type="button" data-close aria-label="Fechar">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
-        </button>
-      </header>
-      <form class="modal-body bulk-form" id="bulkForm" novalidate>
-        <div class="bulk-row">
-          <div class="segmented" id="bkScope" role="tablist" aria-label="Período">
-            <button type="button" data-scope="dia" class="is-active">Dia</button>
-            <button type="button" data-scope="semana">Semana</button>
-            <button type="button" data-scope="mes">Mês</button>
-            <button type="button" data-scope="periodo">Período</button>
-          </div>
-          <div class="bulk-nav">
-            <button class="icon-btn" type="button" data-bk-step="-1" aria-label="Anterior">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-            </button>
-            <label class="date-pill" id="bkRefWrap"><span id="bkRefLabel">Dia</span><input type="date" id="bkRef" /></label>
-            <label class="date-pill" id="bkMonthWrap" hidden><span>Mês</span><input type="month" id="bkMonth" /></label>
-            <label class="date-pill" id="bkFromWrap" hidden><span>De</span><input type="date" id="bkFrom" /></label>
-            <label class="date-pill" id="bkToWrap" hidden><span>Até</span><input type="date" id="bkTo" /></label>
-            <button class="icon-btn" type="button" data-bk-step="1" aria-label="Próximo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
-          </div>
-        </div>
-        <div class="bulk-row">
-          <label class="select-pill"><span>Tipo</span><select id="bkTipo"><option value="">Todos</option></select></label>
-          <label class="select-pill"><span>Status</span><select id="bkStatus"><option value="">Todos</option></select></label>
-        </div>
-
-        <section class="bulk-preview" id="bkPreview" aria-live="polite"></section>
-
-        <label class="check"><input type="checkbox" id="bkBackup" checked /> <span>Baixar uma cópia (CSV) antes de excluir</span></label>
-        <label class="field"><span>Para confirmar, digite <b>EXCLUIR</b></span>
-          <input type="text" id="bkConfirm" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="EXCLUIR" />
-        </label>
-        <p class="form-error" id="bkError" role="alert" hidden></p>
-        <div class="form-actions">
-          <button type="button" class="btn btn-ghost" data-close>Cancelar</button>
-          <button type="submit" class="btn btn-danger" id="bkSubmit" disabled>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
-            <span id="bkSubmitText">Excluir</span>
-          </button>
         </div>
       </form>
     </div>
