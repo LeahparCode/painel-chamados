@@ -210,6 +210,7 @@
 ::view-transition-old(root), ::view-transition-new(root){ animation: none; mix-blend-mode: normal; }
 ::view-transition-old(root){ z-index: 1; }
 ::view-transition-new(root){ z-index: 2; }
+html.theme-closing::view-transition-old(root){ z-index: 3; } /* escurecer: o claro fica por cima e fecha */
 html.theme-switching *, html.theme-switching *::before, html.theme-switching *::after{ transition: none !important; }
 #themeToggle.is-flip svg{ animation: theme-flip .55s cubic-bezier(.22, .8, .28, 1) both; }
 @keyframes theme-flip{ from{ transform: rotate(-120deg) scale(.4); opacity: 0; } to{ transform: none; opacity: 1; } }

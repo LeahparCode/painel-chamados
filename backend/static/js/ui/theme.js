@@ -22,7 +22,7 @@ const calmo = () => window.matchMedia?.("(prefers-reduced-motion: reduce)").matc
  * espalha num círculo a partir do botão. Antes, cada elemento da página animava a própria cor ao
  * mesmo tempo, o que travava com muitos cards. Sem suporte (ou com "reduzir movimento"): troca na hora.
  */
-function switchWithReveal(change, origin){
+function switchWithReveal(change, origin, fechar = false){
   if (!document.startViewTransition || calmo()){ change(); return; }
   const r = origin?.getBoundingClientRect();
   const x = r ? r.left + r.width / 2 : innerWidth / 2;
@@ -30,13 +30,17 @@ function switchWithReveal(change, origin){
   const raio = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
   // durante a troca, os elementos não animam a própria cor (só o círculo anima): bem mais leve
   const root = document.documentElement;
+  // escurecer: o tema claro FECHA num círculo até o botão; clarear: o tema claro ABRE a partir dele
   root.classList.add("theme-switching");
+  root.classList.toggle("theme-closing", fechar);
   const t = document.startViewTransition(change);
-  t.finished.finally(() => root.classList.remove("theme-switching"));
+  t.finished.finally(() => root.classList.remove("theme-switching", "theme-closing"));
   t.ready.then(() => {
+    const aberto = `circle(${raio}px at ${x}px ${y}px)`, fechado = `circle(0px at ${x}px ${y}px)`;
     document.documentElement.animate(
-      { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${raio}px at ${x}px ${y}px)`] },
-      { duration: 560, easing: "cubic-bezier(.22, .8, .28, 1)", pseudoElement: "::view-transition-new(root)" }
+      { clipPath: fechar ? [aberto, fechado] : [fechado, aberto] },
+      { duration: 560, easing: fechar ? "cubic-bezier(.55, 0, .7, .2)" : "cubic-bezier(.22, .8, .28, 1)",
+        fill: "forwards", pseudoElement: fechar ? "::view-transition-old(root)" : "::view-transition-new(root)" }
     );
   }).catch(() => {});
 }
@@ -94,6 +98,6 @@ export function initTheme(){
   btn?.addEventListener("click", () => {
     const next = isDark() ? "light" : "dark";
     save(THEME_KEY, next);
-    switchWithReveal(() => { applyMode(next, true); notify(); }, btn);
+    switchWithReveal(() => { applyMode(next, true); notify(); }, btn, next === "dark");
   });
 }
