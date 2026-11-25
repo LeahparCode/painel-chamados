@@ -53,13 +53,6 @@
 }
 
 .sidebar-foot{ margin-top: auto; display: flex; flex-direction: column; gap: 14px; }
-.clock{
-  padding: 14px; border-radius: 14px;
-  background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .07);
-  display: flex; flex-direction: column;
-}
-.clock strong{ color: var(--side-strong); font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
-.clock small{ color: var(--side-muted); font-size: 12px; text-transform: capitalize; }
 .sidebar-row{ display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .sidebar .icon-btn{ background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .1); color: var(--side-text); }
 .sidebar .icon-btn:hover{ background: rgba(255, 255, 255, .16); color: var(--side-strong); }
@@ -131,7 +124,6 @@
   .sidebar-row{ gap: 8px; }
   .sidebar-actions{ gap: 6px; }
   .sidebar .icon-btn{ width: 36px; height: 36px; border-radius: 10px; }
-  .clock{ display: none; }
   .live span{ display: none; }
 
   /* menu: barra de abas fixa embaixo, sempre com todos os itens visíveis */
@@ -295,4 +287,10 @@ html.dark .dev-link:hover, html.dark .dev-link:focus-visible{ color: #a9cbff; ba
 }
 @media (max-width: 340px){
   html.is-admin .nav-item span{ font-size: 9px; letter-spacing: -.02em; }
+}
+
+/* rodapé da sidebar enxuto: usuário + status, separados do menu por uma linha fina */
+@media (min-width: 901px){
+  html:not(.is-public) .sidebar-foot{ gap: 6px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .08); }
+  html:not(.is-public) .sidebar-row{ padding: 0 8px; }
 }
