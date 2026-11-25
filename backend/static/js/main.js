@@ -2,7 +2,6 @@
 import { state, subscribe } from "./core/state.js";
 import { loadCache, connect, loadTemplatesCache, fetchTemplates } from "./core/api.js";
 import { initTheme } from "./ui/theme.js";
-import { initClock } from "./ui/clock.js";
 import { initModals } from "./ui/modal.js";
 import { initPainel } from "./views/painel.js";
 import { initBoard } from "./views/board.js";
@@ -103,7 +102,6 @@ async function startApp(){
   if (logged) loadTemplatesCache(); // templates próprios já aparecem antes da resposta do servidor
 
   initTheme();
-  initClock();
   initModals();
   initAccount();
   initInstanceSwitcher({ onManage: () => switchView("instancias") });
