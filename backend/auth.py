@@ -294,11 +294,29 @@ def _store_error(e):
     return _err(str(e), getattr(e, "status", 502), "storage_error")
 
 
+_last_prune = 0.0
+
+
+def _prune_fails(now):
+    """Esquece tentativas antigas de todos os logins/IPs (senão a lista cresceria para sempre)."""
+    global _last_prune
+    if now - _last_prune < 300:
+        return
+    _last_prune = now
+    janela = max(FAIL_WINDOW, SIGNUP_WINDOW)
+    for k in [k for k, ts in _fails.items() if not ts or now - ts[-1] >= janela]:
+        del _fails[k]
+
+
 def _too_many(key, limit=MAX_FAILS, window=FAIL_WINDOW):
     now = time.time()
     with _fails_lock:
+        _prune_fails(now)
         recent = [t for t in _fails.get(key, []) if now - t < window]
-        _fails[key] = recent
+        if recent:
+            _fails[key] = recent
+        else:
+            _fails.pop(key, None)  # nada recente: não guarda entrada vazia
         return len(recent) >= limit
 
 

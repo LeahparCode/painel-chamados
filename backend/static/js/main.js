@@ -140,9 +140,15 @@ async function startApp(){
     connect();
     if (state.instNegada) toast("Você não tem acesso à instância deste link.", "warn", 4000);
   }else{
-    // conta ainda sem nenhuma instância liberada
     const txt = document.getElementById("noInstText");
-    if (txt) txt.innerHTML = "<b>Você ainda não tem acesso a nenhuma instância.</b> Peça a um administrador para liberar.";
+    if (state.instErro){
+      // falha momentânea ao ler a planilha: avisa e tenta de novo sozinho
+      if (txt) txt.innerHTML = "<b>Não consegui carregar o painel agora.</b> Tentando de novo em instantes…";
+      setTimeout(() => location.reload(), 15000);
+    }else if (txt){
+      // conta ainda sem nenhuma instância liberada
+      txt.innerHTML = "<b>Você ainda não tem acesso a nenhuma instância.</b> Peça a um administrador para liberar.";
+    }
     hideSplash();
   }
   if (logged){
