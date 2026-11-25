@@ -101,6 +101,11 @@
           <span>Usuários</span>
           <span class="nav-badge" id="pendingBadge" hidden>0</span>
         </button>
+        <!-- ação (não é tela): abre a exclusão em massa — só administradores -->
+        <button class="nav-item nav-action nav-danger admin-only" type="button" id="bulkOpen" title="Excluir todos os disparos de um dia, semana, mês ou período">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+          <span class="lbl-full">Excluir em massa</span><span class="lbl-short">Excluir</span>
+        </button>
       </nav>
 
       <div class="sidebar-foot">
@@ -147,10 +152,6 @@
             <p id="scopeLabel">Hoje</p>
           </div>
           <div class="page-actions">
-            <button class="btn btn-danger-ghost admin-only" type="button" id="bulkOpen" title="Excluir todos os disparos de um dia, semana, mês ou período">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
-              Excluir em massa
-            </button>
             <button class="btn btn-primary" type="button" data-action="new">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
               Novo disparo

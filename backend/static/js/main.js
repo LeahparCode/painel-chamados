@@ -124,7 +124,7 @@ async function startApp(){
     }
   }
 
-  document.querySelectorAll(".nav-item").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
+  document.querySelectorAll(".nav-item[data-view]").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
   const initial = (location.hash || "").replace("#", "");
   switchView(["login", "criar-conta"].includes(initial) ? "painel" : initial);
 

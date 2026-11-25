@@ -254,11 +254,11 @@ html.dark.has-wm .brand-watermark{ --wm-color: #ffffff; opacity: .045; }
 .dev-link{
   color: #3b82f6; font-weight: 700; text-decoration: none;
   border-radius: 6px; padding: 1px 3px;
-  text-shadow: 0 0 6px rgba(59, 130, 246, .35);
-  animation: dev-glow 2.8s ease-in-out infinite;
-  transition: color .2s var(--ease), background .2s var(--ease);
+  transition: color .2s var(--ease), background .2s var(--ease), text-shadow .3s var(--ease);
 }
+/* brilho só ao passar o mouse (ou com foco do teclado) */
 .dev-link:hover, .dev-link:focus-visible{
+  animation: dev-glow 2.8s ease-in-out infinite;
   color: #2563eb; background: rgba(59, 130, 246, .1);
   text-decoration: underline; text-underline-offset: 3px;
 }
@@ -267,4 +267,32 @@ html.dark .dev-link:hover, html.dark .dev-link:focus-visible{ color: #a9cbff; ba
 @keyframes dev-glow{
   0%, 100%{ text-shadow: 0 0 4px rgba(59, 130, 246, .25); }
   50%{ text-shadow: 0 0 10px rgba(59, 130, 246, .65), 0 0 18px rgba(59, 130, 246, .3); }
+}
+
+/* ---------- Ação "Excluir em massa" no menu lateral ---------- */
+.nav-action{ margin-top: 10px; }
+.nav-action::after{ /* linha separando das telas */
+  content: ""; position: absolute; left: 12px; right: 12px; top: -6px; height: 1px;
+  background: rgba(255, 255, 255, .1);
+}
+.nav-danger:hover, .nav-danger:focus-visible{
+  background: rgba(239, 68, 68, .16); color: #ffd4d4;
+}
+.nav-danger:hover svg, .nav-danger:focus-visible svg{ color: #ff8a8a; opacity: 1; }
+@media (max-width: 900px){
+  .nav-action{ margin-top: 0; }
+  .nav-action::after{ left: -1px; right: auto; top: 10px; bottom: 10px; width: 1px; height: auto; }
+}
+/* administradores têm 6 itens na barra de baixo: letra um pouco menor para nada ser cortado */
+@media (max-width: 440px){
+  html.is-admin .nav-item span{ font-size: 10px; letter-spacing: -.01em; }
+  html.is-admin .nav-item{ padding-left: 1px; padding-right: 1px; }
+}
+/* celulares estreitos: "Excluir" vira só a lixeira, sobrando espaço para os nomes das telas */
+@media (max-width: 400px){
+  .nav-action{ flex: 0 0 44px; }
+  .nav-action span{ display: none !important; }
+}
+@media (max-width: 340px){
+  html.is-admin .nav-item span{ font-size: 9px; letter-spacing: -.02em; }
 }
