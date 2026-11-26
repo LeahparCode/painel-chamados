@@ -1,5 +1,5 @@
 import os, re, time, json, hashlib, logging, threading, unicodedata
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from flask import Flask, jsonify, request, Response, render_template, g
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -41,9 +41,33 @@ app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # limite do corpo das requi
 ASSET_VERSION = os.getenv("ASSET_VERSION") or str(int(time.time()))
 
 
+def _ler_versao():
+    """Número da versão (arquivo VERSION, aumentado a cada atualização publicada)."""
+    try:
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "VERSION"), encoding="utf-8") as f:
+            return f.read().strip() or "0.0.0"
+    except OSError:
+        return "0.0.0"
+
+
+APP_VERSION = _ler_versao()
+# o Render informa o commit publicado; sem ele (ex.: rodando local) fica vazio
+APP_COMMIT = (os.getenv("RENDER_GIT_COMMIT") or os.getenv("GIT_COMMIT") or "")[:7]
+# quando este servidor subiu (= quando a atualização entrou no ar), no horário de Brasília
+APP_NO_AR = (datetime.now(timezone.utc) - timedelta(hours=3)).strftime("%d/%m/%Y %H:%M")
+
+
+def _versao_titulo():
+    partes = [f"Versão {APP_VERSION}"]
+    if APP_COMMIT:
+        partes.append(f"atualização {APP_COMMIT}")
+    partes.append(f"no ar desde {APP_NO_AR}")
+    return " · ".join(partes)
+
+
 @app.context_processor
 def inject_asset_version():
-    return {"asset_version": ASSET_VERSION}
+    return {"asset_version": ASSET_VERSION, "app_version": APP_VERSION, "app_version_title": _versao_titulo()}
 
 
 # ===== Armazenamento (Google Planilhas ou Airtable) =====
@@ -305,7 +329,7 @@ def favicon():
 
 @app.get("/healthz")
 def health():
-    return jsonify(ok=True, storage=backend_name())
+    return jsonify(ok=True, storage=backend_name(), version=APP_VERSION, commit=APP_COMMIT)
 
 
 # ---- Data ----
