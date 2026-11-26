@@ -92,6 +92,7 @@
 }
 
 .footer{
+  position: relative;
   margin-top: 40px; padding: 18px 0 22px;
   border-top: 1px solid var(--border);
   color: var(--muted); font-size: 12px; text-align: center;
@@ -278,4 +279,17 @@ html.dark .dev-link:hover, html.dark .dev-link:focus-visible{ color: #a9cbff; ba
 @media (min-width: 901px){
   html:not(.is-public) .sidebar-foot{ gap: 6px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .08); }
   html:not(.is-public) .sidebar-row{ padding: 0 8px; }
+}
+
+/* número da versão: canto direito do rodapé, bem discreto */
+.app-version{
+  position: absolute; right: 0; bottom: 22px;
+  font-size: 11px; font-weight: 600; letter-spacing: .02em; font-variant-numeric: tabular-nums;
+  color: var(--muted); opacity: .55; cursor: default;
+  transition: opacity .2s var(--ease);
+}
+.app-version:hover{ opacity: 1; }
+.auth-panel .auth-version{ right: 18px; bottom: 14px; }
+@media (max-width: 560px){
+  .footer .app-version{ position: static; display: block; margin-top: 6px; }
 }

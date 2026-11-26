@@ -145,6 +145,13 @@ O servidor ajusta os status sozinho (sem depender de alguém com o painel aberto
     **só quando ainda não existe nenhum administrador ativo**. Depois disso são ignoradas (excluir essa
     conta pelo painel não a recria) e podem ser apagadas do servidor. A senha é trocada pelo próprio painel.
 
+## Versão
+
+O número da versão fica em `backend/VERSION` e aparece discreto no canto direito do rodapé (painel e
+tela de login). Passando o mouse: o commit publicado (variável `RENDER_GIT_COMMIT`, que o Render define
+sozinho) e quando a atualização entrou no ar. Também aparece em `/healthz`. Aumente o número a cada
+atualização publicada (ex.: `1.0.0` → `1.1.0` para novidades, `1.0.1` para correções).
+
 ## Deploy (Render)
 
 O deploy é feito no [Render](https://render.com) usando o `Dockerfile` e o blueprint `render.yaml`.
